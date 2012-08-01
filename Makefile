@@ -2,8 +2,8 @@ INC=-I/home/wbhart/gc/include
 LIB=-L/home/wbhart/gc/lib
 OBJS=input.o ast.o exception.o parser.o
 
-cesium: $(OBJS)
-	gcc -O2 -o cesium cesium.c $(INC) $(OBJS) $(LIB) -lgc
+calc: calc.c $(OBJS)
+	gcc -O2 -o calc calc.c $(INC) $(OBJS) $(LIB) -lgc
 
 ast.o: ast.c ast.h
 	gcc -c -O2 -o ast.o ast.c $(INC)

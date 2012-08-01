@@ -34,7 +34,7 @@ int main(void)
 
    ast_init();
 
-   printf("Welcome to Cesium v0.3\n\n");
+   printf("Welcome to Calc\n\n");
    printf("> ");
 
    combinator_t * stmt = new_combinator();
