@@ -1,0 +1,30 @@
+Parser Combinators v 0.1
+========================
+
+This branch is for parser combinators implemented in C.
+
+Features:
+---------
+
+* Written in C
+* Error message support
+* Support for syntax macros
+* Support for adding operators with arbitrary precedence, fixity, associativity
+* Simple example language (calc) 
+
+Dependencies:
+-------------
+
+* Boehm-Demers-Weiser garbage collection
+
+Build:
+------
+
+Update the directory locations at the top of Makefile and type:
+
+make
+
+To run example, type:
+
+./calc
+
