@@ -1,0 +1,47 @@
+Cesium v 0.3:
+=============
+
+Dependencies:
+-------------
+
+* Boehm-Demers-Weiser Garbage Collection
+
+Build:
+------
+
+Update directory paths at the top of the Makefile then type:
+
+make
+
+To run, simply type:
+
+./cesium
+
+Introduction:
+-------------
+
+Cesium is a language with the following features:
+
+* LLVMJit backend for performance
+* Local type inference
+* C foreign function interface
+* Syntax and expression macros
+* Garbage collection
+* Imperative and functional styles
+* Parameterised types
+* Ad hoc and parametric polymorphism
+
+Progress:
+---------
+
+* Parser combinators - almost done
+* Symbol Hash table - not done
+* Parser - not done
+* Environments - not done
+* Type system - not done
+* Back end - not done
+* Closures - not done
+* Type inference - not done
+* FFI - not done
+* Module system - not done
+
