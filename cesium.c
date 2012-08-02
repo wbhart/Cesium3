@@ -63,7 +63,7 @@ int main(void)
    expr_altern(exp, 1, T_DIV, match("/"));
    expr_altern(exp, 1, T_REM, match("%"));
 
-   seq(stmt, T_LIST,
+   seq(stmt, T_NONE,
           exp,
           match(";"),
        NULL);
