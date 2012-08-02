@@ -347,7 +347,8 @@ ast_t * expr_fn(input_t * in, void * args)
          }
 
          return lhs;
-      }
+      } else
+         exception("Invalid associativity for infix operator\n");
    } else if (list->fix == EXPR_PREFIX)
    {
       ast_t * rhs;
