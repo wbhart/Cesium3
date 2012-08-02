@@ -101,6 +101,37 @@ combinator_t * exact(char * str)
     return comb;
 }
 
+ast_t * range_fn(input_t * in, void * args)
+{
+    char * str = ((match_args *) args)->str;
+    int start = in->start;
+
+    char c = read1(in);
+
+    if (str[0] <= c && str[1] >= c)
+       return ast_nil;
+    else
+    {
+       in->start = start;
+       return NULL;
+    }
+}
+
+combinator_t * range(char * str)
+{
+    match_args * args = GC_MALLOC(sizeof(match_args));
+    args->str = str;
+    
+    if (strlen(str) != 2)
+       exception("String not of length 2 in range\n");
+
+    combinator_t * comb = new_combinator();
+    comb->fn = range_fn;
+    comb->args = args;
+
+    return comb;
+}
+
 ast_t * integer_fn(input_t * in, void * args)
 {
    int start = in->start;
