@@ -93,7 +93,7 @@ combinator_t * integer();
 
 combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
 
-combinator_t * multi(combinator_t * ret, combinator_t * c1, ...);
+combinator_t * multi(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
 
 combinator_t * expr(combinator_t * exp, combinator_t * base);
 
