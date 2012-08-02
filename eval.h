@@ -24,61 +24,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdio.h>
-#include "parser.h"
-#include "eval.h"
+#include <stdlib.h>
+#include "ast.h"
 
-int main(void)
-{
-   ast_t * a;
-   input_t * in = new_input();
+#ifndef EVAL_H
+#define EVAL_H
 
-   ast_init();
-   sym_tab_init();
+long eval(ast_t * ast);
 
-   printf("Welcome to Calc\n\n");
-   printf("> ");
+#endif
 
-   combinator_t * stmt = new_combinator();
-   combinator_t * exp = new_combinator();
-   combinator_t * paren = new_combinator();
-   combinator_t * base = new_combinator();
-
-   seq(paren, T_LIST,
-          match("("),
-          exp,
-          match(")"),
-       NULL);
-
-   multi(base, T_NONE,
-          capture(T_INT, integer()),
-          paren,
-       NULL);
-
-   expr(exp, base);
-
-   expr_insert(exp, 0, T_ADD, EXPR_INFIX, ASSOC_LEFT, match("+"));
-   expr_altern(exp, 0, T_SUB, match("-"));
-
-   expr_insert(exp, 1, T_MUL, EXPR_INFIX, ASSOC_LEFT, match("*"));
-   expr_altern(exp, 1, T_DIV, match("/"));
-   expr_altern(exp, 1, T_REM, match("%"));
-
-   seq(stmt, T_NONE,
-          exp,
-          match(";"),
-       NULL);
-
-   while (a = parse(in, stmt)) 
-   {
-      printf("%ld\n", eval(a));
-      printf("\n> ");
-      in->start = 0;
-      in->length = 0;
-   }
-
-   printf("\n");
-
-   return 0;
-
-}

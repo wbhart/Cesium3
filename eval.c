@@ -18,67 +18,20 @@ FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL William Hart 
 CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, O `R TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdio.h>
-#include "parser.h"
 #include "eval.h"
 
-int main(void)
+long eval(ast_t * ast)
 {
-   ast_t * a;
-   input_t * in = new_input();
-
-   ast_init();
-   sym_tab_init();
-
-   printf("Welcome to Calc\n\n");
-   printf("> ");
-
-   combinator_t * stmt = new_combinator();
-   combinator_t * exp = new_combinator();
-   combinator_t * paren = new_combinator();
-   combinator_t * base = new_combinator();
-
-   seq(paren, T_LIST,
-          match("("),
-          exp,
-          match(")"),
-       NULL);
-
-   multi(base, T_NONE,
-          capture(T_INT, integer()),
-          paren,
-       NULL);
-
-   expr(exp, base);
-
-   expr_insert(exp, 0, T_ADD, EXPR_INFIX, ASSOC_LEFT, match("+"));
-   expr_altern(exp, 0, T_SUB, match("-"));
-
-   expr_insert(exp, 1, T_MUL, EXPR_INFIX, ASSOC_LEFT, match("*"));
-   expr_altern(exp, 1, T_DIV, match("/"));
-   expr_altern(exp, 1, T_REM, match("%"));
-
-   seq(stmt, T_NONE,
-          exp,
-          match(";"),
-       NULL);
-
-   while (a = parse(in, stmt)) 
-   {
-      printf("%ld\n", eval(a));
-      printf("\n> ");
-      in->start = 0;
-      in->length = 0;
-   }
-
-   printf("\n");
-
-   return 0;
-
+    switch (ast->typ)
+    {
+    case T_INT:
+        return atol(ast->sym->name);
+    }
 }
+
