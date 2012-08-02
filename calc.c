@@ -50,7 +50,7 @@ int main(void)
    seq(paren, T_NONE,
           match("("),
           exp,
-          match(")"),
+          expect(match(")"), "\")\" expected\n"),
        NULL);
 
    multi(base, T_NONE,
@@ -71,7 +71,7 @@ int main(void)
 
    seq(stmt, T_NONE,
           exp,
-          match(";"),
+          expect(match(";"), "\";\" expected\n"),
        NULL);
 
    while (1) 
