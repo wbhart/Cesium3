@@ -27,6 +27,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include "input.h"
 #include "exception.h"
+#include "symbol.h"
 #include "ast.h"
 #include "gc.h"
 
@@ -57,6 +58,12 @@ typedef struct
     tag_t typ;
     seq_list * list;
 } seq_args;
+
+typedef struct
+{
+    tag_t typ;
+    combinator_t * comb;
+} capture_args;
 
 typedef enum
 {
@@ -94,6 +101,8 @@ combinator_t * integer();
 combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
 
 combinator_t * multi(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
+
+combinator_t * capture(tag_t typ, combinator_t * comb);
 
 combinator_t * expr(combinator_t * exp, combinator_t * base);
 
