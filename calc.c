@@ -28,10 +28,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "parser.h"
 #include "eval.h"
 
+extern jmp_buf exc;
+
 int main(void)
 {
    ast_t * a;
    input_t * in = new_input();
+   int jval;
 
    ast_init();
    sym_tab_init();
@@ -71,12 +74,23 @@ int main(void)
           match(";"),
        NULL);
 
-   while (a = parse(in, stmt)) 
+   while (1) 
    {
-      printf("%ld\n", eval(a));
+      if (!(jval = setjmp(exc)))
+      {
+         a = parse(in, stmt);
+         if (!a) break;
+      
+         printf("%ld\n", eval(a));
+      } else
+      {
+         while (read1(in) != '\n') ;
+      }
+              
       printf("\n> ");
       in->start = 0;
       in->length = 0;
+
    }
 
    printf("\n");
