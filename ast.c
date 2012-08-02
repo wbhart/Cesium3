@@ -38,7 +38,7 @@ ast_t * new_ast()
 void ast_init()
 {
     ast_nil = new_ast();
-    ast_nil->typ = T_NIL;
+    ast_nil->typ = T_NONE;
 }
 
 ast_t * ast2(tag_t typ, ast_t * a1, ast_t * a2)

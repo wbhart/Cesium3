@@ -177,13 +177,22 @@ combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...)
 
 ast_t * multi_fn(input_t * in, void * args)
 {
-    seq_list * seq = (seq_list *) args;
-    
+    seq_list * seq = ((seq_args *) args)->list;
+    tag_t typ = ((seq_args *) args)->typ;
+
     while (seq != NULL)
     {
         ast_t * a = parse(in, seq->comb);
         if (a != NULL)
-           return a;
+        {
+           if (typ == T_NONE)
+              return a;
+           
+           ast_t * res = new_ast();
+           res->typ = typ;
+           res->child = a;
+           return res;
+        }
         
         seq = seq->next;
     }
@@ -191,18 +200,23 @@ ast_t * multi_fn(input_t * in, void * args)
     return NULL;
 }
 
-combinator_t * multi(combinator_t * ret, combinator_t * c1, ...)
+combinator_t * multi(combinator_t * ret, tag_t typ, combinator_t * c1, ...)
 {
     combinator_t * comb;
     seq_list * seq;
-    
+    seq_args * args;
+
     va_list ap;
     va_start(ap, c1);
 
     seq = new_seq();
     seq->comb = c1;
 
-    ret->args = (void *) seq;
+    args = GC_MALLOC(sizeof(seq_args));
+    args->typ = typ;
+    args->list = seq;
+    
+    ret->args = (void *) args;
     ret->fn = multi_fn;
 
     while ((comb = va_arg(ap, combinator_t *)) != NULL)

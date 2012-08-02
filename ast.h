@@ -31,7 +31,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef enum
 {
-   T_NIL, T_LIST, T_INT, T_ADD, T_SUB, T_MUL, T_DIV, T_REM
+   T_NONE, T_LIST, T_INT, T_ADD, T_SUB, T_MUL, T_DIV, T_REM
 } tag_t;
 
 typedef struct ast_t
