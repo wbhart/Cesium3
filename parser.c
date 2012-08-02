@@ -298,6 +298,27 @@ combinator_t * not(combinator_t * c)
     return comb;
 }
 
+ast_t * option_fn(input_t * in, void * args)
+{
+   combinator_t * comb = (combinator_t *) args;
+   ast_t * ast;
+   int start = in->start;
+
+   if (ast = parse(in, comb))
+      return ast;
+   else
+      return ast_nil;
+}
+
+combinator_t * option(combinator_t * c)
+{
+    combinator_t * comb = new_combinator();
+    comb->fn = option_fn;
+    comb->args = (void *) c;
+
+    return comb;
+}
+
 ast_t * expr_fn(input_t * in, void * args)
 {
    int alt;
