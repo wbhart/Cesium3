@@ -24,6 +24,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include <stdio.h>
+#include <setjmp.h>
+
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
 
