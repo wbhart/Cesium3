@@ -41,6 +41,14 @@ void ast_init()
     ast_nil->typ = T_NONE;
 }
 
+ast_t * ast1(tag_t typ, ast_t * a1)
+{
+   ast_t * ast = new_ast();
+   ast->typ = typ;
+   ast->child = a1;
+   return ast;
+}
+
 ast_t * ast2(tag_t typ, ast_t * a1, ast_t * a2)
 {
    ast_t * ast = new_ast();

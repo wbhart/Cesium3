@@ -45,6 +45,8 @@ typedef struct ast_t
 
 ast_t * new_ast();
 
+ast_t * ast1(tag_t typ, ast_t * a1);
+
 ast_t * ast2(tag_t typ, ast_t * a1, ast_t * a2);
 
 #endif
