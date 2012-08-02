@@ -368,6 +368,24 @@ ast_t * expr_fn(input_t * in, void * args)
          return ast1(op->tag, rhs);
       else
          return rhs;
+   } else if (list->fix == EXPR_POSTFIX)
+   {
+      ast_t * lhs = expr_fn(in, (void *) list->next); 
+      if (!lhs)
+         return NULL;
+
+      op = list->op;
+      while (op)
+      {
+         if (parse(in, op->comb))
+            break;
+         op = op->next;
+      }
+      
+      if (op)
+         return ast1(op->tag, lhs);
+      else
+         return lhs;
    }
 }
 
