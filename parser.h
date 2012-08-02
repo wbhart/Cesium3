@@ -72,7 +72,7 @@ typedef enum
 
 typedef enum
 {
-   ASSOC_LEFT, ASSOC_RIGHT, ASSOC_FLAT, ASSOC_NONE
+   ASSOC_LEFT, ASSOC_RIGHT, ASSOC_NONE
 } expr_assoc;
 
 typedef struct op_t
