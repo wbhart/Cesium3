@@ -24,11 +24,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "exception.h"
+
+jmp_buf exc;
 
 void exception(char * err)
 {
    fprintf(stderr, err);
-   abort();
+   
+   longjmp(exc, 1);
 }
