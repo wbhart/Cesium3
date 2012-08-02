@@ -276,6 +276,28 @@ combinator_t * capture(tag_t typ, combinator_t * c)
     return comb;
 }
 
+ast_t * not_fn(input_t * in, void * args)
+{
+   combinator_t * comb = (combinator_t *) args;
+   int start = in->start;
+
+   if (parse(in, comb))
+   {
+      in->start = start;
+      return NULL;
+   } else
+      return ast_nil;
+}
+
+combinator_t * not(combinator_t * c)
+{
+    combinator_t * comb = new_combinator();
+    comb->fn = not_fn;
+    comb->args = (void *) c;
+
+    return comb;
+}
+
 ast_t * expr_fn(input_t * in, void * args)
 {
    int alt;
