@@ -71,6 +71,34 @@ combinator_t * match(char * str)
     return comb;
 }
 
+ast_t * expect_fn(input_t * in, void * args)
+{
+    expect_args * eargs = (expect_args *) args;
+    ast_t * ast;
+    
+    combinator_t * comb = eargs->comb;
+
+    if (ast = parse(in, comb))
+       return ast;
+    else
+       exception(eargs->msg);
+
+    return NULL;
+}
+
+combinator_t * expect(combinator_t * c, char * msg)
+{
+    expect_args * args = GC_MALLOC(sizeof(expect_args));
+    args->msg = msg;
+    args->comb = c;
+    
+    combinator_t * comb = new_combinator();
+    comb->fn = expect_fn;
+    comb->args = (void *) args;
+
+    return comb;
+}
+
 ast_t * exact_fn(input_t * in, void * args)
 {
     char * str = ((match_args *) args)->str;
