@@ -33,6 +33,7 @@ int main(void)
    input_t * in = new_input();
 
    ast_init();
+   sym_tab_init();
 
    printf("Welcome to Cesium v0.3\n\n");
    printf("> ");
@@ -49,7 +50,7 @@ int main(void)
        NULL);
 
    multi(base, T_NONE, 
-          integer(),
+          capture(T_INT, integer()),
           paren,
        NULL);
 
