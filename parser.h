@@ -108,6 +108,8 @@ combinator_t * not(combinator_t * c);
 
 combinator_t * option(combinator_t * c);
 
+combinator_t * zeroplus(tag_t typ, combinator_t * c);
+
 combinator_t * expr(combinator_t * exp, combinator_t * base);
 
 ast_t * parse(input_t * in, combinator_t * comb);
