@@ -64,6 +64,8 @@ int main(void)
    expr_altern(exp, 1, T_DIV, match("/"));
    expr_altern(exp, 1, T_REM, match("%"));
 
+   expr_insert(exp, 2, T_NEG, EXPR_PREFIX, ASSOC_NONE, match("-"));
+
    seq(stmt, T_NONE,
           exp,
           match(";"),

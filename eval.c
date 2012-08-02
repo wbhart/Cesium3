@@ -42,6 +42,8 @@ long eval(ast_t * ast)
         return eval(ast->child) / eval(ast->child->next);
     case T_REM:
         return eval(ast->child) % eval(ast->child->next);
+    case T_NEG:
+        return -eval(ast->child);
     default:
         exception("Unknown ast tag in eval\n");
     }
