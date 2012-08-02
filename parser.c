@@ -348,7 +348,26 @@ ast_t * expr_fn(input_t * in, void * args)
 
          return lhs;
       }
+   } else if (list->fix == EXPR_PREFIX)
+   {
+      ast_t * rhs;
+      
+      op = list->op;
+      while (op)
+      {
+         if (parse(in, op->comb))
+            break;
+         op = op->next;
+      }
+      
+      rhs = expr_fn(in, (void *) list->next);
+      if (op && !rhs)
+         exception("Expression expected!\n");
 
+      if (op)
+         return ast1(op->tag, rhs);
+      else
+         return rhs;
    }
 }
 
