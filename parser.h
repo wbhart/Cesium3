@@ -96,6 +96,8 @@ combinator_t * new_combinator();
 
 combinator_t * match(char * str);
 
+combinator_t * exact(char * str);
+
 combinator_t * integer();
 
 combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...);

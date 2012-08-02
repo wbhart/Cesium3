@@ -71,6 +71,36 @@ combinator_t * match(char * str)
     return comb;
 }
 
+ast_t * exact_fn(input_t * in, void * args)
+{
+    char * str = ((match_args *) args)->str;
+
+    int start = in->start;
+    int i = 0, len = strlen(str);
+   
+    while (i < len && str[i] == read1(in)) i++;
+   
+    if (i != len)
+    {
+       in->start = start;
+       return NULL;
+    }
+
+    return ast_nil;
+}
+
+combinator_t * exact(char * str)
+{
+    match_args * args = GC_MALLOC(sizeof(match_args));
+    args->str = str;
+    
+    combinator_t * comb = new_combinator();
+    comb->fn = exact_fn;
+    comb->args = args;
+
+    return comb;
+}
+
 ast_t * integer_fn(input_t * in, void * args)
 {
    int start = in->start;
