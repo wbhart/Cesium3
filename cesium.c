@@ -48,7 +48,7 @@ int main(void)
           match(")"),
        NULL);
 
-   multi(base, 
+   multi(base, T_NONE, 
           integer(),
           paren,
        NULL);
