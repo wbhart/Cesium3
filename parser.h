@@ -47,6 +47,12 @@ typedef struct
     char * str;
 } match_args;
 
+typedef struct
+{
+    combinator_t * comb;
+    char * msg;
+} expect_args;
+
 typedef struct seq_list
 {
     combinator_t * comb;
@@ -107,6 +113,8 @@ combinator_t * alpha();
 combinator_t * digit();
 
 combinator_t * anything();
+
+combinator_t * expect(combinator_t * comb, char * msg);
 
 combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
 
