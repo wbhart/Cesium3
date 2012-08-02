@@ -371,7 +371,11 @@ ast_t * capture_fn(input_t * in, void * args)
 {
     capture_args * cap = (capture_args *) args;
     
-    int start = in->start;
+    int start;
+    
+    skip_whitespace(in);
+   
+    start = in->start;
     if (parse(in, cap->comb))
     {
         ast_t * a = new_ast();
