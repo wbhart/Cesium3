@@ -140,7 +140,14 @@ ast_t * seq_fn(input_t * in, void * args)
         seq = seq->next;
     }
 
-    return ret;
+    if (sa->typ == T_NONE)
+       return ret->next;
+    else
+    {
+       ret->child = ret->next;
+       ret->next = NULL;
+       return ret;
+    }
 }
 
 combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...)
