@@ -132,6 +132,72 @@ combinator_t * range(char * str)
     return comb;
 }
 
+ast_t * alpha_fn(input_t * in, void * args)
+{
+    int start = in->start;
+
+    char c = read1(in);
+
+    if (isalpha(c))
+       return ast_nil;
+    else
+    {
+       in->start = start;
+       return NULL;
+    }
+}
+
+combinator_t * alpha()
+{
+    combinator_t * comb = new_combinator();
+    comb->fn = alpha_fn;
+    comb->args = NULL;
+
+    return comb;
+}
+
+ast_t * digit_fn(input_t * in, void * args)
+{
+    int start = in->start;
+
+    char c = read1(in);
+
+    if (isdigit(c))
+       return ast_nil;
+    else
+    {
+       in->start = start;
+       return NULL;
+    }
+}
+
+combinator_t * digit()
+{
+    combinator_t * comb = new_combinator();
+    comb->fn = digit_fn;
+    comb->args = NULL;
+
+    return comb;
+}
+
+ast_t * anything_fn(input_t * in, void * args)
+{
+    int start = in->start;
+
+    char c = read1(in);
+
+    return ast_nil;
+}
+
+combinator_t * anything()
+{
+    combinator_t * comb = new_combinator();
+    comb->fn = anything_fn;
+    comb->args = NULL;
+
+    return comb;
+}
+
 ast_t * integer_fn(input_t * in, void * args)
 {
    int start = in->start;
