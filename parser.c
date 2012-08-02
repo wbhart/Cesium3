@@ -315,7 +315,40 @@ ast_t * expr_fn(input_t * in, void * args)
          }
 
          return lhs;
+      } else if (list->assoc == ASSOC_RIGHT)
+      {
+         ast_t * lhs = expr_fn(in, (void *) list->next);
+         ast_t ** ptr;
+
+         if (!lhs)
+            return NULL;
+         
+         ptr =  &lhs;
+
+         while (1)
+         {
+            ast_t * rhs;
+            
+            op = list->op;
+            while (op)
+            {
+               if (parse(in, op->comb))
+                  break;
+               op = op->next;
+            }
+            if (!op) break;
+
+            rhs = expr_fn(in, (void *) list->next);
+            if (!rhs)
+               exception("Expression expected!\n");
+
+            (*ptr) = ast2(op->tag, *ptr, rhs);
+            ptr = &((*ptr)->child->next);
+         }
+
+         return lhs;
       }
+
    }
 }
 
