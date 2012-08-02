@@ -1,6 +1,6 @@
 INC=-I/home/wbhart/gc/include
 LIB=-L/home/wbhart/gc/lib
-OBJS=input.o ast.o exception.o parser.o
+OBJS=symbol.o input.o ast.o exception.o parser.o
 
 cesium: cesium.c $(OBJS)
 	gcc -O2 -o cesium cesium.c $(INC) $(OBJS) $(LIB) -lgc
@@ -16,4 +16,7 @@ parser.o: parser.c parser.h
 
 input.o: input.c input.h
 	gcc -c -O2 -o input.o input.c $(INC)
+
+symbol.o: symbol.c symbol.h
+	gcc -c -O2 -o symbol.o symbol.c $(INC)
 
