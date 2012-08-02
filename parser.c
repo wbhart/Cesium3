@@ -319,6 +319,83 @@ combinator_t * option(combinator_t * c)
     return comb;
 }
 
+ast_t * zeroplus_fn(input_t * in, void * args)
+{
+   capture_args * cap = (capture_args *) args;
+   combinator_t * comb = cap->comb;
+   
+   ast_t * ast;
+   ast_t ** ptr = &ast;
+
+   while ((*ptr) = parse(in, comb))
+      ptr = &((*ptr)->next);
+   
+   if (ast == NULL)
+      return ast_nil;
+   else if (cap->typ == T_NONE)
+      return ast;
+   else
+   {
+      ast_t * res = new_ast();
+      res->typ = cap->typ;
+      res->child = ast;
+      return res;
+   }
+}
+
+combinator_t * zeroplus(tag_t typ, combinator_t * c)
+{
+    capture_args * args = GC_MALLOC(sizeof(capture_args));
+    args->typ = typ;
+    args->comb = c;
+    
+    combinator_t * comb = new_combinator();
+    comb->fn = zeroplus_fn;
+    comb->args = args;
+
+    return comb;
+}
+
+ast_t * oneplus_fn(input_t * in, void * args)
+{
+   capture_args * cap = (capture_args *) args;
+   combinator_t * comb = cap->comb;
+   
+   ast_t * ast;
+   ast_t ** ptr = &ast;
+
+   ast = parse(in, comb);
+   if (!ast)
+      return ast_nil;
+   ptr = &(ast->next);
+   
+   while ((*ptr) = parse(in, comb))
+      ptr = &((*ptr)->next);
+   
+   if (cap->typ == T_NONE)
+      return ast;
+   else
+   {
+      ast_t * res = new_ast();
+      res->typ = cap->typ;
+      res->child = ast;
+      return res;
+   }
+}
+
+combinator_t * oneplus(tag_t typ, combinator_t * c)
+{
+    capture_args * args = GC_MALLOC(sizeof(capture_args));
+    args->typ = typ;
+    args->comb = c;
+    
+    combinator_t * comb = new_combinator();
+    comb->fn = oneplus_fn;
+    comb->args = args;
+
+    return comb;
+}
+
 ast_t * expr_fn(input_t * in, void * args)
 {
    int alt;
