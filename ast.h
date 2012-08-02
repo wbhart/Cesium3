@@ -25,6 +25,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "gc.h"
+#include "symbol.h"
 
 #ifndef AST_H
 #define AST_H
@@ -39,6 +40,7 @@ typedef struct ast_t
    tag_t typ;
    struct ast_t * child;
    struct ast_t * next;
+   sym_t * sym;
 } ast_t;
 
 ast_t * new_ast();

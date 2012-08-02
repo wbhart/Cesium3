@@ -233,6 +233,42 @@ combinator_t * multi(combinator_t * ret, tag_t typ, combinator_t * c1, ...)
     return ret;
 }
 
+ast_t * capture_fn(input_t * in, void * args)
+{
+    capture_args * cap = (capture_args *) args;
+    
+    int start = in->start;
+    if (parse(in, cap->comb))
+    {
+        ast_t * a = new_ast();
+        int len = in->start - start;
+        char * text = GC_MALLOC(len + 1);
+        
+        strncpy(text, in->input + start, len);
+        text[len] = '\0';
+
+        a->typ = cap->typ;
+        a->sym = sym_lookup(text);
+
+        return a;
+    }
+    
+    return NULL;
+}
+
+combinator_t * capture(tag_t typ, combinator_t * c)
+{
+    capture_args * args = GC_MALLOC(sizeof(capture_args));
+    args->typ = typ;
+    args->comb = c;
+    
+    combinator_t * comb = new_combinator();
+    comb->fn = capture_fn;
+    comb->args = args;
+
+    return comb;
+}
+
 ast_t * expr_fn(input_t * in, void * args)
 {
    int alt;
