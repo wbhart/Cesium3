@@ -32,6 +32,18 @@ long eval(ast_t * ast)
     {
     case T_INT:
         return atol(ast->sym->name);
+    case T_ADD:
+        return eval(ast->child) + eval(ast->child->next);
+    case T_SUB:
+        return eval(ast->child) - eval(ast->child->next);
+    case T_MUL:
+        return eval(ast->child) * eval(ast->child->next);
+    case T_DIV:
+        return eval(ast->child) / eval(ast->child->next);
+    case T_REM:
+        return eval(ast->child) % eval(ast->child->next);
+    default:
+        exception("Unknown ast tag in eval\n");
     }
 }
 

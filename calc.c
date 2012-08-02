@@ -44,7 +44,7 @@ int main(void)
    combinator_t * paren = new_combinator();
    combinator_t * base = new_combinator();
 
-   seq(paren, T_LIST,
+   seq(paren, T_NONE,
           match("("),
           exp,
           match(")"),

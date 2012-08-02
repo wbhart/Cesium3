@@ -26,6 +26,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdlib.h>
 #include "ast.h"
+#include "exception.h"
 
 #ifndef EVAL_H
 #define EVAL_H
