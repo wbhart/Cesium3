@@ -102,6 +102,12 @@ combinator_t * integer();
 
 combinator_t * range(char * str);
 
+combinator_t * alpha();
+
+combinator_t * digit();
+
+combinator_t * anything();
+
 combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
 
 combinator_t * multi(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
