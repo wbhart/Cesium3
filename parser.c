@@ -290,13 +290,14 @@ ast_t * cident_fn(input_t * in, void * args)
       in->start = start;
       return NULL;
    }
-
+   
    while ((c = read1(in)) == '_' || isalpha(c) || isdigit(c)) ;
    in->start--;
 
    ast->typ = T_IDENT;
 
    len = in->start - start;
+   
    text = GC_MALLOC(len + 1);
         
    strncpy(text, in->input + start, len);
@@ -323,6 +324,7 @@ seq_list * new_seq()
 
 ast_t * seq_fn(input_t * in, void * args)
 {
+    int start = in->start;
     seq_args * sa = (seq_args *) args;
     seq_list * seq = sa->list;
     
@@ -335,7 +337,10 @@ ast_t * seq_fn(input_t * in, void * args)
     {
         ast_t * a = parse(in, seq->comb);
         if (a == NULL)
+        {
+           in->start = start;
            return NULL;
+        }
 
         if (a != ast_nil)
         {
