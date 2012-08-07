@@ -79,7 +79,7 @@ Literals
 
    combinator_t * match(char * str)
 
-This combinator when parsed exactly matches a give string str. If the string is 
+This combinator when parsed exactly matches a given string str. If the string is 
 not matched the parser returns NULL, otherwise it returns ast_nil.
 
 For example we may write:
