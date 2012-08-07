@@ -28,3 +28,279 @@ To run example, type:
 
 ./calc
 
+Usage:
+------
+
+To use the parser library, you must include parser.h in your C program. You must
+also currently have:
+
+extern jmp_buf exc;
+
+and define a setjmp(exc) somewhere in your parser (see the example calc program)
+so that the exception code has somewhere to jump in the event of an exception.
+
+Parser combinators are data structures which contain data about how to parse a
+given grammar production rule. One creates a parser by building up a grammar from 
+combinators. One then passes the root combinator to the parse function to parse
+statements/expressions from the language described by the combinators.
+
+The basic type in the library is a combinator_t. 
+
+There are two different ways to create combinator_t's. Some of the combinator
+functions return a combinator_t, others take an existing one and modify it.
+
+To create a new combinator data struct called stmt for example, we write:
+
+  combinator_t * stmt = new_combinator();
+
+The ability to create empty combinators like this is useful when we wish to have
+combinators which are (indirectly) self-referential. The combinator can be made
+before it is defined so that some component of it can refer to it.
+
+Combinators, once created and fully defined, can be parsed with the parse 
+function:
+
+  ast_t * parse(input_t * in, combinator_t * comb)
+
+If the input coming from the given input stream matches the grammar defined by
+comb, an ast_t is returned. The ast nodes are defined in ast.h and the input_t
+type is defined in input.h.  
+
+Some combinators do not return AST details about what is parsed. They merely 
+return an ast_t called ast_nil if the input matches the grammar and NULL 
+otherwise. Such combinators can be used with the capture function (described
+below) to capture the exact text that was parsed.
+
+We now list the different functions available for creating and combining
+combinators.
+
+Literals
+========
+
+   combinator_t * match(char * str)
+
+This combinator when parsed exactly matches a give string str. If the string is 
+not matched the parser returns NULL, otherwise it returns ast_nil.
+
+For example we may write:
+
+match("if");
+
+to create a combinator which matches the exact string "if" when parsed.
+
+This combinator skips any whitespace preceeding the match string before parsing
+it.
+
+   combinator_t * expect(combinator_t * c, char * msg)
+
+This combinator causes an exception to be raised if the given combinator returns
+NULL when parsed. This is a mechanism for printing error messages if given parts
+of the grammar are not matched. For example, one may have statements of the form
+if (expr) stmt; in ones grammar. Once the "if" has been parsed, one expects a 
+left parenthesis. Thus one may write
+
+expect(match("("), "Error: \"(\" expected\n");
+
+to expect a left parenthesis at this point. If it is not found then an exception
+is raised and the given error message printed.
+
+To raise an exception the library calls the exception function declared in 
+exception.h. Currently this relies on longjmp which is available on posix 
+systems, however it can be replaced with a user defined function if required.
+
+   combinator_t * exact(char * str)
+
+This combinator is identical to match except that it does not skip preceding
+whitespace. This is useful in combination with other "lexical" combinators which
+can be used with the capture combinator to capture strings without whitespace in
+them.
+
+   combinator_t * range(char * str)
+
+This combinator function takes a string consisting of precisely two non-null
+characters (an exception is raised if this is not the case). When parsed the
+combinator matches any character which lies between the two specified characters
+(inclusive). For example:
+
+range("ae");
+
+The range combinator does not skip preceding whitespace.
+
+   combinator_t * alpha()
+
+This combinator matches an alphabetical character (upper of lower case). It does
+not skip preceding whitespace.
+
+   combinator_t * digit()
+
+This combinator matches a digit (0-9). It does not skip preceding whitespace.
+
+   combinator_t * anything()
+
+This combinator matches any character. It does not skip preceding whitespace.
+
+   combinator_t * integer()
+
+This combinator matches an integer, i.e. either 0 or a digit between 1 and 9
+inclusive, followed by any number of digits. This combinator skips preceding 
+whitespace. The AST node returned has tag T_INT. 
+
+Lexical combinators
+===================
+
+   combinator_t * not(combinator_t * c)
+
+This combinator returns ast_nil if the given combinator c returns NULL when
+parsed, otherwise it returns NULL. 
+
+   combinator_t * option(combinator_t * c)
+
+This combinator returns ast_nil regardless of whether the combinator c is matched
+or not. This allows one to specify that a given grammatical element is optional,
+i.e. may occur zero or one times.
+
+   combinator_t * zeroplus(tag_t typ, combinator_t * c)
+
+This combinator is the kleene star operator. It returns ast_nil if the given 
+combinator is matched zero or more times. It is greedy in that it attempts to match 
+as many times as it can.
+
+   ast_t * oneplus_fn(input_t * in, void * args)
+
+This combinator returns ast_nil if the given combinator is matched one or more
+times, and NULL otherwise. It is greedy in that it attempts to match as many times
+as it can.
+
+   combinator_t * capture(tag_t typ, combinator_t * c)
+
+This combinator wraps an existing "lexical" combinator and does two things. Firstly
+it skips preceeding whitespace. Secondly it captures the entire string matched by
+the combinator c and returns an AST node with the given AST tag and the captured
+string as a symbol.
+
+The function for turning the captured string into a symbol is declared in symbol.h
+but can be replaced with a user defined function. The default behaviour is to hash
+the string against all previously captured strings. If two captured strings are 
+parsed then (referentially) identical symbols are returned in the AST nodes. This is
+a useful performance enhancement that allows compilers/interpreters to compare two
+strings by comparing the (pointers to) their symbols instead of comparing the actual
+strings.
+
+Note that c can be any combinator, including a composite one, made of lexical 
+combinators.
+
+Syntactic combinators
+=====================
+
+   combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...)
+
+This function takes an existing (empty) combinator as first argument (and then 
+returns it once defined). It defines ret to be a combinator which parses a 
+sequence of other combinators in order. To terminate the list of combinators
+one must pass a final NULL argument. For example:
+
+seq(simple_if_stmt, T_IF1, match("if"), match("("), expr, match(")"), stmt, NULL);
+
+where expr and stmt are previously defined combinators.
+
+The seq combinator will receive an AST node from each matched combinator in the 
+sequence. These are then chained together using the next field of the ast_t type to 
+produce a list.
+
+If typ is AST_NONE then this list is returned without decoration. However if typ
+is any other AST tag then the list is wrapped in a new AST node with that tag, 
+i.e. the list becomes the child node of the returned AST node.
+
+   combinator_t * multi(combinator_t * ret, tag_t typ, combinator_t * c1, ...)
+
+The multi combinator is a multiple choice combinator. It takes an existing (empty)
+combinator as first argument (and then returns it once defined). It defines ret
+to be a combinator which parses any one of the other combinators (checked in the
+order given). To terminate the list of combinators one must pass a final NULL 
+argument. For example:
+
+   multi(if_stmt, T_IF, simple_if_stmt, compound_if_stmt, NULL);
+
+where simple_if_stmt and compound_if_stmt are previously defined combinators.
+
+The multi combinator will receive an AST node from the first matched combinator in 
+the sequence.
+
+If typ is AST_NONE then this is returned without decoration. However if typ is any 
+other AST tag then the node is wrapped in a new AST node with that tag, i.e. the it 
+becomes the child node of the returned AST node.
+
+Expression combinators
+======================
+
+Because combinators do not handle left recursion correctly, expressions are handled
+a little differently in this library, using a special expression combinator.
+
+   combinator_t * expr(combinator_t * exp, combinator_t * base)
+
+This combinator takes an existing (blank) combinator exp (and returns it once 
+defined) and another combinator base. The result is a combinator which parses only
+expressions defined by the base combinator. 
+
+However, the exp combinator can have other expression combinators added to it with 
+the functions below. This is done for two reasons. Firstly, this allows for 
+expression combinators to be added with a given precedence, associativity and fixity.
+Secondly, this allows new expression combinators to be added to the expression 
+heirarchy at run-time.
+
+The base combinator is expected to have the highest precedence of all the expression
+combinators added to exp. It is usually used to parse literals at the base of the
+expression heirarchy. 
+
+   void expr_insert(combinator_t * expr, int prec, tag_t tag, expr_fix fix, 
+                 expr_assoc assoc, combinator_t * comb)
+
+This function inserts a new operator into the expression heirarchy. The symbol for
+the operator is parsed by the combinator comb. The operator is added at the given
+precedence and is defined to have the given fixity and associativity.
+
+The precedence is just a number from 0 (lowest) to n (highest) where n is the
+number of non-base precedence levels already defined. The new operator is added
+with the given precedence and all higher precedence operators (and base) are shifted
+up in their precedence. 
+
+Available options for inserted operators are EXPR_INFIX, EXPR_PREFIX and EXPR_POSTFIX
+depending on whether the operator symbol will appear between two expressions of 
+higher precedence, before an expression of higher precedence or after such, 
+respectively.
+
+Available options for associativity include ASSOC_LEFT and ASSOC_RIGHT for left 
+associativity (e.g. addition is left associative) and right associativity 
+respectively. For unary (prefix and postfix) operators, ASSOC_NONE can be specified.
+
+Only binary infix and unary prefix/postfix operators are currently supported.
+
+In the infix case an AST node with the given tag is returned. The arguments of the
+operator are returned as child and child->next nodes of the returned AST node.
+
+In the prefix and postfix cases an AST node with the given tag is return and the
+single argument of the operator is returned as the child node of the returned
+AST node.
+
+   void expr_altern(combinator_t * expr, int prec, tag_t tag, combinator_t * comb)
+
+Sometimes more than one operator has the same precedence, fixity and associativity.
+In this case one can add it at an existing precedence level using exp_altern. The
+parameters for this function are as for expr_insert except that a fixity and 
+associativity are not specified, these being derived from the existing operators at
+the specified precedence.
+
+Here is an example of the usage of the expression combinators from the calc program.
+It assumes that a base combinator exists and is defined and that an exp combinator
+has been created (but not defined yet):
+
+expr(exp, base);
+
+expr_insert(exp, 0, T_ADD, EXPR_INFIX, ASSOC_LEFT, match("+"));
+expr_altern(exp, 0, T_SUB, match("-"));
+
+expr_insert(exp, 1, T_MUL, EXPR_INFIX, ASSOC_LEFT, match("*"));
+expr_altern(exp, 1, T_DIV, match("/"));
+expr_altern(exp, 1, T_REM, match("%"));
+
+expr_insert(exp, 2, T_NEG, EXPR_PREFIX, ASSOC_NONE, match("-"));
