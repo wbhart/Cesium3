@@ -228,12 +228,14 @@ combinator_t * anything()
 
 ast_t * integer_fn(input_t * in, void * args)
 {
-   int start = in->start, len;
+   int start, len;
    char c, * text;
 
    ast_t * ast = new_ast();
 
    skip_whitespace(in);
+
+   start = in->start;
 
    c = read1(in);
 
@@ -276,12 +278,14 @@ combinator_t * integer()
 
 ast_t * cident_fn(input_t * in, void * args)
 {
-   int start = in->start, len;
+   int start, len;
    char c, * text;
 
    ast_t * ast = new_ast();
 
    skip_whitespace(in);
+
+   start = in->start;
 
    c = read1(in);
 
