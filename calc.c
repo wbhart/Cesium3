@@ -46,6 +46,7 @@ int main(void)
    combinator_t * root = new_combinator();
    combinator_t * stmt = new_combinator();
    combinator_t * for_stmt = new_combinator();
+   combinator_t * if_stmt = new_combinator();
    combinator_t * exp = new_combinator();
    combinator_t * paren = new_combinator();
    combinator_t * base = new_combinator();
@@ -97,7 +98,15 @@ int main(void)
           expect(stmt, "Statement expected\n"),
        NULL);
 
+   seq(if_stmt, T_IF,
+          match("if"),
+          expect(exp, "Expression expected\n"),
+          expect(match("then"), "Keyword \"then\" expected\n"),
+          expect(stmt, "Statement expected\n"),
+       NULL);
+
    multi(stmt, T_NONE,
+          if_stmt,
           for_stmt,
           assign_exp,
        NULL);
