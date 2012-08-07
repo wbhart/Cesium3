@@ -314,3 +314,42 @@ expr_altern(exp, 1, T_DIV, match("/"));
 expr_altern(exp, 1, T_REM, match("%"));
 
 expr_insert(exp, 2, T_NEG, EXPR_PREFIX, ASSOC_NONE, match("-"));
+
+The example calc language:
+--------------------------
+
+In the files calc.c and eval.c/h is an example of the usage of the combinator 
+library. It defines a very simple language which has simple arithmetic operators,
+variable assignment and if and for statements.
+
+Here are the elements of the language:
+
+1) Integer literals, e.g. 0, 123, 23478343
+2) Unary minus, e.g. -1, -s, -(4*3*a - 1)
+3) Addition/subtraction: 1 + 4, s + 3, 2 - 7
+4) Multiplication/division/remainder: 3*4, 7/2, 7%s
+5) Parentheses: 3 + (4 * 2 - 1), 3 - (2 * 3 + (4 + 1))
+6) Assignment: s = 1, v = t = 3, s = t + 2
+7) Simple "if" statments: if s then t = 3
+8) Simple "for" statements: for i in 1:100 do s = s + i
+
+Here is a sample session:
+
+Every statement must be followed by a semicolon.
+
+> s = 1 + 2 - (3*4 + 1);
+-10
+
+> t = 0;
+0
+
+> if s then t = t + 1;
+1
+
+> t;
+1
+
+> for i in 1:100 do t = t + i;
+4951
+
+
