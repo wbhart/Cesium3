@@ -28,6 +28,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 long eval(ast_t * ast)
 {
+    long t;
+    
     switch (ast->typ)
     {
     case T_INT:
@@ -44,6 +46,13 @@ long eval(ast_t * ast)
         return eval(ast->child) % eval(ast->child->next);
     case T_NEG:
         return -eval(ast->child);
+    case T_ASSIGN:
+        t = eval(ast->child->next);
+        printf("%s = %ld\n", ast->child->sym->name, t);
+        return t;
+    case T_IDENT:
+        printf("%s\n", ast->sym->name);
+        return 0;
     default:
         exception("Unknown ast tag in eval\n");
     }

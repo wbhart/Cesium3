@@ -46,6 +46,8 @@ int main(void)
    combinator_t * exp = new_combinator();
    combinator_t * paren = new_combinator();
    combinator_t * base = new_combinator();
+   combinator_t * assign_exp = new_combinator();
+   combinator_t * assign = new_combinator();
 
    seq(paren, T_NONE,
           match("("),
@@ -53,8 +55,20 @@ int main(void)
           expect(match(")"), "\")\" expected\n"),
        NULL);
 
+   seq(assign, T_ASSIGN, 
+          cident(), 
+          match("="), 
+          expect(exp, "Expression expected\n"), 
+       NULL);
+
+   multi(assign_exp, T_NONE, 
+          assign,
+          exp,
+       NULL);
+
    multi(base, T_NONE,
           integer(),
+          cident(),
           paren,
        NULL);
 
@@ -70,7 +84,7 @@ int main(void)
    expr_insert(exp, 2, T_NEG, EXPR_PREFIX, ASSOC_NONE, match("-"));
 
    seq(stmt, T_NONE,
-          exp,
+          assign_exp,
           expect(match(";"), "\";\" expected\n"),
        NULL);
 
