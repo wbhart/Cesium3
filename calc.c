@@ -54,7 +54,7 @@ int main(void)
        NULL);
 
    multi(base, T_NONE,
-          capture(T_INT, integer()),
+          integer(),
           paren,
        NULL);
 
