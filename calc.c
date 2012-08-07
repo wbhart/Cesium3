@@ -43,7 +43,9 @@ int main(void)
    printf("Welcome to Calc\n\n");
    printf("> ");
 
+   combinator_t * root = new_combinator();
    combinator_t * stmt = new_combinator();
+   combinator_t * for_stmt = new_combinator();
    combinator_t * exp = new_combinator();
    combinator_t * paren = new_combinator();
    combinator_t * base = new_combinator();
@@ -84,8 +86,24 @@ int main(void)
 
    expr_insert(exp, 2, T_NEG, EXPR_PREFIX, ASSOC_NONE, match("-"));
 
-   seq(stmt, T_NONE,
+   seq(for_stmt, T_FOR,
+          match("for"),
+          expect(cident(), "Identifier expected in for statement\n"),
+          expect(match("in"), "Keyword \"in\" expected\n"),
+          expect(exp, "Expression expected\n"),
+          expect(match(":"), "Separator \":\" expected\n"),
+          expect(exp, "Expression expected\n"),
+          expect(match("do"), "Keyword \"do\" expected\n"),
+          expect(stmt, "Statement expected\n"),
+       NULL);
+
+   multi(stmt, T_NONE,
+          for_stmt,
           assign_exp,
+       NULL);
+
+   seq(root, T_NONE,
+          stmt,
           expect(match(";"), "\";\" expected\n"),
        NULL);
 
@@ -93,7 +111,7 @@ int main(void)
    {
       if (!(jval = setjmp(exc)))
       {
-         a = parse(in, stmt);
+         a = parse(in, root);
          if (!a) break;
       
          printf("%ld\n", eval(a));

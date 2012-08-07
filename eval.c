@@ -76,6 +76,7 @@ void eval_init()
 long eval(ast_t * ast)
 {
     long t;
+    ast_t * id, * r1, * r2, * stmt;
     
     switch (ast->typ)
     {
@@ -99,6 +100,18 @@ long eval(ast_t * ast)
         return t;
     case T_IDENT:
         return value_get(ast->sym);
+    case T_FOR:
+        id = ast->child;
+        r1 = id->next;
+        r2 = r1->next;
+        stmt = r2->next;
+        value_store(id->sym, eval(r1));
+        while (value_get(id->sym) < eval(r2))
+        {
+           t = eval(stmt);
+           value_store(id->sym, value_get(id->sym) + 1);
+        }
+        return t;
     default:
         exception("Unknown ast tag in eval\n");
     }
