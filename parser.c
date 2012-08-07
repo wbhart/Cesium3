@@ -228,8 +228,8 @@ combinator_t * anything()
 
 ast_t * integer_fn(input_t * in, void * args)
 {
-   int start = in->start;
-   char c;
+   int start = in->start, len;
+   char c, * text;
 
    ast_t * ast = new_ast();
 
@@ -253,6 +253,15 @@ ast_t * integer_fn(input_t * in, void * args)
    in->start--;
 
    ast->typ = T_INT;
+
+   len = in->start - start;
+   text = GC_MALLOC(len + 1);
+        
+   strncpy(text, in->input + start, len);
+   text[len] = '\0';
+
+   ast->sym = sym_lookup(text);
+
    return ast;
 }
 
