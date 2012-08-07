@@ -88,7 +88,7 @@ match("if");
 
 to create a combinator which matches the exact string "if" when parsed.
 
-This combinator skips any whitespace preceeding the match string before parsing
+This combinator skips any whitespace preceding the match string before parsing
 it.
 
    combinator_t * expect(combinator_t * c, char * msg)
@@ -184,7 +184,7 @@ as it can.
    combinator_t * capture(tag_t typ, combinator_t * c)
 
 This combinator wraps an existing "lexical" combinator and does two things. Firstly
-it skips preceeding whitespace. Secondly it captures the entire string matched by
+it skips preceding whitespace. Secondly it captures the entire string matched by
 the combinator c and returns an AST node with the given AST tag and the captured
 string as a symbol.
 
