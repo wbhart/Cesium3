@@ -248,6 +248,9 @@ ast_t * integer_fn(input_t * in, void * args)
    if (c == '0')
    {
       ast->typ = T_INT;
+      
+      ast->sym = sym_lookup("0");
+
       return ast;
    }
 
