@@ -128,7 +128,7 @@ The range combinator does not skip preceding whitespace.
 
    combinator_t * alpha()
 
-This combinator matches an alphabetical character (upper of lower case). It does
+This combinator matches an alphabetical character (upper or lower case). It does
 not skip preceding whitespace.
 
    combinator_t * digit()
