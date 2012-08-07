@@ -96,7 +96,7 @@ it.
 This combinator causes an exception to be raised if the given combinator returns
 NULL when parsed. This is a mechanism for printing error messages if given parts
 of the grammar are not matched. For example, one may have statements of the form
-if (expr) stmt; in ones grammar. Once the "if" has been parsed, one expects a 
+if (expr) stmt; in one's grammar. Once the "if" has been parsed, one expects a 
 left parenthesis. Thus one may write
 
 expect(match("("), "Error: \"(\" expected\n");
