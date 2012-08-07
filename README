@@ -143,7 +143,9 @@ This combinator matches any character. It does not skip preceding whitespace.
 
 This combinator matches an integer, i.e. either 0 or a digit between 1 and 9
 inclusive, followed by any number of digits. This combinator skips preceding 
-whitespace. The AST node returned has tag T_INT. 
+whitespace. The AST node returned has tag T_INT. The integer is hashed and 
+turned into a symbol (equal integers have the same symbol). The symbol is then
+stored in the returned AST node.
 
 Lexical combinators
 ===================
