@@ -25,11 +25,20 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdlib.h>
+#include "gc.h"
 #include "ast.h"
 #include "exception.h"
+#include "symbol.h"
 
 #ifndef EVAL_H
 #define EVAL_H
+
+typedef struct vals_t
+{
+   sym_t * sym;
+   long val;
+   struct vals_t * next;
+} vals_t;
 
 long eval(ast_t * ast);
 

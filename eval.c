@@ -26,6 +26,53 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "eval.h"
 
+vals_t * values;
+
+void value_store(sym_t * sym, long val)
+{
+   vals_t * value;
+   vals_t * ptr = values;
+
+   while (ptr != NULL)
+   {
+      if (ptr->sym == sym)
+      {
+         ptr->val = val;
+         return;
+      }
+
+      ptr = ptr->next;
+   }
+   
+   value = GC_MALLOC(sizeof(vals_t));
+   value->sym = sym;
+   value->val = val;
+   value->next = values;
+   values = value;
+}
+
+long value_get(sym_t * sym)
+{
+   vals_t * ptr = values;
+
+   while (ptr != NULL)
+   {
+      if (ptr->sym == sym)
+      {
+         return ptr->val;
+      }
+
+      ptr = ptr->next;
+   }
+   
+   exception("Undefined symbol\n");
+}
+
+void eval_init()
+{
+   values = NULL;
+}
+
 long eval(ast_t * ast)
 {
     long t;
@@ -48,11 +95,10 @@ long eval(ast_t * ast)
         return -eval(ast->child);
     case T_ASSIGN:
         t = eval(ast->child->next);
-        printf("%s = %ld\n", ast->child->sym->name, t);
+        value_store(ast->child->sym, t);
         return t;
     case T_IDENT:
-        printf("%s\n", ast->sym->name);
-        return 0;
+        return value_get(ast->sym);
     default:
         exception("Unknown ast tag in eval\n");
     }

@@ -38,6 +38,7 @@ int main(void)
 
    ast_init();
    sym_tab_init();
+   eval_init();
 
    printf("Welcome to Calc\n\n");
    printf("> ");
