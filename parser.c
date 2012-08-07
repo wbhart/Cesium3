@@ -274,6 +274,48 @@ combinator_t * integer()
     return comb;
 }
 
+ast_t * cident_fn(input_t * in, void * args)
+{
+   int start = in->start, len;
+   char c, * text;
+
+   ast_t * ast = new_ast();
+
+   skip_whitespace(in);
+
+   c = read1(in);
+
+   if (c != '_' && !isalpha(c))
+   {
+      in->start = start;
+      return NULL;
+   }
+
+   while ((c = read1(in)) == '_' || isalpha(c) || isdigit(c)) ;
+   in->start--;
+
+   ast->typ = T_IDENT;
+
+   len = in->start - start;
+   text = GC_MALLOC(len + 1);
+        
+   strncpy(text, in->input + start, len);
+   text[len] = '\0';
+
+   ast->sym = sym_lookup(text);
+
+   return ast;
+}
+
+combinator_t * cident()
+{
+    combinator_t * comb = new_combinator();
+    comb->fn = cident_fn;
+    comb->args = NULL;
+
+    return comb;
+}
+
 seq_list * new_seq()
 {
     return GC_MALLOC(sizeof(seq_list));

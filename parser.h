@@ -106,6 +106,8 @@ combinator_t * exact(char * str);
 
 combinator_t * integer();
 
+combinator_t * cident();
+
 combinator_t * range(char * str);
 
 combinator_t * alpha();
