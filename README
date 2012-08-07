@@ -214,8 +214,8 @@ seq(simple_if_stmt, T_IF1, match("if"), match("("), expr, match(")"), stmt, NULL
 where expr and stmt are previously defined combinators.
 
 The seq combinator will receive an AST node from each matched combinator in the 
-sequence. These are then chained together using the next field of the ast_t type to 
-produce a list.
+sequence. Those which return something other than ast_nil are then chained 
+together using the next field of the ast_t type to produce a list.
 
 If typ is AST_NONE then this list is returned without decoration. However if typ
 is any other AST tag then the list is wrapped in a new AST node with that tag, 
