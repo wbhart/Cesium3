@@ -237,7 +237,7 @@ The multi combinator will receive an AST node from the first matched combinator 
 the sequence.
 
 If typ is AST_NONE then this is returned without decoration. However if typ is any 
-other AST tag then the node is wrapped in a new AST node with that tag, i.e. the it 
+other AST tag then the node is wrapped in a new AST node with that tag, i.e. it 
 becomes the child node of the returned AST node.
 
 Expression combinators
