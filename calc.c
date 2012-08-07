@@ -62,7 +62,7 @@ int main(void)
    seq(assign, T_ASSIGN, 
           cident(), 
           match("="), 
-          expect(exp, "Expression expected\n"), 
+          expect(assign_exp, "Expression expected\n"), 
        NULL);
 
    multi(assign_exp, T_NONE, 
