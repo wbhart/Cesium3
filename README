@@ -147,6 +147,14 @@ whitespace. The AST node returned has tag T_INT. The integer is hashed and
 turned into a symbol (equal integers have the same symbol). The symbol is then
 stored in the returned AST node.
 
+   combinator_t * cident()
+
+This combinator matches a C identifier, i.e. an underscore or letter followed
+by any number of underscores, letters or digits. This combinator skips 
+preceding whitespace. The AST node returned has tag T_IDENT. The identifier is 
+hashed and turned into a symbol (equal identifiers have the same symbol). The 
+symbol is then stored in the returned AST node.
+
 Lexical combinators
 ===================
 
