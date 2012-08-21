@@ -40,13 +40,14 @@ typedef enum
 
 typedef struct type_t
 {
-   typ_t typ;
-   int arity;
-   int params;
-   struct type_t ** arg;
-   struct type_t * ret;
-   sym_t ** param;
-   struct sym_t * sym;
+   typ_t typ; /* kind of type */
+   int arity; /* number of args */
+   int num_params; /* number of type parameters */
+   struct type_t ** args; /* arguments */
+   struct type_t * ret; /* return type, for functions */
+   sym_t ** params; /* type parameters */
+   struct sym_t * sym; /* name of type */
+   struct sym_t ** slots; /* names of type args/slots */
 } type_t;
 
 extern type_t * t_nil;
@@ -59,6 +60,19 @@ extern type_t * t_char;
 type_t * new_type(typ_t typ);
 
 void types_init(void);
+
+type_t * fn_type(type_t * ret, int arity, type_t ** args);
+
+type_t * tuple_type(int arity, type_t ** args);
+
+type_t * data_type(int arity, type_t ** args, sym_t * sym, 
+                     sym_t ** slots, int num_params, sym_t ** params);
+
+type_t * array_type(type_t * el_type);
+
+type_t * fn_to_lambda_type(type_t * type);
+
+type_t * new_typevar(void);
 
 #endif
 

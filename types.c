@@ -37,7 +37,6 @@ type_t * new_type(typ_t typ)
 {
    type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
    t->typ = typ;
-   t->arity = 0;
    return t;
 }
 
@@ -49,4 +48,83 @@ void types_init(void)
    t_double = new_type(DOUBLE);
    t_string = new_type(STRING);
    t_char = new_type(CHAR);
+}
+
+type_t * fn_type(type_t * ret, int arity, type_t ** args)
+{
+   int i;
+   
+   type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->typ = FN;
+   t->args = (type_t **) GC_MALLOC(sizeof(type_t *)*arity);
+   t->ret = ret;
+   t->arity = arity;
+   
+   for (i = 0; i < arity; i++)
+      t->args[i] = args[i];
+
+   return t;
+}
+
+type_t * tuple_type(int arity, type_t ** args)
+{
+   int i;
+   
+   type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->typ = TUPLE;
+   t->args = (type_t **) GC_MALLOC(sizeof(type_t *)*arity);
+   t->arity = arity;
+
+   for (i = 0; i < arity; i++)
+      t->args[i] = args[i];
+
+   return t;
+}
+
+type_t * data_type(int arity, type_t ** args, sym_t * sym, 
+                       sym_t ** slots, int num_params, sym_t ** params)
+{
+   int i;
+   
+   type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->typ = DATATYPE;
+   t->args = (type_t **) GC_MALLOC(sizeof(type_t *)*arity);
+   t->slots = (sym_t **) GC_MALLOC(sizeof(sym_t *)*arity);
+   t->arity = arity;
+   t->num_params = num_params;
+   t->params = params;
+
+   for (i = 0; i < arity; i++)
+   {
+       t->args[i] = args[i];
+       t->slots[i] = slots[i];
+   }
+   
+   t->sym = sym;
+
+   return t;
+}
+
+type_t * array_type(type_t * el_type)
+{
+   type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->typ = ARRAY;
+   t->ret = el_type;
+   
+   return t;
+}
+
+type_t * fn_to_lambda_type(type_t * type)
+{
+    type = fn_type(type->ret, type->arity, type->args);
+    type->typ = LAMBDA; 
+    return type;
+}
+
+type_t * new_typevar(void)
+{
+    static long typevarnum = 0;
+    type_t * t = new_type(TYPEVAR);
+    t->arity = typevarnum++;
+    return t;
 }
