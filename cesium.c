@@ -26,6 +26,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include "parser.h"
+#include "types.h"
+#include "backend.h"
 
 extern jmp_buf exc;
 
@@ -37,6 +39,7 @@ int main(void)
 
    ast_init();
    sym_tab_init();
+   types_init();
 
    printf("Welcome to Cesium v0.3\n\n");
    printf("> ");

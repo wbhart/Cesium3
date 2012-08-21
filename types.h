@@ -26,22 +26,39 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 #include <stdio.h>
+#include "symbol.h"
 #include "gc.h"
 
-#ifndef SYMBOL_H
-#define SYMBOL_H
+#ifndef TYPES_H
+#define TYPES_H
 
-#define SYM_TAB_SIZE 10000
+typedef enum
+{
+   NIL, BOOL, INT, DOUBLE, STRING, CHAR, 
+   FN, LAMBDA, GENERIC, ARRAY, TUPLE, DATATYPE, TYPEVAR
+} typ_t;
 
-typedef struct sym_t {
-   char * name;
-} sym_t;
+typedef struct type_t
+{
+   typ_t typ;
+   int arity;
+   int params;
+   struct type_t ** arg;
+   struct type_t * ret;
+   sym_t ** param;
+   struct sym_t * sym;
+} type_t;
 
-void sym_tab_init(void);
+extern type_t * t_nil;
+extern type_t * t_int;
+extern type_t * t_bool;
+extern type_t * t_double;
+extern type_t * t_string;
+extern type_t * t_char;
 
-void print_sym_tab(void);
+type_t * new_type(typ_t typ);
 
-sym_t * sym_lookup(const char * name);
+void types_init(void);
 
 #endif
 

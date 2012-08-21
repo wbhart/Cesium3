@@ -24,24 +24,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <string.h>
-#include <stdio.h>
-#include "gc.h"
+#include "backend.h"
 
-#ifndef SYMBOL_H
-#define SYMBOL_H
-
-#define SYM_TAB_SIZE 10000
-
-typedef struct sym_t {
-   char * name;
-} sym_t;
-
-void sym_tab_init(void);
-
-void print_sym_tab(void);
-
-sym_t * sym_lookup(const char * name);
-
-#endif
 

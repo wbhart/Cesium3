@@ -24,24 +24,29 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <string.h>
-#include <stdio.h>
-#include "gc.h"
+#include "types.h"
 
-#ifndef SYMBOL_H
-#define SYMBOL_H
+type_t * t_nil;
+type_t * t_int;
+type_t * t_bool;
+type_t * t_double;
+type_t * t_string;
+type_t * t_char;
 
-#define SYM_TAB_SIZE 10000
+type_t * new_type(typ_t typ)
+{
+   type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->typ = typ;
+   t->arity = 0;
+   return t;
+}
 
-typedef struct sym_t {
-   char * name;
-} sym_t;
-
-void sym_tab_init(void);
-
-void print_sym_tab(void);
-
-sym_t * sym_lookup(const char * name);
-
-#endif
-
+void types_init(void)
+{
+   t_nil = new_type(NIL);
+   t_int = new_type(INT);
+   t_bool = new_type(BOOL);
+   t_double = new_type(DOUBLE);
+   t_string = new_type(STRING);
+   t_char = new_type(CHAR);
+}
