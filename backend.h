@@ -31,7 +31,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef BACKEND_H
 #define BACKEND_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

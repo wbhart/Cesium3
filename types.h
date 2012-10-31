@@ -32,6 +32,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TYPES_H
 #define TYPES_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 typedef enum
 {
    NIL, BOOL, INT, DOUBLE, STRING, CHAR, 
@@ -73,6 +77,10 @@ type_t * array_type(type_t * el_type);
 type_t * fn_to_lambda_type(type_t * type);
 
 type_t * new_typevar(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

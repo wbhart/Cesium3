@@ -31,6 +31,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #define SYM_TAB_SIZE 10000
 
 typedef struct sym_t {
@@ -42,6 +46,10 @@ void sym_tab_init(void);
 void print_sym_tab(void);
 
 sym_t * sym_lookup(const char * name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

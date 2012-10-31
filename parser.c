@@ -59,10 +59,11 @@ ast_t * match_fn(input_t * in, void * args)
     return ast_nil;
 }
 
-combinator_t * match(char * str)
+combinator_t * match(const char * str)
 {
     match_args * args = GC_MALLOC(sizeof(match_args));
-    args->str = str;
+    args->str = GC_MALLOC(strlen(str) + 1);
+    strcpy(args->str, str);
     
     combinator_t * comb = new_combinator();
     comb->fn = match_fn;
@@ -86,10 +87,11 @@ ast_t * expect_fn(input_t * in, void * args)
     return NULL;
 }
 
-combinator_t * expect(combinator_t * c, char * msg)
+combinator_t * expect(combinator_t * c, const char * msg)
 {
     expect_args * args = GC_MALLOC(sizeof(expect_args));
-    args->msg = msg;
+    args->msg = GC_MALLOC(strlen(msg) + 1);
+    strcpy(args->msg, msg);
     args->comb = c;
     
     combinator_t * comb = new_combinator();
@@ -117,10 +119,11 @@ ast_t * exact_fn(input_t * in, void * args)
     return ast_nil;
 }
 
-combinator_t * exact(char * str)
+combinator_t * exact(const char * str)
 {
     match_args * args = GC_MALLOC(sizeof(match_args));
-    args->str = str;
+    args->str = GC_MALLOC(strlen(str) + 1);
+    strcpy(args->str, str);
     
     combinator_t * comb = new_combinator();
     comb->fn = exact_fn;
@@ -145,10 +148,11 @@ ast_t * range_fn(input_t * in, void * args)
     }
 }
 
-combinator_t * range(char * str)
+combinator_t * range(const char * str)
 {
     match_args * args = GC_MALLOC(sizeof(match_args));
-    args->str = str;
+    args->str = GC_MALLOC(strlen(str) + 1);
+    strcpy(args->str, str);
     
     if (strlen(str) != 2)
        exception("String not of length 2 in range\n");
@@ -511,7 +515,7 @@ ast_t * not_fn(input_t * in, void * args)
       return ast_nil;
 }
 
-combinator_t * not(combinator_t * c)
+combinator_t * pnot(combinator_t * c)
 {
     combinator_t * comb = new_combinator();
     comb->fn = not_fn;

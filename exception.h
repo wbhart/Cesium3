@@ -30,6 +30,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 void exception(char * err);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

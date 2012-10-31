@@ -30,6 +30,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef INPUT_H
 #define INPUT_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 typedef struct
 {
    char * input;
@@ -43,5 +47,9 @@ input_t * new_input();
 char read1(input_t * in);
 
 void skip_whitespace(input_t * in);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

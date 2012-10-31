@@ -34,6 +34,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef PARSER_H
 #define PARSER_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 typedef ast_t * (*comb_fn)(input_t *, void *);
    
 typedef struct
@@ -100,15 +104,15 @@ typedef struct expr_list
 
 combinator_t * new_combinator();
 
-combinator_t * match(char * str);
+combinator_t * match(const char * str);
 
-combinator_t * exact(char * str);
+combinator_t * exact(const char * str);
 
 combinator_t * integer();
 
 combinator_t * cident();
 
-combinator_t * range(char * str);
+combinator_t * range(const char * str);
 
 combinator_t * alpha();
 
@@ -116,7 +120,7 @@ combinator_t * digit();
 
 combinator_t * anything();
 
-combinator_t * expect(combinator_t * comb, char * msg);
+combinator_t * expect(combinator_t * comb, const char * msg);
 
 combinator_t * seq(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
 
@@ -124,7 +128,7 @@ combinator_t * multi(combinator_t * ret, tag_t typ, combinator_t * c1, ...);
 
 combinator_t * capture(tag_t typ, combinator_t * comb);
 
-combinator_t * not(combinator_t * c);
+combinator_t * pnot(combinator_t * c);
 
 combinator_t * option(combinator_t * c);
 
@@ -134,6 +138,15 @@ combinator_t * oneplus(tag_t typ, combinator_t * c);
 
 combinator_t * expr(combinator_t * exp, combinator_t * base);
 
+void expr_insert(combinator_t * expr, int prec, tag_t tag, expr_fix fix, 
+                 expr_assoc assoc, combinator_t * comb);
+
+void expr_altern(combinator_t * expr, int prec, tag_t tag, combinator_t * comb);
+
 ast_t * parse(input_t * in, combinator_t * comb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

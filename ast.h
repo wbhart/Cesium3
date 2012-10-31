@@ -30,6 +30,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef AST_H
 #define AST_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 typedef enum
 {
    T_NONE, T_LIST, T_INT, T_ADD, T_SUB, T_MUL, T_DIV, T_REM, T_IDENT
@@ -45,8 +49,14 @@ typedef struct ast_t
 
 ast_t * new_ast();
 
+void ast_init();
+
 ast_t * ast1(tag_t typ, ast_t * a1);
 
 ast_t * ast2(tag_t typ, ast_t * a1, ast_t * a2);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

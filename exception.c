@@ -30,7 +30,7 @@ jmp_buf exc;
 
 void exception(char * err)
 {
-   fprintf(stderr, err);
+   fprintf(stderr, "%s\n", err);
    
    longjmp(exc, 1);
 }

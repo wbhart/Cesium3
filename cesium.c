@@ -25,6 +25,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdio.h>
+#include "ast.h"
 #include "parser.h"
 #include "types.h"
 #include "backend.h"
