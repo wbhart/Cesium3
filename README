@@ -31,17 +31,18 @@ Cesium is a language with the following features:
 * Parameterised types
 * Ad hoc and parametric polymorphism
 
-Progress:
+Planned features:
 ---------
 
-* Parser combinators - almost done
-* Symbol Hash table - not done
-* Parser - not done
-* Environments - not done
-* Type system - not done
-* Back end - not done
-* Closures - not done
-* Type inference - not done
-* FFI - not done
-* Module system - not done
+* Parser combinators
+* Symbol Hash table
+* Parser
+* Environments
+* Type system
+* Back end
+* Closures
+* Type inference
+* FFI
+* Module system
+* Macros
 
