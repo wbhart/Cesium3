@@ -25,72 +25,56 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdio.h>
+#include "gc.h"
 #include "ast.h"
-#include "parser.h"
 #include "types.h"
 #include "backend.h"
+
+#include "parser.c"
 
 extern jmp_buf exc;
 
 int main(void)
 {
    ast_t * a;
-   input_t * in = new_input();
    int jval;
 
+   GC_INIT();
+   GREG g;
+ 
    ast_init();
    sym_tab_init();
    types_init();
 
+   yyinit(&g);
+
    printf("Welcome to Cesium v0.3\n\n");
    printf("> ");
-
-   combinator_t * stmt = new_combinator();
-   combinator_t * exp = new_combinator();
-   combinator_t * paren = new_combinator();
-   combinator_t * base = new_combinator();
-
-   seq(paren, T_LIST,
-          match("("),
-          exp,
-          match(")"),
-       NULL);
-
-   multi(base, T_NONE, 
-          capture(T_INT, integer()),
-          paren,
-       NULL);
-
-   expr(exp, base);
-
-   expr_insert(exp, 0, T_ADD, EXPR_INFIX, ASSOC_LEFT, match("+"));
-   expr_altern(exp, 0, T_SUB, match("-"));
-
-   expr_insert(exp, 1, T_MUL, EXPR_INFIX, ASSOC_LEFT, match("*"));
-   expr_altern(exp, 1, T_DIV, match("/"));
-   expr_altern(exp, 1, T_REM, match("%"));
-
-   seq(stmt, T_NONE,
-          exp,
-          match(";"),
-       NULL);
 
    while (1)
    {
       if (!(jval = setjmp(exc)))
       {
-         a = parse(in, stmt);
-         if (!a) break;
-      } else
+         if (!yyparse(&g))
+         {
+            printf("Error parsing\n");
+            abort();
+         } else if (root)
+         {
+            root = NULL;
+         }
+      } else if (jval == 1)
       {
-         while (read1(in) != '\n') ;
-      }
+         root = NULL;
+         while (getc(stdin) != '\n') ;
+      } else /* jval == 2 */
+         break;
       
       printf("\n> ");
-      in->start = 0;
-      in->length = 0;
    }
 
+   yydeinit(&g);
+    
    printf("\n");
 
    return 0;

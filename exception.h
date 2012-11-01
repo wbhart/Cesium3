@@ -34,6 +34,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  extern "C" {
 #endif
 
+extern jmp_buf exc;
+
 void exception(char * err);
 
 #ifdef __cplusplus

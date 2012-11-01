@@ -1,0 +1,58 @@
+%{
+#include <stdio.h>
+#include "ast.h"
+#include "symbol.h"
+#include "exception.h"
+
+static int eat_eol = 0;
+
+#define YYSTYPE ast_t *
+
+/* 
+   Increase the parse buffers
+*/
+
+#define YY_BUFFER_START_SIZE 16384 
+
+#define YY_STACK_SIZE YY_BUFFER_START_SIZE
+
+#define YY_INPUT(buf, result, max_size, core)          \
+{                                                      \
+  int yyc = fgetc(stdin);                              \
+  if (yyc == EOF) { eat_eol = 0; longjmp(exc, 2); }    \
+  if (eat_eol) while (yyc == '\n') yyc = fgetc(stdin); \
+  if (yyc == '(') eat_eol++;                           \
+  if (yyc == ')') eat_eol--;                           \
+  result = (EOF == yyc) ? 0 : (*(buf)= yyc, 1);        \
+}
+%}
+
+start         = Spacing r:Statement { root = r; }
+                 | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
+Statement     = Spacing Expression EOL
+                 | Spacing EOL
+Expression    = r:Infix10 ( ( Plus s:Infix10 { r = ast2(T_ADD, r, s); } )
+               | ( Minus s:Infix10 { r = ast2(T_SUB, r, s); } ) )* { $$ = r; }
+Infix10       = r:Primary ( ( Times s:Primary { r = ast2(T_MUL, r, s); } )
+               | ( Div s:Primary { r = ast2(T_DIV, r, s); } ) 
+               | ( Mod s:Primary { r = ast2(T_REM, r, s); } ) )* { $$ = r; }
+Primary       = Integer
+                 | ( LParen Expression RParen )
+                
+Integer       = < ( [1-9] [0-9]* | '0' ) > Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_INT, sym);
+              }
+Spacing       = ( Space | Comment )*
+Sp2           = ( Space | EOL | Comment )*
+Space         = ' ' | '\t'
+Comment       = '/*' ( !'*/' . )* '*/'
+LParen        = '(' Spacing
+RParen        = ')' Spacing 
+Plus          = '+' Sp2
+Minus         = '-' Sp2
+Times         = '*' Sp2
+Div           = '/' Sp2
+Mod           = '%' Sp2
+EOL           = '\r\n' | '\n' | '\r'

@@ -26,6 +26,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ast.h"
 
+ast_t * root;
+
 ast_t * ast_nil;
 
 ast_t * new_ast()
@@ -56,4 +58,11 @@ ast_t * ast2(tag_t typ, ast_t * a1, ast_t * a2)
    ast->child = a1;
    ast->child->next = a2;
    return ast;
+}
+
+ast_t * ast_symbol(tag_t typ, sym_t * sym)
+{
+   ast_t * ast = new_ast();
+   ast->typ = typ;
+   ast->sym = sym;
 }
