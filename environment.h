@@ -24,61 +24,36 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdio.h>
-#include "gc.h"
-#include "ast.h"
+#include "symbol.h"
 #include "types.h"
-#include "environment.h"
-#include "backend.h"
+#include "gc.h"
 
-#include "parser.c"
+#ifndef ENVIRONMENT_H
+#define ENVIRONMENT_H
 
-extern jmp_buf exc;
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
-int main(void)
+typedef struct bind_t
 {
-   ast_t * a;
-   int jval;
+   type_t * type;
+   sym_t * sym;
+   struct bind_t * next;
+} bind_t;
 
-   GC_INIT();
-   GREG g;
- 
-   ast_init();
-   sym_tab_init();
-   types_init();
-   scope_init();
+typedef struct env_t
+{
+   bind_t * scope;
+   struct env_t * next;
+} env_t;
 
-   yyinit(&g);
+extern env_t * current_scope;
 
-   printf("Welcome to Cesium v0.3\n\n");
-   printf("> ");
+void scope_init(void);
 
-   while (1)
-   {
-      if (!(jval = setjmp(exc)))
-      {
-         if (!yyparse(&g))
-         {
-            printf("Error parsing\n");
-            abort();
-         } else if (root)
-         {
-            root = NULL;
-         }
-      } else if (jval == 1)
-      {
-         root = NULL;
-         while (getc(stdin) != '\n') ;
-      } else /* jval == 2 */
-         break;
-      
-      printf("\n> ");
-   }
-
-   yydeinit(&g);
-    
-   printf("\n");
-
-   return 0;
-
+#ifdef __cplusplus
 }
+#endif
+
+#endif

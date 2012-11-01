@@ -24,61 +24,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdio.h>
-#include "gc.h"
-#include "ast.h"
-#include "types.h"
 #include "environment.h"
-#include "backend.h"
 
-#include "parser.c"
+env_t * current_scope;
 
-extern jmp_buf exc;
-
-int main(void)
+void scope_init(void)
 {
-   ast_t * a;
-   int jval;
-
-   GC_INIT();
-   GREG g;
- 
-   ast_init();
-   sym_tab_init();
-   types_init();
-   scope_init();
-
-   yyinit(&g);
-
-   printf("Welcome to Cesium v0.3\n\n");
-   printf("> ");
-
-   while (1)
-   {
-      if (!(jval = setjmp(exc)))
-      {
-         if (!yyparse(&g))
-         {
-            printf("Error parsing\n");
-            abort();
-         } else if (root)
-         {
-            root = NULL;
-         }
-      } else if (jval == 1)
-      {
-         root = NULL;
-         while (getc(stdin) != '\n') ;
-      } else /* jval == 2 */
-         break;
-      
-      printf("\n> ");
-   }
-
-   yydeinit(&g);
-    
-   printf("\n");
-
-   return 0;
-
+   current_scope = (env_t *) GC_MALLOC(sizeof(env_t));
 }
