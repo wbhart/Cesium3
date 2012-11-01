@@ -52,6 +52,10 @@ extern env_t * current_scope;
 
 void scope_init(void);
 
+void intrinsics_init(void);
+
+bind_t * bind_generic(sym_t * sym, type_t * type);
+
 #ifdef __cplusplus
 }
 #endif

@@ -52,6 +52,7 @@ typedef struct type_t
    sym_t ** params; /* type parameters */
    struct sym_t * sym; /* name of type */
    struct sym_t ** slots; /* names of type args/slots */
+   int intrinsic; /* intrinsic function/operator? */
 } type_t;
 
 extern type_t * t_nil;
@@ -66,6 +67,8 @@ type_t * new_type(typ_t typ);
 void types_init(void);
 
 type_t * fn_type(type_t * ret, int arity, type_t ** args);
+
+type_t * generic_type(int arity, type_t ** args);
 
 type_t * tuple_type(int arity, type_t ** args);
 

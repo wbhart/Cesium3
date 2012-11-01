@@ -66,6 +66,21 @@ type_t * fn_type(type_t * ret, int arity, type_t ** args)
    return t;
 }
 
+type_t * generic_type(int arity, type_t ** args)
+{
+   int i;
+   
+   type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->typ = GENERIC;
+   t->args = (type_t **) GC_MALLOC(sizeof(type_t *)*arity);
+   t->arity = arity;
+   
+   for (i = 0; i < arity; i++)
+      t->args[i] = args[i];
+
+   return t;
+}
+
 type_t * tuple_type(int arity, type_t ** args)
 {
    int i;

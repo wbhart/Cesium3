@@ -47,6 +47,7 @@ int main(void)
    sym_tab_init();
    types_init();
    scope_init();
+   intrinsics_init();
 
    yyinit(&g);
 
