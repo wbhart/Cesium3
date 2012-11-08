@@ -40,29 +40,78 @@ ast_t * new_ast()
 void ast_init()
 {
     ast_nil = new_ast();
-    ast_nil->typ = T_NONE;
+    ast_nil->tag = T_NONE;
 }
 
-ast_t * ast1(tag_t typ, ast_t * a1)
+ast_t * ast1(tag_t tag, ast_t * a1)
 {
    ast_t * ast = new_ast();
-   ast->typ = typ;
+   ast->tag = tag;
    ast->child = a1;
    return ast;
 }
 
-ast_t * ast2(tag_t typ, ast_t * a1, ast_t * a2)
+ast_t * ast2(tag_t tag, ast_t * a1, ast_t * a2)
 {
    ast_t * ast = new_ast();
-   ast->typ = typ;
+   ast->tag = tag;
    ast->child = a1;
    ast->child->next = a2;
    return ast;
 }
 
-ast_t * ast_symbol(tag_t typ, sym_t * sym)
+ast_t * ast_symbol(tag_t tag, sym_t * sym)
 {
    ast_t * ast = new_ast();
-   ast->typ = typ;
+   ast->tag = tag;
    ast->sym = sym;
+}
+
+void ast_print(ast_t * ast, int indent)
+{
+   int i;
+   
+   for (i = 0; i < indent; i++)
+      printf(" ");
+   printf(":: ");
+
+   switch (ast->tag)
+   {
+      case T_NONE:
+         printf("none\n");
+         break;
+      case T_INT:
+         printf("int(%s)\n", ast->sym->name);
+         break;
+      case T_ADD:
+         printf("add\n");
+         ast_print(ast->child, indent + 3);
+         ast_print(ast->child->next, indent + 3);
+         break;
+      case T_SUB:
+         printf("sub\n");
+         ast_print(ast->child, indent + 3);
+         ast_print(ast->child->next, indent + 3);
+         break;
+      case T_MUL:
+         printf("mul\n");
+         ast_print(ast->child, indent + 3);
+         ast_print(ast->child->next, indent + 3);
+         break;
+      case T_DIV:
+         printf("div\n");
+         ast_print(ast->child, indent + 3);
+         ast_print(ast->child->next, indent + 3);
+         break;
+      case T_REM:
+         printf("rem\n");
+         ast_print(ast->child, indent + 3);
+         ast_print(ast->child->next, indent + 3);
+         break;
+      case T_IDENT:
+         printf("%s\n", ast->sym->name);
+         break;
+      default:
+         exception("invalid AST tag\n");
+   }
 }

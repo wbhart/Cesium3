@@ -36,12 +36,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef enum
 {
-   T_NONE, T_LIST, T_INT, T_ADD, T_SUB, T_MUL, T_DIV, T_REM, T_IDENT
+   T_NONE, T_INT, T_ADD, T_SUB, T_MUL, T_DIV, T_REM, T_IDENT
 } tag_t;
 
 typedef struct ast_t
 {
-   tag_t typ;
+   tag_t tag;
    struct ast_t * child;
    struct ast_t * next;
    sym_t * sym;
@@ -53,11 +53,13 @@ ast_t * new_ast();
 
 void ast_init();
 
-ast_t * ast1(tag_t typ, ast_t * a1);
+void ast_print(ast_t * ast, int indent);
 
-ast_t * ast2(tag_t typ, ast_t * a1, ast_t * a2);
+ast_t * ast1(tag_t tag, ast_t * a1);
 
-ast_t * ast_symbol(tag_t typ, sym_t * sym);
+ast_t * ast2(tag_t tag, ast_t * a1, ast_t * a2);
+
+ast_t * ast_symbol(tag_t tag, sym_t * sym);
 
 #ifdef __cplusplus
 }

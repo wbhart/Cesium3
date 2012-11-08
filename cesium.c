@@ -33,6 +33,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "parser.c"
 
+#define DEBUG 1 /* print various bits of debug information */
+
 extern jmp_buf exc;
 
 int main(void)
@@ -64,12 +66,15 @@ int main(void)
             abort();
          } else if (root)
          {
+#if DEBUG
+            printf("\n");
+            ast_print(root, 0);
+#endif
             root = NULL;
          }
       } else if (jval == 1)
       {
          root = NULL;
-         while (getc(stdin) != '\n') ;
       } else /* jval == 2 */
          break;
       
