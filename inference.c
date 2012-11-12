@@ -53,7 +53,7 @@ void inference1(ast_t * a)
             break;
          }
       }
-      if (i == t1->arity) 
+      if (i == t1->arity) /* didn't find an op with that prototype */
       {
          printf("Operator %s(", a->sym->name), type_print(a->child->type),
             printf(", "), type_print(a->child->next->type);

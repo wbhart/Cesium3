@@ -360,6 +360,11 @@ YY_ACTION(void) yy_1_Expression(GREG *G, char *yytext, int yyleng, yythunk *thun
 #undef s
 #undef r
 }
+YY_ACTION(void) yy_1_Statement(GREG *G, char *yytext, int yyleng, yythunk *thunk, YY_XTYPE YY_XVAR)
+{
+  yyprintf((stderr, "do yy_1_Statement\n"));
+   yy = NULL; ;
+}
 YY_ACTION(void) yy_2_start(GREG *G, char *yytext, int yyleng, yythunk *thunk, YY_XTYPE YY_XVAR)
 {
 #define r G->val[-1]
@@ -581,7 +586,7 @@ YY_RULE(int) yy_Statement(GREG *G)
   int yypos0= G->pos, yythunkpos0= G->thunkpos;
   yyprintf((stderr, "%s\n", "Statement"));
   {  int yypos45= G->pos, yythunkpos45= G->thunkpos;  if (!yy_Spacing(G)) { goto l46; }  if (!yy_Expression(G)) { goto l46; }  if (!yy_EOL(G)) { goto l46; }  goto l45;
-  l46:;	  G->pos= yypos45; G->thunkpos= yythunkpos45;  if (!yy_Spacing(G)) { goto l44; }  if (!yy_EOL(G)) { goto l44; }
+  l46:;	  G->pos= yypos45; G->thunkpos= yythunkpos45;  if (!yy_Spacing(G)) { goto l44; }  if (!yy_EOL(G)) { goto l44; }  yyDo(G, yy_1_Statement, yytextpos?yytextpos:G->begin, G->end);
   }
   l45:;	
   yyprintf((stderr, "  ok   %s @ %s\n", "Statement", G->buf+G->pos));

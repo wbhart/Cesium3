@@ -64,10 +64,7 @@ typedef struct jit_t
     LLVMExecutionEngineRef engine;  
     LLVMPassManagerRef pass;
     LLVMModuleRef module;
-    LLVMValueRef fmt_str;
 } jit_t;
-
-void llvm_functions(jit_t * jit);
 
 jit_t * llvm_init(void);
 
@@ -75,14 +72,12 @@ void llvm_reset(jit_t * jit);
 
 void llvm_cleanup(jit_t * jit);
 
-void print_obj(jit_t * jit, type_t * type, LLVMValueRef obj);
-
 int exec_ast(jit_t * jit, ast_t * ast);
 
 void exec_root(jit_t * jit, ast_t * ast);
 
 /* Set things up so we can begin jit'ing */
-#define START_EXEC \
+#define START_EXEC(ret_type) \
    LLVMBuilderRef __builder_save; \
    LLVMValueRef __function_save; \
    do { \
@@ -90,7 +85,7 @@ void exec_root(jit_t * jit, ast_t * ast);
    jit->builder = LLVMCreateBuilder(); \
    __function_save = jit->function; \
    LLVMTypeRef __args[] = { }; \
-   LLVMTypeRef __retval = LLVMVoidType(); \
+   LLVMTypeRef __retval = ret_type; \
    LLVMTypeRef __fn_type = LLVMFunctionType(__retval, __args, 0, 0); \
    jit->function = LLVMAddFunction(jit->module, "exec", __fn_type); \
    LLVMBasicBlockRef __entry = LLVMAppendBasicBlock(jit->function, "entry"); \
@@ -98,14 +93,13 @@ void exec_root(jit_t * jit, ast_t * ast);
    } while (0)
    
 /* Run the jit'd code */
-#define END_EXEC \
+#define END_EXEC(gen_val) \
    do { \
-   LLVMBuildRetVoid(jit->builder); \
    LLVMRunFunctionPassManager(jit->pass, jit->function); \
    if (TRACE) \
       LLVMDumpModule(jit->module); \
    LLVMGenericValueRef __exec_args[] = {}; \
-   LLVMRunFunction(jit->engine, jit->function, 0, __exec_args); \
+   gen_val = LLVMRunFunction(jit->engine, jit->function, 0, __exec_args); \
    LLVMDeleteFunction(jit->function); \
    LLVMDisposeBuilder(jit->builder); \
    jit->function = __function_save; \
