@@ -1,7 +1,7 @@
 INC=-I/home/wbhart/llvm/include -I/home/wbhart/gc/include
 LIB=-L/home/wbhart/llvm/lib -L/home/wbhart/gc/lib
-OBJS=backend.o inference.o environment.o types.o symbol.o input.o ast.o exception.o parser.o
-HEADERS=ast.h exception.h input.h symbol.h types.h environment.h inference.h backend.h
+OBJS=backend.o inference.o environment.o types.o symbol.o ast.o exception.o parser.o
+HEADERS=ast.h exception.h symbol.h types.h environment.h inference.h backend.h
 CS_FLAGS=-O2 -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 
 cesium: cesium.c $(HEADERS) $(OBJS)
@@ -15,9 +15,6 @@ exception.o: exception.c $(HEADERS)
 
 parser.o: parser.c $(HEADERS)
 	gcc $(CS_FLAGS) -c parser.c -o parser.o $(INC)
-
-input.o: input.c $(HEADERS)
-	gcc $(CS_FLAGS) -c input.c -o input.o $(INC)
 
 symbol.o: symbol.c $(HEADERS)
 	gcc $(CS_FLAGS) -c symbol.c -o symbol.o $(INC)
