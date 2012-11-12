@@ -116,15 +116,26 @@ LLVMTypeRef type_to_llvm(type_t * type)
 }
 
 /*
+   Create a return struct for return from jit'ing an AST node
+*/
+ret_t * ret(int closed, LLVMValueRef val)
+{
+   ret_t * ret = GC_MALLOC(sizeof(ret_t));
+   ret->closed = closed;
+   ret->val = val;
+   return ret;
+}
+
+/*
    Jit an int literal
 */
-int exec_int(jit_t * jit, ast_t * ast)
+ret_t * exec_int(jit_t * jit, ast_t * ast)
 {
     long num = atol(ast->sym->name);
     
-    ast->val = LLVMConstInt(LLVMWordType(), num, 0);
+    LLVMValueRef val = LLVMConstInt(LLVMWordType(), num, 0);
 
-    return 0;
+    return ret(0, val);
 }
 
 /*
@@ -137,39 +148,37 @@ __name(jit_t * jit, ast_t * ast)                        \
     ast_t * expr1 = ast->child;                         \
     ast_t * expr2 = expr1->next;                        \
                                                         \
-    exec_ast(jit, expr1);                               \
-    exec_ast(jit, expr2);                               \
+    ret_t * ret1 = exec_ast(jit, expr1);                \
+    ret_t * ret2 = exec_ast(jit, expr2);                \
                                                         \
-    LLVMValueRef v1 = expr1->val, v2 = expr2->val;      \
+    LLVMValueRef v1 = ret1->val, v2 = ret2->val, val;   \
                                                         \
     if (expr1->type == t_double)                        \
-       ast->val = __fop(jit->builder, v1, v2, __str);   \
+       val = __fop(jit->builder, v1, v2, __str);        \
     else                                                \
-       ast->val = __iop(jit->builder, v1, v2, __str);   \
+       val = __iop(jit->builder, v1, v2, __str);        \
                                                         \
-    ast->type = expr1->type;                            \
-                                                        \
-    return 0;                                           \
+    return ret(0, val);                                 \
 }
 
 /* 
    Jit add, sub, .... ops 
 */
-int exec_binary(exec_plus, LLVMBuildFAdd, LLVMBuildAdd, "add")
+ret_t * exec_binary(exec_plus, LLVMBuildFAdd, LLVMBuildAdd, "add")
 
-int exec_binary(exec_minus, LLVMBuildFSub, LLVMBuildSub, "sub")
+ret_t * exec_binary(exec_minus, LLVMBuildFSub, LLVMBuildSub, "sub")
 
-int exec_binary(exec_times, LLVMBuildFMul, LLVMBuildMul, "times")
+ret_t * exec_binary(exec_times, LLVMBuildFMul, LLVMBuildMul, "times")
 
-int exec_binary(exec_div, LLVMBuildFDiv, LLVMBuildSDiv, "div")
+ret_t * exec_binary(exec_div, LLVMBuildFDiv, LLVMBuildSDiv, "div")
 
-int exec_binary(exec_mod, LLVMBuildFRem, LLVMBuildSRem, "mod")
+ret_t * exec_binary(exec_mod, LLVMBuildFRem, LLVMBuildSRem, "mod")
 
 /* 
    Dispatch to various binary operations 
 */
 
-int exec_binop(jit_t * jit, ast_t * ast)
+ret_t * exec_binop(jit_t * jit, ast_t * ast)
 {
     if (ast->sym == sym_lookup("+"))
         return exec_plus(jit, ast);
@@ -191,7 +200,7 @@ int exec_binop(jit_t * jit, ast_t * ast)
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
 */
-int exec_ast(jit_t * jit, ast_t * ast)
+ret_t * exec_ast(jit_t * jit, ast_t * ast)
 {
     switch (ast->tag)
     {
@@ -199,20 +208,18 @@ int exec_ast(jit_t * jit, ast_t * ast)
         return exec_int(jit, ast);
     case T_BINOP:
         return exec_binop(jit, ast);
-    default:
-        return 0;
     }
 }
 
 /* 
-   Jit the return from the exec function 
+   Jit a return
 */
-void exec_return(jit_t * jit, ast_t * ast)
+void exec_return(jit_t * jit, ast_t * ast, LLVMValueRef val)
 {
    if (ast->type == t_nil)
       LLVMBuildRetVoid(jit->builder);
    else
-      LLVMBuildRet(jit->builder, ast->val);
+      LLVMBuildRet(jit->builder, val);
 }
 
 /*
@@ -232,15 +239,16 @@ void print_gen(type_t * type, LLVMGenericValueRef gen_val)
 void exec_root(jit_t * jit, ast_t * ast)
 {
     LLVMGenericValueRef gen_val;
-    
+    ret_t * ret;
+
     /* Traverse the ast jit'ing everything, then run the jit'd code */
     START_EXEC(type_to_llvm(ast->type));
          
     /* jit the ast */
-    exec_ast(jit, ast);
+    ret = exec_ast(jit, ast);
 
     /* jit the return statement for the exec function */
-    exec_return(jit, ast);
+    exec_return(jit, ast, ret->val);
     
     /* get the generic return value from exec */
     END_EXEC(gen_val);

@@ -53,7 +53,6 @@ typedef struct ast_t
    struct ast_t * next;
    type_t * type;
    sym_t * sym;
-   LLVMValueRef val;
 } ast_t;
 
 extern ast_t * root;

@@ -66,13 +66,19 @@ typedef struct jit_t
     LLVMModuleRef module;
 } jit_t;
 
+typedef struct ret_t
+{
+    int closed;
+    LLVMValueRef val;
+} ret_t;
+
 jit_t * llvm_init(void);
 
 void llvm_reset(jit_t * jit);
 
 void llvm_cleanup(jit_t * jit);
 
-int exec_ast(jit_t * jit, ast_t * ast);
+ret_t * exec_ast(jit_t * jit, ast_t * ast);
 
 void exec_root(jit_t * jit, ast_t * ast);
 
