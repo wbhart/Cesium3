@@ -91,7 +91,9 @@ void ast_print(ast_t * ast, int indent, int types)
          printf("none\n");
          break;
       case T_INT:
-         printf("int(%s)\n", ast->sym->name);
+         printf("%s", ast->sym->name);
+         if (types) printf(" ("), type_print(ast->type), printf(")");
+         printf("\n");
          break;
       case T_BINOP:
          printf("%s", ast->sym->name);
