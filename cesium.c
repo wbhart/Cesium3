@@ -34,7 +34,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "parser.c"
 
-#define DEBUG 1 /* print various bits of debug information */
+#define DEBUG1 0 /* print ast */
+#define DEBUG2 1 /* print ast after inference1 */
 
 extern jmp_buf exc;
 
@@ -67,11 +68,15 @@ int main(void)
             abort();
          } else if (root)
          {
-#if DEBUG
+#if DEBUG1
             printf("\n");
-            ast_print(root, 0);
+            ast_print(root, 0, 0);
 #endif
             inference1(root);
+#if DEBUG2
+            printf("\n");
+            ast_print(root, 0, 1);
+#endif
             root = NULL;
          }
       } else if (jval == 1)

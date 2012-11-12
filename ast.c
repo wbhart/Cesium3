@@ -77,7 +77,7 @@ ast_t * ast_symbol(tag_t tag, sym_t * sym)
    ast->sym = sym;
 }
 
-void ast_print(ast_t * ast, int indent)
+void ast_print(ast_t * ast, int indent, int types)
 {
    int i;
    
@@ -94,9 +94,11 @@ void ast_print(ast_t * ast, int indent)
          printf("int(%s)\n", ast->sym->name);
          break;
       case T_BINOP:
-         printf("%s\n", ast->sym->name);
-         ast_print(ast->child, indent + 3);
-         ast_print(ast->child->next, indent + 3);
+         printf("%s", ast->sym->name);
+         if (types) printf(" ("), type_print(ast->type), printf(")");
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent + 3, types);
          break;
       case T_IDENT:
          printf("%s\n", ast->sym->name);

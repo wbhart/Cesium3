@@ -55,7 +55,7 @@ ast_t * new_ast();
 
 void ast_init();
 
-void ast_print(ast_t * ast, int indent);
+void ast_print(ast_t * ast, int indent, int types);
 
 ast_t * ast1(tag_t tag, ast_t * a1);
 

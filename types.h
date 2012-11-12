@@ -27,6 +27,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdio.h>
 #include "symbol.h"
+#include "exception.h"
 #include "gc.h"
 
 #ifndef TYPES_H
@@ -80,6 +81,8 @@ type_t * array_type(type_t * el_type);
 type_t * fn_to_lambda_type(type_t * type);
 
 type_t * new_typevar(void);
+
+void type_print(type_t * type);
 
 #ifdef __cplusplus
 }

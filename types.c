@@ -143,3 +143,15 @@ type_t * new_typevar(void)
     t->arity = typevarnum++;
     return t;
 }
+
+void type_print(type_t * type)
+{
+   switch (type->typ)
+   {
+   case INT:
+      printf("int");
+      break;
+   default:
+      exception("Unknown type in type_print\n");
+   }
+}
