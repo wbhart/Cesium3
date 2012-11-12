@@ -55,7 +55,7 @@ void inference1(ast_t * a)
       }
       if (i == t1->arity) 
       {
-         printf("Operator %s("), type_print(a->child->type),
+         printf("Operator %s(", a->sym->name), type_print(a->child->type),
             printf(", "), type_print(a->child->next->type);
          exception(") not found in inference1\n");
       }

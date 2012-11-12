@@ -28,6 +28,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "symbol.h"
 #include "types.h"
 
+#include <llvm-c/Core.h>  
+#include <llvm-c/Analysis.h>  
+#include <llvm-c/ExecutionEngine.h>  
+#include <llvm-c/Target.h>  
+#include <llvm-c/Transforms/Scalar.h> 
+
 #ifndef AST_H
 #define AST_H
 
@@ -47,6 +53,7 @@ typedef struct ast_t
    struct ast_t * next;
    type_t * type;
    sym_t * sym;
+   LLVMValueRef val;
 } ast_t;
 
 extern ast_t * root;

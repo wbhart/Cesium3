@@ -43,6 +43,7 @@ int main(void)
 {
    ast_t * a;
    int jval;
+   jit_t * jit;
 
    GC_INIT();
    GREG g;
@@ -52,6 +53,7 @@ int main(void)
    types_init();
    scope_init();
    intrinsics_init();
+   jit = llvm_init();
 
    yyinit(&g);
 
@@ -77,10 +79,12 @@ int main(void)
             printf("\n");
             ast_print(root, 0, 1);
 #endif
+            exec_root(jit, root);
             root = NULL;
          }
       } else if (jval == 1)
       {
+         llvm_reset(jit);
          root = NULL;
       } else /* jval == 2 */
          break;
@@ -88,6 +92,7 @@ int main(void)
       printf("\n> ");
    }
 
+   llvm_cleanup(jit);
    yydeinit(&g);
     
    printf("\n");
