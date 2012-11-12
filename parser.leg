@@ -31,11 +31,11 @@ start         = Spacing r:Statement { root = r; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
 Statement     = Spacing Expression EOL
                  | Spacing EOL
-Expression    = r:Infix10 ( ( Plus s:Infix10 { r = ast2(T_ADD, r, s); } )
-               | ( Minus s:Infix10 { r = ast2(T_SUB, r, s); } ) )* { $$ = r; }
-Infix10       = r:Primary ( ( Times s:Primary { r = ast2(T_MUL, r, s); } )
-               | ( Div s:Primary { r = ast2(T_DIV, r, s); } ) 
-               | ( Mod s:Primary { r = ast2(T_REM, r, s); } ) )* { $$ = r; }
+Expression    = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r, s); } )
+               | ( Minus s:Infix10 { r = ast_binop(sym_lookup("-"), r, s); } ) )* { $$ = r; }
+Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
+               | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
+               | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
 Primary       = Integer
                  | ( LParen Expression RParen )
                 

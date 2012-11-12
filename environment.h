@@ -56,6 +56,8 @@ void intrinsics_init(void);
 
 bind_t * bind_generic(sym_t * sym, type_t * type);
 
+bind_t * find_symbol(sym_t * sym);
+
 #ifdef __cplusplus
 }
 #endif

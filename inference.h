@@ -24,69 +24,23 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdio.h>
 #include "gc.h"
 #include "ast.h"
 #include "types.h"
 #include "environment.h"
-#include "inference.h"
-#include "backend.h"
 
-#include "parser.c"
+#ifndef INFERENCE_H
+#define INFERENCE_H
 
-#define DEBUG 1 /* print various bits of debug information */
-
-extern jmp_buf exc;
-
-int main(void)
-{
-   ast_t * a;
-   int jval;
-
-   GC_INIT();
-   GREG g;
- 
-   ast_init();
-   sym_tab_init();
-   types_init();
-   scope_init();
-   intrinsics_init();
-
-   yyinit(&g);
-
-   printf("Welcome to Cesium v0.3\n\n");
-   printf("> ");
-
-   while (1)
-   {
-      if (!(jval = setjmp(exc)))
-      {
-         if (!yyparse(&g))
-         {
-            printf("Error parsing\n");
-            abort();
-         } else if (root)
-         {
-#if DEBUG
-            printf("\n");
-            ast_print(root, 0);
+#ifdef __cplusplus
+ extern "C" {
 #endif
-            inference1(root);
-            root = NULL;
-         }
-      } else if (jval == 1)
-      {
-         root = NULL;
-      } else /* jval == 2 */
-         break;
-      
-      printf("\n> ");
-   }
 
-   yydeinit(&g);
-    
-   printf("\n");
+void inference1(ast_t * a);
 
-   return 0;
-
+#ifdef __cplusplus
 }
+#endif
+
+#endif
+

@@ -26,6 +26,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "gc.h"
 #include "symbol.h"
+#include "types.h"
 
 #ifndef AST_H
 #define AST_H
@@ -36,7 +37,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef enum
 {
-   T_NONE, T_INT, T_ADD, T_SUB, T_MUL, T_DIV, T_REM, T_IDENT
+   T_NONE, T_INT, T_BINOP, T_IDENT
 } tag_t;
 
 typedef struct ast_t
@@ -44,6 +45,7 @@ typedef struct ast_t
    tag_t tag;
    struct ast_t * child;
    struct ast_t * next;
+   type_t * type;
    sym_t * sym;
 } ast_t;
 
@@ -58,6 +60,8 @@ void ast_print(ast_t * ast, int indent);
 ast_t * ast1(tag_t tag, ast_t * a1);
 
 ast_t * ast2(tag_t tag, ast_t * a1, ast_t * a2);
+
+ast_t * ast_binop(sym_t * sym, ast_t * a1, ast_t * a2);
 
 ast_t * ast_symbol(tag_t tag, sym_t * sym);
 

@@ -311,7 +311,7 @@ YY_ACTION(void) yy_3_Infix10(GREG *G, char *yytext, int yyleng, yythunk *thunk, 
 #define s G->val[-1]
 #define r G->val[-2]
   yyprintf((stderr, "do yy_3_Infix10\n"));
-   r = ast2(T_REM, r, s); ;
+   r = ast_binop(sym_lookup("%"), r, s); ;
 #undef s
 #undef r
 }
@@ -320,7 +320,7 @@ YY_ACTION(void) yy_2_Infix10(GREG *G, char *yytext, int yyleng, yythunk *thunk, 
 #define s G->val[-1]
 #define r G->val[-2]
   yyprintf((stderr, "do yy_2_Infix10\n"));
-   r = ast2(T_DIV, r, s); ;
+   r = ast_binop(sym_lookup("/"), r, s); ;
 #undef s
 #undef r
 }
@@ -329,7 +329,7 @@ YY_ACTION(void) yy_1_Infix10(GREG *G, char *yytext, int yyleng, yythunk *thunk, 
 #define s G->val[-1]
 #define r G->val[-2]
   yyprintf((stderr, "do yy_1_Infix10\n"));
-   r = ast2(T_MUL, r, s); ;
+   r = ast_binop(sym_lookup("*"), r, s); ;
 #undef s
 #undef r
 }
@@ -347,7 +347,7 @@ YY_ACTION(void) yy_2_Expression(GREG *G, char *yytext, int yyleng, yythunk *thun
 #define s G->val[-1]
 #define r G->val[-2]
   yyprintf((stderr, "do yy_2_Expression\n"));
-   r = ast2(T_SUB, r, s); ;
+   r = ast_binop(sym_lookup("-"), r, s); ;
 #undef s
 #undef r
 }
@@ -356,7 +356,7 @@ YY_ACTION(void) yy_1_Expression(GREG *G, char *yytext, int yyleng, yythunk *thun
 #define s G->val[-1]
 #define r G->val[-2]
   yyprintf((stderr, "do yy_1_Expression\n"));
-   r = ast2(T_ADD, r, s); ;
+   r = ast_binop(sym_lookup("+"), r, s); ;
 #undef s
 #undef r
 }

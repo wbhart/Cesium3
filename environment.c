@@ -64,3 +64,25 @@ bind_t * bind_generic(sym_t * sym, type_t * type)
    current_scope->scope = b;
    return b;
 }
+
+bind_t * find_symbol(sym_t * sym)
+{
+   env_t * s = current_scope;
+   bind_t * b;
+
+   while (s != NULL)
+   {
+      b = s->scope;
+ 
+      while (b != NULL)
+      {
+         if (b->sym == sym)
+            return b;
+         b = b->next;
+      }
+      
+      s = s->next;
+   }
+
+   return NULL;
+}

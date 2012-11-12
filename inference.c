@@ -24,69 +24,37 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <stdio.h>
-#include "gc.h"
-#include "ast.h"
-#include "types.h"
-#include "environment.h"
 #include "inference.h"
-#include "backend.h"
 
-#include "parser.c"
-
-#define DEBUG 1 /* print various bits of debug information */
-
-extern jmp_buf exc;
-
-int main(void)
+void inference1(ast_t * a)
 {
-   ast_t * a;
-   int jval;
+   bind_t * bind;
+   type_t * t1, * t2;
+   type_t ** args;
+   int i, j;
 
-   GC_INIT();
-   GREG g;
- 
-   ast_init();
-   sym_tab_init();
-   types_init();
-   scope_init();
-   intrinsics_init();
-
-   yyinit(&g);
-
-   printf("Welcome to Cesium v0.3\n\n");
-   printf("> ");
-
-   while (1)
+   switch (a->tag)
    {
-      if (!(jval = setjmp(exc)))
+   case T_INT:
+      a->type = t_int;
+      break;
+   case T_BINOP:
+      inference1(a->child);
+      inference1(a->child->next);
+      bind = find_symbol(a->sym);
+      t1 = bind->type;
+      for (i = 0; i < t1->arity; i++)
       {
-         if (!yyparse(&g))
+         t2 = t1->args[i];
+         if (t2->args[0] == a->child->type
+          && t2->args[1] == a->child->next->type)
          {
-            printf("Error parsing\n");
-            abort();
-         } else if (root)
-         {
-#if DEBUG
-            printf("\n");
-            ast_print(root, 0);
-#endif
-            inference1(root);
-            root = NULL;
+            a->type = t2->ret;
+            break;
          }
-      } else if (jval == 1)
-      {
-         root = NULL;
-      } else /* jval == 2 */
-         break;
-      
-      printf("\n> ");
+      }
+      break;
+   default:
+      exception("Unknown AST tag in inference1\n");
    }
-
-   yydeinit(&g);
-    
-   printf("\n");
-
-   return 0;
-
 }

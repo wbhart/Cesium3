@@ -60,6 +60,16 @@ ast_t * ast2(tag_t tag, ast_t * a1, ast_t * a2)
    return ast;
 }
 
+ast_t * ast_binop(sym_t * sym, ast_t * a1, ast_t * a2)
+{
+   ast_t * ast = new_ast();
+   ast->tag = T_BINOP;
+   ast->child = a1;
+   ast->child->next = a2;
+   ast->sym = sym;
+   return ast;
+}
+
 ast_t * ast_symbol(tag_t tag, sym_t * sym)
 {
    ast_t * ast = new_ast();
@@ -83,28 +93,8 @@ void ast_print(ast_t * ast, int indent)
       case T_INT:
          printf("int(%s)\n", ast->sym->name);
          break;
-      case T_ADD:
-         printf("add\n");
-         ast_print(ast->child, indent + 3);
-         ast_print(ast->child->next, indent + 3);
-         break;
-      case T_SUB:
-         printf("sub\n");
-         ast_print(ast->child, indent + 3);
-         ast_print(ast->child->next, indent + 3);
-         break;
-      case T_MUL:
-         printf("mul\n");
-         ast_print(ast->child, indent + 3);
-         ast_print(ast->child->next, indent + 3);
-         break;
-      case T_DIV:
-         printf("div\n");
-         ast_print(ast->child, indent + 3);
-         ast_print(ast->child->next, indent + 3);
-         break;
-      case T_REM:
-         printf("rem\n");
+      case T_BINOP:
+         printf("%s\n", ast->sym->name);
          ast_print(ast->child, indent + 3);
          ast_print(ast->child->next, indent + 3);
          break;
