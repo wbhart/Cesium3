@@ -28,8 +28,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 jmp_buf exc;
 
-void exception(char * err)
+void exception(const char * err)
 {
+   fflush(stdout);
    fprintf(stderr, "%s\n", err);
    
    longjmp(exc, 1);

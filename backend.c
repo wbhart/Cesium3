@@ -105,14 +105,28 @@ void llvm_cleanup(jit_t * jit)
 }
 
 /* 
+   Raise an exception but clean up jit first 
+*/
+void jit_exception(jit_t * jit, const char * msg)
+{
+   llvm_reset(jit);
+   
+   exception(msg);
+}
+
+/* 
    Convert a type_t to an LLVMTypeRef 
 */
-LLVMTypeRef type_to_llvm(type_t * type)
+LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
 {
    if (type == t_nil)
       return LLVMVoidType();
    else if (type == t_int)
       return LLVMWordType();
+   else if (type == t_bool)
+      return LLVMInt1Type();
+   else
+      jit_exception(jit, "Unknown type in type_to_llvm\n");
 }
 
 /*
@@ -174,6 +188,46 @@ ret_t * exec_binary(exec_div, LLVMBuildFDiv, LLVMBuildSDiv, "div")
 
 ret_t * exec_binary(exec_mod, LLVMBuildFRem, LLVMBuildSRem, "mod")
 
+/*
+   We have a number of binary rels we want to jit and they
+   all look the same, so define macros for them.
+*/
+
+#define exec_binary_rel(__name, __fop, __frel, __iop, __irel, __str)  \
+__name(jit_t * jit, ast_t * ast)                                      \
+{                                                                     \
+    ast_t * expr1 = ast->child;                                       \
+    ast_t * expr2 = expr1->next;                                      \
+                                                                      \
+    ret_t * ret1 = exec_ast(jit, expr1);                              \
+    ret_t * ret2 = exec_ast(jit, expr2);                              \
+                                                                      \
+    LLVMValueRef v1 = ret1->val, v2 = ret2->val, val;                 \
+                                                                      \
+    if (expr1->type == t_double)                                      \
+       val = __fop(jit->builder, __frel, v1, v2, __str);              \
+    else                                                              \
+       val = __iop(jit->builder, __irel, v1, v2, __str);              \
+                                                                      \
+    return ret(0, val);                                               \
+}
+
+/* 
+   Jit eq, neq, lt, gt, .... rels 
+*/
+
+ret_t * exec_binary_rel(exec_le, LLVMBuildFCmp, LLVMRealOLE, LLVMBuildICmp, LLVMIntSLE, "le")
+
+ret_t * exec_binary_rel(exec_ge, LLVMBuildFCmp, LLVMRealOGE, LLVMBuildICmp, LLVMIntSGE, "ge")
+
+ret_t * exec_binary_rel(exec_lt, LLVMBuildFCmp, LLVMRealOLT, LLVMBuildICmp, LLVMIntSLT, "lt")
+
+ret_t * exec_binary_rel(exec_gt, LLVMBuildFCmp, LLVMRealOGT, LLVMBuildICmp, LLVMIntSGT, "gt")
+
+ret_t * exec_binary_rel(exec_eq, LLVMBuildFCmp, LLVMRealOEQ, LLVMBuildICmp, LLVMIntEQ, "eq")
+
+ret_t * exec_binary_rel(exec_ne, LLVMBuildFCmp, LLVMRealONE, LLVMBuildICmp, LLVMIntNE, "ne")
+
 /* 
    Dispatch to various binary operations 
 */
@@ -194,6 +248,26 @@ ret_t * exec_binop(jit_t * jit, ast_t * ast)
 
     if (ast->sym == sym_lookup("%"))
         return exec_mod(jit, ast);
+
+    if (ast->sym == sym_lookup("=="))
+        return exec_eq(jit, ast);
+
+    if (ast->sym == sym_lookup("!="))
+        return exec_ne(jit, ast);
+
+    if (ast->sym == sym_lookup("<="))
+        return exec_le(jit, ast);
+
+    if (ast->sym == sym_lookup(">="))
+        return exec_ge(jit, ast);
+
+    if (ast->sym == sym_lookup("<"))
+        return exec_lt(jit, ast);
+
+    if (ast->sym == sym_lookup(">"))
+        return exec_gt(jit, ast);
+
+    jit_exception(jit, "Unknown symbol in binop\n");
 }
 
 /*
@@ -208,6 +282,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_int(jit, ast);
     case T_BINOP:
         return exec_binop(jit, ast);
+    default:
+        jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }
 }
 
@@ -227,10 +303,20 @@ void exec_return(jit_t * jit, ast_t * ast, LLVMValueRef val)
 */
 void print_gen(type_t * type, LLVMGenericValueRef gen_val)
 {
+   int res;
+   
    if (type == t_nil)
       printf("None\n");
    else if (type == t_int)
       printf("%ld\n", (long) LLVMGenericValueToInt(gen_val, 1));
+   else if (type == t_bool)
+   {
+      if (LLVMGenericValueToInt(gen_val, 0))
+         printf("true\n");
+      else
+         printf("false\n");
+   } else
+      exception("Unknown type in print_gen\n");
 }
 
 /* 
@@ -242,7 +328,7 @@ void exec_root(jit_t * jit, ast_t * ast)
     ret_t * ret;
 
     /* Traverse the ast jit'ing everything, then run the jit'd code */
-    START_EXEC(type_to_llvm(ast->type));
+    START_EXEC(type_to_llvm(jit, ast->type));
          
     /* jit the ast */
     ret = exec_ast(jit, ast);

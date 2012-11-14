@@ -26,6 +26,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 #include <stdio.h>
+
 #include "symbol.h"
 #include "exception.h"
 #include "gc.h"

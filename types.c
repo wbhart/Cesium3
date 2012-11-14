@@ -151,6 +151,9 @@ void type_print(type_t * type)
    case INT:
       printf("int");
       break;
+   case BOOL:
+      printf("bool");
+      break;
    default:
       exception("Unknown type in type_print\n");
    }

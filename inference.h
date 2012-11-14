@@ -25,6 +25,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "gc.h"
+
 #include "ast.h"
 #include "types.h"
 #include "environment.h"

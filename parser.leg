@@ -31,7 +31,13 @@ start         = Spacing r:Statement { root = r; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
 Statement     = Spacing Expression EOL
                  | Spacing EOL { $$ = NULL; }
-Expression    = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r, s); } )
+Expression    = r:Infix40 ( ( EQ s:Infix40 { r = ast_binop(sym_lookup("=="), r, s); } )
+               | ( NE s:Infix40 { r = ast_binop(sym_lookup("!="), r, s); } ) )* { $$ = r; } 
+Infix40       = r:Infix20 ( ( LE s:Infix20 { r = ast_binop(sym_lookup("<="), r, s); } )
+               | ( GE s:Infix20 { r = ast_binop(sym_lookup(">="), r, s); } ) 
+               | ( LT s:Infix20 { r = ast_binop(sym_lookup("<"), r, s); } )
+               | ( GT s:Infix20 { r = ast_binop(sym_lookup(">"), r, s); } ) )* { $$ = r; } 
+Infix20       = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r, s); } )
                | ( Minus s:Infix10 { r = ast_binop(sym_lookup("-"), r, s); } ) )* { $$ = r; }
 Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
@@ -55,4 +61,10 @@ Minus         = '-' Sp2
 Times         = '*' Sp2
 Div           = '/' Sp2
 Mod           = '%' Sp2
+EQ            = '==' Sp2
+NE            = '!=' Sp2
+LE            = '<=' Sp2
+GE            = '>=' Sp2
+LT            = '<' Sp2
+GT            = '>' Sp2
 EOL           = '\r\n' | '\n' | '\r'

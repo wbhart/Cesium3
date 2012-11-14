@@ -24,9 +24,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "gc.h"
+
 #include "symbol.h"
 #include "types.h"
-#include "gc.h"
 
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H

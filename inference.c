@@ -26,6 +26,38 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "inference.h"
 
+int final_expression(ast_t * a)
+{
+   ast_t * s;
+   
+   switch (a->tag)
+   {
+   case T_IF_ELSE_STMT:
+      if (final_expression(a->child->next)
+       && final_expression(a->child->next->next))
+      {
+         a->tag = T_IF_ELSE_EXPR;
+         return 1;
+      } else
+         return 0;
+   case T_BLOCK:
+      s = a->child;
+      while (s->next != NULL)
+         s = s->next;
+      if (final_expression(s))
+      {
+         a->tag = T_IF_ELSE_EXPR;
+         return 1;
+      } else
+         return 0;
+   case T_INT:
+   case T_BINOP:
+      return 1;
+   default:
+      exception("Unknown AST tag in final_expression\n");
+   }
+}
+
 void inference1(ast_t * a)
 {
    bind_t * bind;

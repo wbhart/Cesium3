@@ -25,14 +25,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "gc.h"
-#include "symbol.h"
-#include "types.h"
 
 #include <llvm-c/Core.h>  
 #include <llvm-c/Analysis.h>  
 #include <llvm-c/ExecutionEngine.h>  
 #include <llvm-c/Target.h>  
 #include <llvm-c/Transforms/Scalar.h> 
+
+#include "symbol.h"
+#include "types.h"
 
 #ifndef AST_H
 #define AST_H
@@ -43,7 +44,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef enum
 {
-   T_NONE, T_INT, T_BINOP, T_IDENT
+   T_NONE, T_BOOL, T_INT, T_BINOP, T_IDENT, 
+   T_BLOCK, T_IF_ELSE_EXPR, T_IF_ELSE_STMT
 } tag_t;
 
 typedef struct ast_t

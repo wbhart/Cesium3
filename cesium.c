@@ -83,10 +83,8 @@ int main(void)
             root = NULL;
          }
       } else if (jval == 1)
-      {
-         llvm_reset(jit);
          root = NULL;
-      } else /* jval == 2 */
+      else /* jval == 2 */
          break;
       
       printf("\n> ");

@@ -29,11 +29,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <math.h>
 
+#include "gc.h"
 #include "exception.h"
 #include "environment.h"
 #include "inference.h"
 #include "ast.h"
-#include "gc.h"
 
 #include <llvm-c/Core.h>  
 #include <llvm-c/Analysis.h>  

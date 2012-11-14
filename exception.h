@@ -36,7 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern jmp_buf exc;
 
-void exception(char * err);
+void exception(const char * err);
 
 #ifdef __cplusplus
 }
