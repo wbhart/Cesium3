@@ -271,6 +271,70 @@ ret_t * exec_binop(jit_t * jit, ast_t * ast)
 }
 
 /*
+   Jit a block of statements
+*/
+ret_t * exec_block(jit_t * jit, ast_t * ast)
+{
+    ast_t * c = ast->child;
+    ret_t * c_ret;
+    
+    while (c != NULL)
+    {
+        c_ret = exec_ast(jit, c);
+                    
+        c = c->next;
+    }
+
+    return c_ret;
+}
+
+/*
+   Jit an if..else expression
+*/
+ret_t * exec_if_else_expr(jit_t * jit, ast_t * ast)
+{
+    ast_t * exp = ast->child;
+    ast_t * con = exp->next;
+    ast_t * alt = con->next;
+    
+    ret_t * exp_ret, * con_ret, * alt_ret;
+    LLVMValueRef val;
+
+    LLVMBasicBlockRef i = LLVMAppendBasicBlock(jit->function, "if");
+    LLVMBasicBlockRef b1 = LLVMAppendBasicBlock(jit->function, "ifbody");
+    LLVMBasicBlockRef b2 = LLVMAppendBasicBlock(jit->function, "elsebody");
+    LLVMBasicBlockRef e = LLVMAppendBasicBlock(jit->function, "ifend");
+
+    LLVMBuildBr(jit->builder, i);
+    LLVMPositionBuilderAtEnd(jit->builder, i);  
+    
+    exp_ret = exec_ast(jit, exp); /* expression */
+
+    LLVMValueRef tmp = LLVMBuildAlloca(jit->builder, type_to_llvm(jit, ast->type), "ifexpr");
+    
+    LLVMBuildCondBr(jit->builder, exp_ret->val, b1, b2);
+    LLVMPositionBuilderAtEnd(jit->builder, b1); 
+   
+    con_ret = exec_ast(jit, con); /* stmt1 */
+    LLVMBuildStore(jit->builder, con_ret->val, tmp);
+
+    LLVMBuildBr(jit->builder, e);
+
+    LLVMPositionBuilderAtEnd(jit->builder, b2);  
+
+    alt_ret = exec_ast(jit, alt); /* stmt2 */
+    LLVMBuildStore(jit->builder, alt_ret->val, tmp);
+
+    LLVMBuildBr(jit->builder, e);
+
+    LLVMPositionBuilderAtEnd(jit->builder, e); 
+    
+    val = LLVMBuildLoad(jit->builder, tmp, "if_else_tmp");
+      
+    return ret(0, val);
+}
+
+/*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
 */
@@ -282,6 +346,12 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_int(jit, ast);
     case T_BINOP:
         return exec_binop(jit, ast);
+    case T_IF_ELSE_EXPR:
+        return exec_if_else_expr(jit, ast);
+    case T_BLOCK:
+    case T_THEN:
+    case T_ELSE:
+        return exec_block(jit, ast);
     default:
         jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }

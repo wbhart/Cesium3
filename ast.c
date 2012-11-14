@@ -56,7 +56,17 @@ ast_t * ast2(tag_t tag, ast_t * a1, ast_t * a2)
    ast_t * ast = new_ast();
    ast->tag = tag;
    ast->child = a1;
-   ast->child->next = a2;
+   a1->next = a2;
+   return ast;
+}
+
+ast_t * ast3(tag_t tag, ast_t * a1, ast_t * a2, ast_t * a3)
+{
+   ast_t * ast = new_ast();
+   ast->tag = tag;
+   ast->child = a1;
+   a1->next = a2;
+   a2->next = a3;
    return ast;
 }
 
@@ -80,6 +90,7 @@ ast_t * ast_symbol(tag_t tag, sym_t * sym)
 void ast_print(ast_t * ast, int indent, int types)
 {
    int i;
+   ast_t * a;
    
    for (i = 0; i < indent; i++)
       printf(" ");
@@ -105,7 +116,42 @@ void ast_print(ast_t * ast, int indent, int types)
       case T_IDENT:
          printf("%s\n", ast->sym->name);
          break;
+      case T_IF_ELSE_EXPR:
+         printf("if");
+         if (types) printf(" ("), type_print(ast->type), printf(")");
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent, types);
+         ast_print(ast->child->next->next, indent, types);
+         break;
+      case T_BLOCK:
+         printf("block\n");
+         a = ast->child;
+         while (a != NULL)
+         {
+            ast_print(a, indent + 3, types);
+            a = a->next;
+         }
+         break;
+      case T_THEN:
+         printf("then\n");
+         a = ast->child;
+         while (a != NULL)
+         {
+            ast_print(a, indent + 3, types);
+            a = a->next;
+         }
+         break;
+      case T_ELSE:
+         printf("else\n");
+         a = ast->child;
+         while (a != NULL)
+         {
+            ast_print(a, indent + 3, types);
+            a = a->next;
+         }
+         break;
       default:
-         exception("invalid AST tag\n");
+         exception("invalid AST tag in ast_print\n");
    }
 }

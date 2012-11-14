@@ -30,7 +30,13 @@ static int eat_eol = 0;
 start         = Spacing r:Statement { root = r; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
 Statement     = Spacing Expression EOL
+                 | Spacing IfElseStmt EOL
                  | Spacing EOL { $$ = NULL; }
+Block         = s:Statement b:Block { s->next = b; $$ = s; }
+               | Statement 
+               | Expression
+IfElseStmt    = If e:Expression ( EOL | Then ) b:Block Else c:Block End 
+              { $$ = ast3(T_IF_ELSE_STMT, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
 Expression    = r:Infix40 ( ( EQ s:Infix40 { r = ast_binop(sym_lookup("=="), r, s); } )
                | ( NE s:Infix40 { r = ast_binop(sym_lookup("!="), r, s); } ) )* { $$ = r; } 
 Infix40       = r:Infix20 ( ( LE s:Infix20 { r = ast_binop(sym_lookup("<="), r, s); } )
@@ -54,6 +60,10 @@ Spacing       = ( Space | Comment )*
 Sp2           = ( Space | EOL | Comment )*
 Space         = ' ' | '\t'
 Comment       = '/*' ( !'*/' . )* '*/'
+If            = Sp2 'if' Sp2
+Then          = Sp2 'then' Sp2
+Else          = Sp2 'else' Sp2
+End           = Sp2 'end' Spacing
 LParen        = '(' Spacing
 RParen        = ')' Spacing 
 Plus          = '+' Sp2

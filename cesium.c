@@ -74,6 +74,7 @@ int main(void)
             printf("\n");
             ast_print(root, 0, 0);
 #endif
+            final_expression(root);
             inference1(root);
 #if DEBUG2
             printf("\n");

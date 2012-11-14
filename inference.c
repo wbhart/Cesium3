@@ -41,15 +41,12 @@ int final_expression(ast_t * a)
       } else
          return 0;
    case T_BLOCK:
+   case T_THEN:
+   case T_ELSE:
       s = a->child;
       while (s->next != NULL)
          s = s->next;
-      if (final_expression(s))
-      {
-         a->tag = T_IF_ELSE_EXPR;
-         return 1;
-      } else
-         return 0;
+      return final_expression(s);
    case T_INT:
    case T_BINOP:
       return 1;
@@ -63,6 +60,7 @@ void inference1(ast_t * a)
    bind_t * bind;
    type_t * t1, * t2;
    type_t ** args;
+   ast_t * a1, * a2, * a3;
    int i, j;
 
    switch (a->tag)
@@ -91,6 +89,31 @@ void inference1(ast_t * a)
             printf(", "), type_print(a->child->next->type);
          exception(") not found in inference1\n");
       }
+      break;
+   case T_BLOCK:
+   case T_THEN:
+   case T_ELSE:
+      a1 = a->child;
+      while (a1->next != NULL)
+      {
+         inference1(a1);
+         a1 = a1->next;
+      }
+      inference1(a1);
+      a->type = a1->type;
+      break;
+   case T_IF_ELSE_EXPR:
+      a1 = a->child;
+      a2 = a1->next;
+      a3 = a2->next;
+      inference1(a1);
+      if (a1->type != t_bool)
+         exception("Boolean expression expected in if..else expression\n");
+      inference1(a2);
+      inference1(a3);
+      if (a2->type != a3->type)
+         exception("Types not equal in branches of if..else expression\n");
+      a->type = a2->type;
       break;
    default:
       exception("Unknown AST tag in inference1\n");

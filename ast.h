@@ -45,7 +45,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef enum
 {
    T_NONE, T_BOOL, T_INT, T_BINOP, T_IDENT, 
-   T_BLOCK, T_IF_ELSE_EXPR, T_IF_ELSE_STMT
+   T_BLOCK, T_IF_ELSE_EXPR, T_IF_ELSE_STMT,
+   T_THEN, T_ELSE
 } tag_t;
 
 typedef struct ast_t
@@ -68,6 +69,8 @@ void ast_print(ast_t * ast, int indent, int types);
 ast_t * ast1(tag_t tag, ast_t * a1);
 
 ast_t * ast2(tag_t tag, ast_t * a1, ast_t * a2);
+
+ast_t * ast3(tag_t tag, ast_t * a1, ast_t * a2, ast_t * a3);
 
 ast_t * ast_binop(sym_t * sym, ast_t * a1, ast_t * a2);
 
