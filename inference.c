@@ -115,6 +115,17 @@ void inference1(ast_t * a)
          exception("Types not equal in branches of if..else expression\n");
       a->type = a2->type;
       break;
+   case T_IF_ELSE_STMT:
+      a1 = a->child;
+      a2 = a1->next;
+      a3 = a2->next;
+      inference1(a1);
+      if (a1->type != t_bool)
+         exception("Boolean expression expected in if..else statement\n");
+      inference1(a2);
+      inference1(a3);
+      a->type = t_nil;
+      break;
    default:
       exception("Unknown AST tag in inference1\n");
    }

@@ -335,6 +335,45 @@ ret_t * exec_if_else_expr(jit_t * jit, ast_t * ast)
 }
 
 /*
+   Jit an if..else statement
+*/
+ret_t * exec_if_else_stmt(jit_t * jit, ast_t * ast)
+{
+    ast_t * exp = ast->child;
+    ast_t * con = exp->next;
+    ast_t * alt = con->next;
+    
+    ret_t * exp_ret;
+
+    LLVMBasicBlockRef i = LLVMAppendBasicBlock(jit->function, "if");
+    LLVMBasicBlockRef b1 = LLVMAppendBasicBlock(jit->function, "ifbody");
+    LLVMBasicBlockRef b2 = LLVMAppendBasicBlock(jit->function, "elsebody");
+    LLVMBasicBlockRef e = LLVMAppendBasicBlock(jit->function, "ifend");
+
+    LLVMBuildBr(jit->builder, i);
+    LLVMPositionBuilderAtEnd(jit->builder, i);  
+    
+    exp_ret = exec_ast(jit, exp); /* expression */
+
+    LLVMBuildCondBr(jit->builder, exp_ret->val, b1, b2);
+    LLVMPositionBuilderAtEnd(jit->builder, b1); 
+   
+    exec_ast(jit, con); /* stmt1 */
+    
+    LLVMBuildBr(jit->builder, e);
+
+    LLVMPositionBuilderAtEnd(jit->builder, b2);  
+
+    exec_ast(jit, alt); /* stmt2 */
+    
+    LLVMBuildBr(jit->builder, e);
+
+    LLVMPositionBuilderAtEnd(jit->builder, e); 
+      
+    return ret(0, NULL);
+}
+
+/*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
 */
@@ -348,6 +387,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_binop(jit, ast);
     case T_IF_ELSE_EXPR:
         return exec_if_else_expr(jit, ast);
+    case T_IF_ELSE_STMT:
+        return exec_if_else_stmt(jit, ast);
     case T_BLOCK:
     case T_THEN:
     case T_ELSE:

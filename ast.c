@@ -117,6 +117,7 @@ void ast_print(ast_t * ast, int indent, int types)
          printf("%s\n", ast->sym->name);
          break;
       case T_IF_ELSE_EXPR:
+      case T_IF_ELSE_STMT:
          printf("if");
          if (types) printf(" ("), type_print(ast->type), printf(")");
          printf("\n");
