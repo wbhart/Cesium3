@@ -50,3 +50,20 @@ Feature todo list:
 * Module system
 * Macros
 
+Syntax:
+-------
+
+Here is the syntax available so far....
+
+* integer literals
+* +, -, *, /, %
+* <, >, <=, >=, ==, !=
+* if expr then stmt1+ else stmt2+ end
+* if expr then stmt2+ end
+* if expr then stmt1* expr1 else stmt2* expr2 end
+(statements must be terminated with end of line)
+* ident = val
+
+MUCH more to come.
+
+William Hart 2012
