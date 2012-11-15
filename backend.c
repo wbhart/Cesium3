@@ -25,16 +25,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "backend.h"
-
-#include <stdlib.h>
-
-char * serial()
-{
-   char * u = GC_MALLOC(11);
-   int i = (int) rand();
-   sprintf(u, "%x", i);
-   return u;
-}
+#include "serial.h"
 
 /*
    Initialise the LLVM JIT
