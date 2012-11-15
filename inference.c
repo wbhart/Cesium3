@@ -47,7 +47,10 @@ int final_expression(ast_t * a)
       while (s->next != NULL)
          s = s->next;
       return final_expression(s);
+   case T_ASSIGN:
+      return 0;
    case T_INT:
+   case T_IDENT:
    case T_BINOP:
       return 1;
    default:
@@ -67,6 +70,12 @@ void inference1(ast_t * a)
    {
    case T_INT:
       a->type = t_int;
+      break;
+   case T_IDENT:
+      bind = find_symbol(a->sym);
+      if (!bind)
+         exception("Symbol not found in expression\n");
+      a->type = bind->type;
       break;
    case T_BINOP:
       inference1(a->child);
@@ -93,6 +102,8 @@ void inference1(ast_t * a)
    case T_BLOCK:
    case T_THEN:
    case T_ELSE:
+      scope_up();
+      a->env = current_scope;
       a1 = a->child;
       while (a1->next != NULL)
       {
@@ -101,6 +112,7 @@ void inference1(ast_t * a)
       }
       inference1(a1);
       a->type = a1->type;
+      scope_down();
       break;
    case T_IF_ELSE_EXPR:
       a1 = a->child;
@@ -124,6 +136,21 @@ void inference1(ast_t * a)
          exception("Boolean expression expected in if..else statement\n");
       inference1(a2);
       inference1(a3);
+      a->type = t_nil;
+      break;
+   case T_ASSIGN:
+      inference1(a->child->next);
+      bind = find_symbol(a->child->sym);
+      if (!bind) /* identifier doesn't exist */
+      {
+         a->child->type = a->child->next->type;
+         bind_symbol(a->child->sym, a->child->type, NULL);
+      } else
+      {
+         if (a->child->next->type != bind->type)
+            exception("Incompatible types in assignment\n");
+         a->child->type = bind->type;
+      }
       a->type = t_nil;
       break;
    default:

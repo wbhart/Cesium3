@@ -32,6 +32,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 
+#include <llvm-c/Core.h>  
+
 #ifdef __cplusplus
  extern "C" {
 #endif
@@ -40,6 +42,8 @@ typedef struct bind_t
 {
    type_t * type;
    sym_t * sym;
+   char * llvm;
+   LLVMValueRef llvm_val;
    struct bind_t * next;
 } bind_t;
 
@@ -57,7 +61,15 @@ void intrinsics_init(void);
 
 bind_t * bind_generic(sym_t * sym, type_t * type);
 
+bind_t * bind_symbol(sym_t * sym, type_t * type, char * llvm);
+
 bind_t * find_symbol(sym_t * sym);
+
+void scope_up(void);
+
+void scope_down(void);
+
+int scope_is_global(bind_t * bind);
 
 #ifdef __cplusplus
 }

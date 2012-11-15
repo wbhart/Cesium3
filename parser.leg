@@ -27,12 +27,14 @@ static int eat_eol = 0;
 }
 %}
 
-start         = Spacing r:Statement { root = r; }
+start         = Spacing EOL { root = NULL; }
+                 | Spacing r:Statement EOL { root = r; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
-Statement     = Spacing Expression EOL
-                 | Spacing IfElseStmt EOL
-                 | Spacing EOL { $$ = NULL; }
-Block         = s:Statement b:Block { s->next = b; $$ = s; }
+Statement     = Spacing IfElseStmt
+                 | Spacing Assignment
+                 | Spacing Expression
+Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
+Block         = s:Statement EOL b:Block { s->next = b; $$ = s; }
                | Statement 
                | Expression
 IfElseStmt    = If e:Expression ( EOL | Then ) b:Block Else c:Block End 
@@ -48,9 +50,17 @@ Infix20       = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r,
 Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
-Primary       = Integer
+Primary       = Integer | Identifier
                  | ( LParen Expression RParen )
                 
+Reserved      = If | Then | Else | End
+Identifier    = !Reserved < IdentStart IdentCont* > Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_IDENT, sym);
+              }
+IdentStart    = [a-zA-Z_]
+IdentCont     = IdentStart | [0-9]
 Integer       = < ( [1-9] [0-9]* | '0' ) > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
@@ -64,6 +74,7 @@ If            = Sp2 'if' Sp2
 Then          = Sp2 'then' Sp2
 Else          = Sp2 'else' Sp2
 End           = Sp2 'end' Spacing
+Equals        = '=' Sp2
 LParen        = '(' Spacing
 RParen        = ')' Spacing 
 Plus          = '+' Sp2

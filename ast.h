@@ -32,6 +32,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <llvm-c/Target.h>  
 #include <llvm-c/Transforms/Scalar.h> 
 
+#include "environment.h"
 #include "symbol.h"
 #include "types.h"
 
@@ -46,7 +47,7 @@ typedef enum
 {
    T_NONE, T_BOOL, T_INT, T_BINOP, T_IDENT, 
    T_BLOCK, T_IF_ELSE_EXPR, T_IF_ELSE_STMT,
-   T_THEN, T_ELSE
+   T_THEN, T_ELSE, T_ASSIGN
 } tag_t;
 
 typedef struct ast_t
@@ -56,6 +57,7 @@ typedef struct ast_t
    struct ast_t * next;
    type_t * type;
    sym_t * sym;
+   env_t * env;
 } ast_t;
 
 extern ast_t * root;

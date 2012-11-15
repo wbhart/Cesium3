@@ -114,7 +114,9 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(ast->child->next, indent + 3, types);
          break;
       case T_IDENT:
-         printf("%s\n", ast->sym->name);
+         printf("%s", ast->sym->name);
+         if (types) printf(" ("), type_print(ast->type), printf(")");
+         printf("\n");
          break;
       case T_IF_ELSE_EXPR:
       case T_IF_ELSE_STMT:
@@ -151,6 +153,13 @@ void ast_print(ast_t * ast, int indent, int types)
             ast_print(a, indent + 3, types);
             a = a->next;
          }
+         break;
+      case T_ASSIGN:
+         printf("assign");
+         if (types) printf(" ("), type_print(ast->type), printf(")");
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent + 3, types);
          break;
       default:
          exception("invalid AST tag in ast_print\n");

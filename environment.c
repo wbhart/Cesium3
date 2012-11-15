@@ -77,6 +77,18 @@ bind_t * bind_generic(sym_t * sym, type_t * type)
    return b;
 }
 
+bind_t * bind_symbol(sym_t * sym, type_t * type, char * llvm)
+{
+   bind_t * scope = current_scope->scope;
+   bind_t * b = (bind_t *) GC_MALLOC(sizeof(bind_t));
+   b->sym = sym;
+   b->type = type;
+   b->llvm = llvm;
+   b->next = scope;
+   current_scope->scope = b;
+   return b;
+}
+
 bind_t * find_symbol(sym_t * sym)
 {
    env_t * s = current_scope;
@@ -97,4 +109,32 @@ bind_t * find_symbol(sym_t * sym)
    }
 
    return NULL;
+}
+
+void scope_up(void)
+{
+   env_t * env = (env_t *) GC_MALLOC(sizeof(env_t));
+   env->next = current_scope;
+   current_scope = env;
+}
+
+void scope_down(void)
+{
+   current_scope = current_scope->next;
+}
+
+int scope_is_global(bind_t * bind)
+{
+   env_t * s = current_scope;
+   while (s->next != NULL)
+      s = s->next;
+
+   bind_t * b = s->scope;
+   while (b != NULL)
+   {
+      if (b == bind)
+         return 1;
+      b = b->next;
+   }
+   return 0;
 }

@@ -26,6 +26,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "backend.h"
 
+#include <stdlib.h>
+
+char * serial()
+{
+   char * u = GC_MALLOC(11);
+   int i = (int) rand();
+   sprintf(u, "%x", i);
+   return u;
+}
+
 /*
    Initialise the LLVM JIT
 */
@@ -278,12 +288,16 @@ ret_t * exec_block(jit_t * jit, ast_t * ast)
     ast_t * c = ast->child;
     ret_t * c_ret;
     
+    current_scope = ast->env;
+    
     while (c != NULL)
     {
         c_ret = exec_ast(jit, c);
                     
         c = c->next;
     }
+
+    scope_down();
 
     return c_ret;
 }
@@ -373,6 +387,80 @@ ret_t * exec_if_else_stmt(jit_t * jit, ast_t * ast)
     return ret(0, NULL);
 }
 
+ret_t * exec_decl(jit_t * jit, ast_t * ast)
+{
+   int len = strlen(ast->sym->name);
+   char * llvm = GC_MALLOC(len + 12);
+   LLVMValueRef val;
+   
+   strcpy(llvm, ast->sym->name);
+   strcpy(llvm + len, serial());
+   bind_t * bind = bind_symbol(ast->sym, ast->type, llvm);
+
+   LLVMTypeRef type = type_to_llvm(jit, ast->type); /* convert to llvm type */
+       
+   if (scope_is_global(bind))
+   {
+      val = LLVMAddGlobal(jit->module, type, llvm);
+      LLVMSetInitializer(val, LLVMGetUndef(type));
+   } else
+   {
+      val = LLVMBuildAlloca(jit->builder, type, llvm);
+      bind->llvm_val = val;
+   }
+
+   return ret(0, val);
+}
+
+/*
+   Jit an assignment statement
+*/
+ret_t * exec_assign(jit_t * jit, ast_t * ast)
+{
+    ast_t * id = ast->child;
+    ast_t * expr = id->next;
+    char * llvm;
+    ret_t * id_ret, * expr_ret;
+    LLVMValueRef val, var;
+
+    bind_t * bind = find_symbol(id->sym);
+    if (bind->llvm == NULL) /* symbol doesn't exist yet */
+    {
+       id_ret = exec_decl(jit, id);
+       var = id_ret->val;
+    } else
+    {
+       if (scope_is_global(bind))
+          var = LLVMGetNamedGlobal(jit->module, bind->llvm);
+       else
+          var = bind->llvm_val;
+    }
+
+    expr_ret = exec_ast(jit, expr);
+    
+    LLVMBuildStore(jit->builder, expr_ret->val, var);
+
+    return ret(0, NULL);
+}
+
+/*
+   Jit load of an identifier
+*/
+ret_t * exec_ident(jit_t * jit, ast_t * ast)
+{
+    bind_t * bind = find_symbol(ast->sym);
+    LLVMValueRef var;
+
+    if (scope_is_global(bind))
+       var = LLVMGetNamedGlobal(jit->module, bind->llvm);
+    else
+       var = bind->llvm_val;
+
+    LLVMValueRef val = LLVMBuildLoad(jit->builder, var, bind->llvm);
+    
+    return ret(0, val);
+}
+
 /*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
@@ -393,6 +481,10 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
     case T_THEN:
     case T_ELSE:
         return exec_block(jit, ast);
+    case T_ASSIGN:
+        return exec_assign(jit, ast);
+    case T_IDENT:
+        return exec_ident(jit, ast);
     default:
         jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }
