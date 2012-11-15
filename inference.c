@@ -49,6 +49,7 @@ int final_expression(ast_t * a)
       return final_expression(s);
    case T_ASSIGN:
    case T_IF_STMT:
+   case T_WHILE_STMT:
       return 0;
    case T_INT:
    case T_IDENT:
@@ -115,6 +116,7 @@ void inference1(ast_t * a)
       break;
    case T_THEN:
    case T_ELSE:
+   case T_DO:
       a1 = a->child;
       while (a1->next != NULL)
       {
@@ -154,6 +156,15 @@ void inference1(ast_t * a)
       inference1(a1);
       if (a1->type != t_bool)
          exception("Boolean expression expected in if statement\n");
+      inference1(a2);
+      a->type = t_nil;
+      break;
+   case T_WHILE_STMT:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a1);
+      if (a1->type != t_bool)
+         exception("Boolean expression expected in while statement\n");
       inference1(a2);
       a->type = t_nil;
       break;

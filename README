@@ -59,9 +59,11 @@ Here is the syntax available so far....
 * +, -, *, /, %
 * <, >, <=, >=, ==, !=
 * if expr then stmt1+ else stmt2+ end
-* if expr then stmt2+ end
+* if expr then stmt+ end
 * if expr then stmt1* expr1 else stmt2* expr2 end
+* while expr do stmt+ end
 (statements must be terminated with end of line)
+(then/do may be substituted with end of line)
 * ident = val
 
 MUCH more to come.

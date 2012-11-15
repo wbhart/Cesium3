@@ -32,16 +32,19 @@ start         = Spacing EOL { root = NULL; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
 Statement     = Spacing IfElseStmt
                  | Spacing IfStmt
+                 | Spacing WhileStmt
                  | Spacing Assignment
                  | Spacing Expression
 Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
 Block         = s:Statement EOL b:Block { s->next = b; $$ = s; }
                | Statement 
                | Expression
-IfStmt    = If e:Expression ( EOL | Then ) b:Block End 
+IfStmt        = If e:Expression ( EOL | Then ) b:Block End 
               { $$ = ast2(T_IF_STMT, e, ast1(T_THEN, b)); }
 IfElseStmt    = If e:Expression ( EOL | Then ) b:Block Else c:Block End 
               { $$ = ast3(T_IF_ELSE_STMT, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
+WhileStmt     = While e:Expression ( EOL | Do ) b:Block End
+              { $$ = ast2(T_WHILE_STMT, e, ast1(T_DO, b)); }
 Expression    = r:Infix40 ( ( EQ s:Infix40 { r = ast_binop(sym_lookup("=="), r, s); } )
                | ( NE s:Infix40 { r = ast_binop(sym_lookup("!="), r, s); } ) )* { $$ = r; } 
 Infix40       = r:Infix20 ( ( LE s:Infix20 { r = ast_binop(sym_lookup("<="), r, s); } )
@@ -56,7 +59,7 @@ Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r
 Primary       = Integer | Identifier
                  | ( LParen Expression RParen )
                 
-Reserved      = If | Then | Else | End
+Reserved      = While | Do | If | Then | Else | End
 Identifier    = !Reserved < IdentStart IdentCont* > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
@@ -73,6 +76,8 @@ Spacing       = ( Space | Comment )*
 Sp2           = ( Space | EOL | Comment )*
 Space         = ' ' | '\t'
 Comment       = '/*' ( !'*/' . )* '*/'
+While         = Sp2 'while' Sp2
+Do            = Sp2 'do' Sp2
 If            = Sp2 'if' Sp2
 Then          = Sp2 'then' Sp2
 Else          = Sp2 'else' Sp2

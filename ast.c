@@ -134,6 +134,13 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
          break;
+      case T_WHILE_STMT:
+         printf("while");
+         if (types) printf(" ("), type_print(ast->type), printf(")");
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent, types);
+         break;
       case T_BLOCK:
          printf("block\n");
          a = ast->child;
@@ -154,6 +161,15 @@ void ast_print(ast_t * ast, int indent, int types)
          break;
       case T_ELSE:
          printf("else\n");
+         a = ast->child;
+         while (a != NULL)
+         {
+            ast_print(a, indent + 3, types);
+            a = a->next;
+         }
+         break;
+      case T_DO:
+         printf("do\n");
          a = ast->child;
          while (a != NULL)
          {

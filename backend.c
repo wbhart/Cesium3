@@ -391,7 +391,7 @@ ret_t * exec_if_stmt(jit_t * jit, ast_t * ast)
     ret_t * exp_ret;
 
     LLVMBasicBlockRef i = LLVMAppendBasicBlock(jit->function, "if");
-    LLVMBasicBlockRef b1 = LLVMAppendBasicBlock(jit->function, "ifbody");
+    LLVMBasicBlockRef b = LLVMAppendBasicBlock(jit->function, "ifbody");
     LLVMBasicBlockRef e = LLVMAppendBasicBlock(jit->function, "ifend");
 
     LLVMBuildBr(jit->builder, i);
@@ -399,13 +399,45 @@ ret_t * exec_if_stmt(jit_t * jit, ast_t * ast)
     
     exp_ret = exec_ast(jit, exp); /* expression */
 
-    LLVMBuildCondBr(jit->builder, exp_ret->val, b1, e);
-    LLVMPositionBuilderAtEnd(jit->builder, b1); 
+    LLVMBuildCondBr(jit->builder, exp_ret->val, b, e);
+    LLVMPositionBuilderAtEnd(jit->builder, b); 
    
     exec_ast(jit, con); /* stmt1 */
     
     LLVMBuildBr(jit->builder, e);
 
+    LLVMPositionBuilderAtEnd(jit->builder, e); 
+      
+    return ret(0, NULL);
+}
+
+/*
+   Jit a while statement
+*/
+ret_t * exec_while_stmt(jit_t * jit, ast_t * ast)
+{
+    ast_t * exp = ast->child;
+    ast_t * con = exp->next;
+    
+    ret_t * exp_ret, * con_ret;
+
+    LLVMBasicBlockRef w = LLVMAppendBasicBlock(jit->function, "while");
+    LLVMBasicBlockRef b = LLVMAppendBasicBlock(jit->function, "whilebody");
+    LLVMBasicBlockRef e = LLVMAppendBasicBlock(jit->function, "whileend");
+
+    LLVMBuildBr(jit->builder, w);
+    LLVMPositionBuilderAtEnd(jit->builder, w);  
+    
+    exp_ret = exec_ast(jit, exp); /* expression */
+
+    LLVMBuildCondBr(jit->builder, exp_ret->val, b, e);
+    LLVMPositionBuilderAtEnd(jit->builder, b); 
+   
+    con_ret = exec_ast(jit, con); /* stmt1 */
+    
+    if (!con_ret->closed)
+        LLVMBuildBr(jit->builder, w);
+ 
     LLVMPositionBuilderAtEnd(jit->builder, e); 
       
     return ret(0, NULL);
@@ -503,9 +535,12 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_if_else_stmt(jit, ast);
     case T_IF_STMT:
         return exec_if_stmt(jit, ast);
+    case T_WHILE_STMT:
+        return exec_while_stmt(jit, ast);
     case T_BLOCK:
     case T_THEN:
     case T_ELSE:
+    case T_DO:
         return exec_block(jit, ast);
     case T_ASSIGN:
         return exec_assign(jit, ast);
