@@ -4,10 +4,14 @@ Cesium v 0.3:
 Dependencies:
 -------------
 
+* LLVM 3.1
 * Boehm-Demers-Weiser Garbage Collection
+* Greg/leg/peg parser library (dependency to be removed in future)
 
 Build:
 ------
+
+Install LLVM 3.1 and GC.
 
 Update directory paths at the top of the Makefile then type:
 
@@ -15,12 +19,12 @@ make
 
 To run, simply type:
 
-./cesium
+./cs
 
 Introduction:
 -------------
 
-Cesium is a language with the following features:
+Cesium is a language which is to have the following features:
 
 * LLVMJit backend for performance
 * Local type inference
@@ -31,15 +35,15 @@ Cesium is a language with the following features:
 * Parameterised types
 * Ad hoc and parametric polymorphism
 
-Planned features:
----------
+Feature todo list:
+------------------
 
-* Parser combinators
-* Symbol Hash table
-* Parser
-* Environments
-* Type system
-* Back end
+* Parser combinators - written but not used
+* Symbol Hash table - done
+* Parser - in progress
+* Environments - done
+* Type system - in progress
+* Back end - in progress
 * Closures
 * Type inference
 * FFI
