@@ -47,7 +47,7 @@ typedef enum
 {
    T_NONE, T_BOOL, T_INT, T_BINOP, T_IDENT, 
    T_BLOCK, T_IF_ELSE_EXPR, T_IF_ELSE_STMT,
-   T_THEN, T_ELSE, T_ASSIGN
+   T_IF_STMT, T_THEN, T_ELSE, T_ASSIGN
 } tag_t;
 
 typedef struct ast_t

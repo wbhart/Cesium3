@@ -127,6 +127,13 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(ast->child->next, indent, types);
          ast_print(ast->child->next->next, indent, types);
          break;
+      case T_IF_STMT:
+         printf("if");
+         if (types) printf(" ("), type_print(ast->type), printf(")");
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent, types);
+         break;
       case T_BLOCK:
          printf("block\n");
          a = ast->child;

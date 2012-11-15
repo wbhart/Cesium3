@@ -48,6 +48,7 @@ int final_expression(ast_t * a)
          s = s->next;
       return final_expression(s);
    case T_ASSIGN:
+   case T_IF_STMT:
       return 0;
    case T_INT:
    case T_IDENT:
@@ -145,6 +146,15 @@ void inference1(ast_t * a)
          exception("Boolean expression expected in if..else statement\n");
       inference1(a2);
       inference1(a3);
+      a->type = t_nil;
+      break;
+   case T_IF_STMT:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a1);
+      if (a1->type != t_bool)
+         exception("Boolean expression expected in if statement\n");
+      inference1(a2);
       a->type = t_nil;
       break;
    case T_ASSIGN:
