@@ -288,7 +288,8 @@ ret_t * exec_block(jit_t * jit, ast_t * ast)
     ast_t * c = ast->child;
     ret_t * c_ret;
     
-    current_scope = ast->env;
+    if (ast->tag == T_BLOCK)
+       current_scope = ast->env;
     
     while (c != NULL)
     {
@@ -297,7 +298,8 @@ ret_t * exec_block(jit_t * jit, ast_t * ast)
         c = c->next;
     }
 
-    scope_down();
+    if (ast->tag == T_BLOCK)
+       scope_down();
 
     return c_ret;
 }

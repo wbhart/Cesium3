@@ -100,8 +100,6 @@ void inference1(ast_t * a)
       }
       break;
    case T_BLOCK:
-   case T_THEN:
-   case T_ELSE:
       scope_up();
       a->env = current_scope;
       a1 = a->child;
@@ -113,6 +111,17 @@ void inference1(ast_t * a)
       inference1(a1);
       a->type = a1->type;
       scope_down();
+      break;
+   case T_THEN:
+   case T_ELSE:
+      a1 = a->child;
+      while (a1->next != NULL)
+      {
+         inference1(a1);
+         a1 = a1->next;
+      }
+      inference1(a1);
+      a->type = a1->type;
       break;
    case T_IF_ELSE_EXPR:
       a1 = a->child;
