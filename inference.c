@@ -48,6 +48,7 @@ int final_expression(ast_t * a)
          s = s->next;
       return final_expression(s);
    case T_ASSIGN:
+   case T_TUPLE_ASSIGN:
    case T_IF_STMT:
    case T_WHILE_STMT:
       return 0;
@@ -72,12 +73,62 @@ int final_expression(ast_t * a)
    }
 }
 
+void assign_inference1(ast_t * a, ast_t * b)
+{
+    int i, j;
+    bind_t * bind;
+   
+    if (a->tag == T_IDENT)
+    {
+       bind = find_symbol(a->sym);
+       if (!bind) /* identifier doesn't exist */
+       {
+          a->type = b->type;
+          bind_symbol(a->sym, a->type, NULL);
+       } else
+       {
+          if (b->type != bind->type)
+             exception("Incompatible types in assignment\n");
+          a->type = bind->type;
+       }
+    } else if (a->tag == T_TUPLE)
+    {
+       if (b->tag != T_TUPLE)
+           exception("Attempt to assign non-tuple to tuple\n");
+       ast_t * a1 = a->child;
+       ast_t * b1 = b->child;
+       i = j = 0;
+       while (a1 != NULL)
+       {
+          a1 = a1->next;
+          i++;
+       }
+       while (b1 != NULL)
+       {
+          b1 = b1->next;
+          j++;
+       }
+       if (i != j)
+          exception("Incorrect number of entries in tuple assignment\n");
+       a1 = a->child;
+       b1 = b->child;
+       while (a1 != NULL)
+       {
+          assign_inference1(a1, b1);
+          a1 = a1->next;
+          b1 = b1->next;
+       }
+       a->type = b->type;
+    } else
+       exception("Invalid L-value in assignment\n");
+}
+
 void inference1(ast_t * a)
 {
    bind_t * bind;
    type_t * t1, * t2;
    type_t ** args;
-   ast_t * a1, * a2, * a3;
+   ast_t * a1, * a2, * a3, * a4;
    int i, j;
 
    switch (a->tag)
@@ -234,18 +285,11 @@ void inference1(ast_t * a)
       a->type = t_nil;
       break;
    case T_ASSIGN:
-      inference1(a->child->next);
-      bind = find_symbol(a->child->sym);
-      if (!bind) /* identifier doesn't exist */
-      {
-         a->child->type = a->child->next->type;
-         bind_symbol(a->child->sym, a->child->type, NULL);
-      } else
-      {
-         if (a->child->next->type != bind->type)
-            exception("Incompatible types in assignment\n");
-         a->child->type = bind->type;
-      }
+   case T_TUPLE_ASSIGN:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a2);
+      assign_inference1(a1, a2);
       a->type = t_nil;
       break;
    default:

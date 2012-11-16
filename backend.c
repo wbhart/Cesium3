@@ -632,10 +632,8 @@ ret_t * exec_decl(jit_t * jit, ast_t * ast)
 /*
    Jit an assignment statement
 */
-ret_t * exec_assign(jit_t * jit, ast_t * ast)
+ret_t * exec_assign(jit_t * jit, ast_t * id, ast_t * expr)
 {
-    ast_t * id = ast->child;
-    ast_t * expr = id->next;
     char * llvm;
     ret_t * id_ret, * expr_ret;
     LLVMValueRef val, var;
@@ -656,6 +654,28 @@ ret_t * exec_assign(jit_t * jit, ast_t * ast)
     expr_ret = exec_ast(jit, expr);
     
     LLVMBuildStore(jit->builder, expr_ret->val, var);
+
+    return ret(0, NULL);
+}
+
+/*
+   Jit a tuple assignment statement
+*/
+ret_t * exec_tuple_assign(jit_t * jit, ast_t * id, ast_t * expr)
+{
+    ast_t * a1 = id->child;
+    ast_t * a2 = expr->child;
+    
+    while (a1 != NULL)
+    {
+       if (a1->tag == T_IDENT)
+          exec_assign(jit, a1, a2);
+       else
+          exec_tuple_assign(jit, a1, a2);
+
+       a1 = a1->next;
+       a2 = a2->next;
+    }
 
     return ret(0, NULL);
 }
@@ -763,7 +783,9 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
     case T_DO:
         return exec_block(jit, ast);
     case T_ASSIGN:
-        return exec_assign(jit, ast);
+        return exec_assign(jit, ast->child, ast->child->next);
+    case T_TUPLE_ASSIGN:
+        return exec_tuple_assign(jit, ast->child, ast->child->next);
     case T_IDENT:
         return exec_ident(jit, ast);
     default:

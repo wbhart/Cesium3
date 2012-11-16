@@ -194,6 +194,7 @@ void ast_print(ast_t * ast, int indent, int types)
          }
          break;
       case T_ASSIGN:
+      case T_TUPLE_ASSIGN:
          printf("assign");
          if (types) printf(" :: "), type_print(ast->type);
          printf("\n");

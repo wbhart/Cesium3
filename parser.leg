@@ -34,8 +34,10 @@ Statement     = Spacing IfElseStmt
                  | Spacing IfStmt
                  | Spacing WhileStmt
                  | Spacing Assignment
+                 | Spacing TupleAssign
                  | Spacing Expression
 Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
+TupleAssign   = i:Tuple Equals e:Tuple { $$ = ast2(T_TUPLE_ASSIGN, i, e); }
 Block         = s:Statement EOL b:Block { s->next = b; $$ = s; }
                | Statement 
                | Expression

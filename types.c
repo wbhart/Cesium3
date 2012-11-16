@@ -43,6 +43,8 @@ type_t * t_float;
 type_t * t_string;
 type_t * t_char;
 
+type_node_t * tuple_type_list;
+
 type_t * new_type(typ_t typ)
 {
    type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
@@ -68,6 +70,8 @@ void types_init(void)
    t_float = new_type(FLOAT);
    t_string = new_type(STRING);
    t_char = new_type(CHAR);
+
+   tuple_type_list = NULL;
 }
 
 type_t * fn_type(type_t * ret, int arity, type_t ** args)
@@ -112,6 +116,26 @@ type_t * tuple_type(int arity, type_t ** args)
 
    for (i = 0; i < arity; i++)
       t->args[i] = args[i];
+
+   type_node_t * s = tuple_type_list;
+
+   while (s != NULL)
+   {
+      if (s->type->arity == arity)
+      {
+         for (i = 0; i < arity; i++)
+            if (s->type->args[i] != t->args[i]) break;
+         
+         if (i == arity)
+            return s->type;
+      }
+      s = s->next;
+   }
+
+   s = GC_MALLOC(sizeof(type_node_t));
+   s->type = t;
+   s->next = tuple_type_list;
+   tuple_type_list = s;
 
    return t;
 }

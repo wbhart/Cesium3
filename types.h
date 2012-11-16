@@ -59,6 +59,12 @@ typedef struct type_t
    int intrinsic; /* intrinsic function/operator? */
 } type_t;
 
+typedef struct type_node_t
+{
+   type_t * type;
+   struct type_node_t * next;
+} type_node_t;
+
 extern type_t * t_nil;
 extern type_t * t_int;
 extern type_t * t_int8;
