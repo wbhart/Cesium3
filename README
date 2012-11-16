@@ -55,7 +55,7 @@ Syntax:
 
 Here is the syntax available so far....
 
-* integer, double literals
+* int/8/16/32/64, uint/8/16/32/64, float, double literals
 * +, -, *, /, %
 * <, >, <=, >=, ==, !=
 * if expr then stmt1+ else stmt2+ end
