@@ -55,7 +55,7 @@ void intrinsics_init(void)
    bind_generic(sym_lookup("-"), generic_type(12, fns));
    bind_generic(sym_lookup("*"), generic_type(12, fns));
    bind_generic(sym_lookup("/"), generic_type(12, fns));
-   bind_generic(sym_lookup("%"), generic_type(11, fns));
+   bind_generic(sym_lookup("%"), generic_type(12, fns));
 
    for (i = 0; i < 12; i++)
    {
