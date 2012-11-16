@@ -231,23 +231,23 @@ ret_t * exec_float(jit_t * jit, ast_t * ast)
    We have a number of binary ops we want to jit and they
    all look the same, so define macros for them.
 */
-#define exec_binary(__name, __fop, __iop, __str)        \
-__name(jit_t * jit, ast_t * ast)                        \
-{                                                       \
-    ast_t * expr1 = ast->child;                         \
-    ast_t * expr2 = expr1->next;                        \
-                                                        \
-    ret_t * ret1 = exec_ast(jit, expr1);                \
-    ret_t * ret2 = exec_ast(jit, expr2);                \
-                                                        \
-    LLVMValueRef v1 = ret1->val, v2 = ret2->val, val;   \
-                                                        \
-    if (expr1->type == t_double)                        \
-       val = __fop(jit->builder, v1, v2, __str);        \
-    else                                                \
-       val = __iop(jit->builder, v1, v2, __str);        \
-                                                        \
-    return ret(0, val);                                 \
+#define exec_binary(__name, __fop, __iop, __str)           \
+__name(jit_t * jit, ast_t * ast)                           \
+{                                                          \
+    ast_t * expr1 = ast->child;                            \
+    ast_t * expr2 = expr1->next;                           \
+                                                           \
+    ret_t * ret1 = exec_ast(jit, expr1);                   \
+    ret_t * ret2 = exec_ast(jit, expr2);                   \
+                                                           \
+    LLVMValueRef v1 = ret1->val, v2 = ret2->val, val;      \
+                                                           \
+    if (expr1->type == t_double || expr1->type == t_float) \
+       val = __fop(jit->builder, v1, v2, __str);           \
+    else                                                   \
+       val = __iop(jit->builder, v1, v2, __str);           \
+                                                           \
+    return ret(0, val);                                    \
 }
 
 /* 
@@ -279,7 +279,7 @@ __name(jit_t * jit, ast_t * ast)                                      \
                                                                       \
     LLVMValueRef v1 = ret1->val, v2 = ret2->val, val;                 \
                                                                       \
-    if (expr1->type == t_double)                                      \
+    if (expr1->type == t_double || expr1->type == t_float)            \
        val = __fop(jit->builder, __frel, v1, v2, __str);              \
     else                                                              \
        val = __iop(jit->builder, __irel, v1, v2, __str);              \
