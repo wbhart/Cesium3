@@ -86,8 +86,10 @@ jit_t * llvm_init(void)
 */
 void llvm_reset(jit_t * jit)
 {
-    LLVMDeleteFunction(jit->function);
-    LLVMDisposeBuilder(jit->builder);
+    if (jit->function)
+       LLVMDeleteFunction(jit->function);
+    if (jit->builder)
+       LLVMDisposeBuilder(jit->builder);
     jit->function = NULL;
     jit->builder = NULL;
 }
@@ -122,10 +124,20 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
 {
    if (type == t_nil)
       return LLVMVoidType();
-   else if (type == t_int)
+   else if (type == t_int || type == t_uint)
       return LLVMWordType();
+   else if (type == t_int8 || type == t_uint8)
+      return LLVMInt8Type();
+   else if (type == t_int16 || type == t_uint16)
+      return LLVMInt16Type();
+   else if (type == t_int32 || type == t_uint32)
+      return LLVMInt32Type();
+   else if (type == t_int64 || type == t_uint64)
+      return LLVMInt64Type();
    else if (type == t_double)
       return LLVMDoubleType();
+   else if (type == t_float)
+      return LLVMFloatType();
    else if (type == t_bool)
       return LLVMInt1Type();
    else
@@ -144,11 +156,47 @@ ret_t * ret(int closed, LLVMValueRef val)
 }
 
 /*
+   Jit an int literal of the given number of bits
+*/
+ret_t * exec_intN(jit_t * jit, ast_t * ast, unsigned bits)
+{
+    long num = atol(ast->sym->name);
+    
+    LLVMValueRef val = LLVMConstInt(LLVMIntType(bits), num, 1);
+
+    return ret(0, val);
+}
+
+/*
    Jit an int literal
 */
 ret_t * exec_int(jit_t * jit, ast_t * ast)
 {
     long num = atol(ast->sym->name);
+    
+    LLVMValueRef val = LLVMConstInt(LLVMWordType(), num, 1);
+
+    return ret(0, val);
+}
+
+/*
+   Jit a uint literal of the given number of bits
+*/
+ret_t * exec_uintN(jit_t * jit, ast_t * ast, unsigned bits)
+{
+    unsigned long num = atol(ast->sym->name);
+    
+    LLVMValueRef val = LLVMConstInt(LLVMIntType(bits), num, 0);
+
+    return ret(0, val);
+}
+
+/*
+   Jit a uint literal
+*/
+ret_t * exec_uint(jit_t * jit, ast_t * ast)
+{
+    unsigned long num = atol(ast->sym->name);
     
     LLVMValueRef val = LLVMConstInt(LLVMWordType(), num, 0);
 
@@ -163,6 +211,18 @@ ret_t * exec_double(jit_t * jit, ast_t * ast)
     double num = atof(ast->sym->name);
     
     LLVMValueRef val = LLVMConstReal(LLVMDoubleType(), num);
+
+    return ret(0, val);
+}
+
+/*
+   Jit a float literal
+*/
+ret_t * exec_float(jit_t * jit, ast_t * ast)
+{
+    double num = atof(ast->sym->name);
+    
+    LLVMValueRef val = LLVMConstReal(LLVMFloatType(), num);
 
     return ret(0, val);
 }
@@ -541,8 +601,28 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
     {
     case T_INT:
         return exec_int(jit, ast);
+    case T_INT8:
+        return exec_intN(jit, ast, 8);
+    case T_INT16:
+        return exec_intN(jit, ast, 16);
+    case T_INT32:
+        return exec_intN(jit, ast, 32);
+    case T_INT64:
+        return exec_intN(jit, ast, 64);
+    case T_UINT:
+        return exec_uint(jit, ast);
+    case T_UINT8:
+        return exec_uintN(jit, ast, 8);
+    case T_UINT16:
+        return exec_uintN(jit, ast, 16);
+    case T_UINT32:
+        return exec_uintN(jit, ast, 32);
+    case T_UINT64:
+        return exec_uintN(jit, ast, 64);
     case T_DOUBLE:
         return exec_double(jit, ast);
+    case T_FLOAT:
+        return exec_float(jit, ast);
     case T_BINOP:
         return exec_binop(jit, ast);
     case T_IF_ELSE_EXPR:
@@ -587,10 +667,16 @@ void print_gen(type_t * type, LLVMGenericValueRef gen_val)
    
    if (type == t_nil)
       printf("None\n");
-   else if (type == t_int)
+   else if (type == t_int || type == t_int8 || type == t_int16
+       || type == t_int32 || type == t_int64)
       printf("%ld\n", (long) LLVMGenericValueToInt(gen_val, 1));
+   else if (type == t_uint || type == t_uint8 || type == t_uint16
+       || type == t_uint32 || type == t_uint64)
+      printf("%lu\n", (unsigned long) LLVMGenericValueToInt(gen_val, 1));
    else if (type == t_double)
       printf("%lf\n", (double) LLVMGenericValueToFloat(LLVMDoubleType(), gen_val));
+   else if (type == t_float)
+      printf("%f\n", (float) LLVMGenericValueToFloat(LLVMFloatType(), gen_val));
    else if (type == t_bool)
    {
       if (LLVMGenericValueToInt(gen_val, 0))

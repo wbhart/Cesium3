@@ -28,8 +28,18 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 type_t * t_nil;
 type_t * t_int;
+type_t * t_int8;
+type_t * t_int16;
+type_t * t_int32;
+type_t * t_int64;
+type_t * t_uint;
+type_t * t_uint8;
+type_t * t_uint16;
+type_t * t_uint32;
+type_t * t_uint64;
 type_t * t_bool;
 type_t * t_double;
+type_t * t_float;
 type_t * t_string;
 type_t * t_char;
 
@@ -44,8 +54,18 @@ void types_init(void)
 {
    t_nil = new_type(NIL);
    t_int = new_type(INT);
+   t_int8 = new_type(INT8);
+   t_int16 = new_type(INT16);
+   t_int32 = new_type(INT32);
+   t_int64 = new_type(INT64);
+   t_uint = new_type(UINT);
+   t_uint8 = new_type(UINT8);
+   t_uint16 = new_type(UINT16);
+   t_uint32 = new_type(UINT32);
+   t_uint64 = new_type(UINT64);
    t_bool = new_type(BOOL);
    t_double = new_type(DOUBLE);
+   t_float = new_type(FLOAT);
    t_string = new_type(STRING);
    t_char = new_type(CHAR);
 }
@@ -151,8 +171,38 @@ void type_print(type_t * type)
    case INT:
       printf("int");
       break;
+   case INT8:
+      printf("int8");
+      break;
+   case INT16:
+      printf("int16");
+      break;
+   case INT32:
+      printf("int32");
+      break;
+   case INT64:
+      printf("int64");
+      break;
+   case UINT:
+      printf("uint");
+      break;
+   case UINT8:
+      printf("uint8");
+      break;
+   case UINT16:
+      printf("uint16");
+      break;
+   case UINT32:
+      printf("uint32");
+      break;
+   case UINT64:
+      printf("uint64");
+      break;
    case DOUBLE:
       printf("double");
+      break;
+   case FLOAT:
+      printf("float");
       break;
    case BOOL:
       printf("bool");

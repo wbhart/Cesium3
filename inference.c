@@ -52,7 +52,17 @@ int final_expression(ast_t * a)
    case T_WHILE_STMT:
       return 0;
    case T_INT:
+   case T_INT8:
+   case T_INT16:
+   case T_INT32:
+   case T_INT64:
+   case T_UINT:
+   case T_UINT8:
+   case T_UINT16:
+   case T_UINT32:
+   case T_UINT64:
    case T_DOUBLE:
+   case T_FLOAT:
    case T_IDENT:
    case T_BINOP:
       return 1;
@@ -74,8 +84,38 @@ void inference1(ast_t * a)
    case T_INT:
       a->type = t_int;
       break;
+   case T_INT8:
+      a->type = t_int8;
+      break;
+   case T_INT16:
+      a->type = t_int16;
+      break;
+   case T_INT32:
+      a->type = t_int32;
+      break;
+   case T_INT64:
+      a->type = t_int64;
+      break;
+   case T_UINT:
+      a->type = t_uint;
+      break;
+   case T_UINT8:
+      a->type = t_uint8;
+      break;
+   case T_UINT16:
+      a->type = t_uint16;
+      break;
+   case T_UINT32:
+      a->type = t_uint32;
+      break;
+   case T_UINT64:
+      a->type = t_uint64;
+      break;
    case T_DOUBLE:
       a->type = t_double;
+      break;
+   case T_FLOAT:
+      a->type = t_float;
       break;
    case T_IDENT:
       bind = find_symbol(a->sym);

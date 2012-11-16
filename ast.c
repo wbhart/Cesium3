@@ -102,11 +102,17 @@ void ast_print(ast_t * ast, int indent, int types)
          printf("none\n");
          break;
       case T_INT:
-         printf("%s", ast->sym->name);
-         if (types) printf(" ("), type_print(ast->type), printf(")");
-         printf("\n");
-         break;
+      case T_INT8:
+      case T_INT16:
+      case T_INT32:
+      case T_INT64:
+      case T_UINT:
+      case T_UINT8:
+      case T_UINT16:
+      case T_UINT32:
+      case T_UINT64:
       case T_DOUBLE:
+      case T_FLOAT:
          printf("%s", ast->sym->name);
          if (types) printf(" ("), type_print(ast->type), printf(")");
          printf("\n");

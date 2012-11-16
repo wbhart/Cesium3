@@ -56,7 +56,8 @@ Infix20       = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r,
 Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
-Primary       = Double | Integer | Identifier
+Primary       = Float | Double | Int8 | UInt8 | Int16 | UInt16 
+                 | Int32 | UInt32 | Int64 | UInt64 | UInt | Int | Identifier
                  | ( LParen Expression RParen )
                 
 Reserved      = While | Do | If | Then | Else | End
@@ -72,11 +73,62 @@ Double        = < ( [1-9] [0-9]* | '0' ) '.' [0-9]*
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_DOUBLE, sym);
-              }
-Integer       = < ( [1-9] [0-9]* | '0' ) > Spacing
+              } 
+Float        = < ( [1-9] [0-9]* | '0' ) '.' [0-9]* 
+                ( ( 'e' | 'E' ) ( '+' | '-' )? ( [1-9] [0-9]* | '0' ) )? > 'f' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_FLOAT, sym);
+              } 
+Int           = < ( [1-9] [0-9]* | '0' ) > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_INT, sym);
+              }
+Int8          = < ( [1-9] [0-9]* | '0' ) > 'i8' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_INT8, sym);
+              }
+Int16         = < ( [1-9] [0-9]* | '0' ) > 'i16' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_INT16, sym);
+              }
+Int32       = < ( [1-9] [0-9]* | '0' ) > 'i32' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_INT32, sym);
+              }
+Int64       = < ( [1-9] [0-9]* | '0' ) > 'i64' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_INT64, sym);
+              }
+UInt           = < ( [1-9] [0-9]* | '0' ) > 'u' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_UINT, sym);
+              }
+UInt8          = < ( [1-9] [0-9]* | '0' ) > 'u8' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_UINT8, sym);
+              }
+UInt16         = < ( [1-9] [0-9]* | '0' ) > 'u16' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_UINT16, sym);
+              }
+UInt32       = < ( [1-9] [0-9]* | '0' ) > 'u32' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_UINT32, sym);
+              }
+UInt64       = < ( [1-9] [0-9]* | '0' ) > 'u64' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_UINT64, sym);
               }
 Spacing       = ( Space | Comment )*
 Sp2           = ( Space | EOL | Comment )*

@@ -40,7 +40,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef enum
 {
-   NIL, BOOL, INT, DOUBLE, STRING, CHAR, 
+   NIL, BOOL, INT, INT8, INT16, INT32, INT64, 
+   UINT, UINT8, UINT16, UINT32, UINT64, 
+   DOUBLE, FLOAT, STRING, CHAR, 
    FN, LAMBDA, GENERIC, ARRAY, TUPLE, DATATYPE, TYPEVAR
 } typ_t;
 
@@ -59,8 +61,18 @@ typedef struct type_t
 
 extern type_t * t_nil;
 extern type_t * t_int;
+extern type_t * t_int8;
+extern type_t * t_int16;
+extern type_t * t_int32;
+extern type_t * t_int64;
+extern type_t * t_uint;
+extern type_t * t_uint8;
+extern type_t * t_uint16;
+extern type_t * t_uint32;
+extern type_t * t_uint64;
 extern type_t * t_bool;
 extern type_t * t_double;
+extern type_t * t_float;
 extern type_t * t_string;
 extern type_t * t_char;
 
