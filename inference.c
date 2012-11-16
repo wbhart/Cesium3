@@ -65,6 +65,7 @@ int final_expression(ast_t * a)
    case T_FLOAT:
    case T_IDENT:
    case T_BINOP:
+   case T_TUPLE:
       return 1;
    default:
       exception("Unknown AST tag in final_expression\n");
@@ -122,6 +123,26 @@ void inference1(ast_t * a)
       if (!bind)
          exception("Symbol not found in expression\n");
       a->type = bind->type;
+      break;
+   case T_TUPLE:
+      a1 = a->child;
+      i = 0;
+      while (a1 != NULL)
+      {
+         inference1(a1);
+         a1 = a1->next;
+         i++;
+      }
+      args = GC_MALLOC(i*sizeof(type_t *));
+      i = 0;
+      a1 = a->child;
+      while (a1 != NULL)
+      {
+         args[i] = a1->type;
+         a1 = a1->next;
+         i++;
+      }
+      a->type = tuple_type(i, args);
       break;
    case T_BINOP:
       inference1(a->child);

@@ -166,6 +166,8 @@ type_t * new_typevar(void)
 
 void type_print(type_t * type)
 {
+   int i;
+   
    switch (type->typ)
    {
    case INT:
@@ -206,6 +208,12 @@ void type_print(type_t * type)
       break;
    case BOOL:
       printf("bool");
+      break;
+   case TUPLE:
+      printf("(");
+      for (i = 0; i < type->arity - 1; i++)
+         type_print(type->args[i]), printf(", ");
+      type_print(type->args[i]), printf(")");
       break;
    case NIL:
       printf("nil");

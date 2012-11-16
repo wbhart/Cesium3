@@ -25,7 +25,47 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "backend.h"
-#include "serial.h"
+
+#define CS_MALLOC "GC_malloc"
+#define CS_MALLOC_ATOMIC "GC_malloc_atomic"
+
+/* 
+   Tell LLVM about some external library functions so we can call them 
+   and about some constants we want to use from jit'd code
+*/
+void llvm_functions(jit_t * jit)
+{
+   LLVMTypeRef args[2];
+   LLVMTypeRef fntype; 
+   LLVMTypeRef ret;
+   LLVMValueRef fn;
+
+   /* patch in the printf function */
+   args[0] = LLVMPointerType(LLVMInt8Type(), 0);
+   ret = LLVMWordType();
+   fntype = LLVMFunctionType(ret, args, 1, 1);
+   fn = LLVMAddFunction(jit->module, "printf", fntype);
+
+   /* patch in the exit function */
+   args[0] = LLVMWordType();
+   ret = LLVMVoidType();
+   fntype = LLVMFunctionType(ret, args, 1, 0);
+   fn = LLVMAddFunction(jit->module, "exit", fntype);
+
+   /* patch in the GC_malloc function */
+   args[0] = LLVMWordType();
+   ret = LLVMPointerType(LLVMInt8Type(), 0);
+   fntype = LLVMFunctionType(ret, args, 1, 0);
+   fn = LLVMAddFunction(jit->module, CS_MALLOC, fntype);
+   LLVMAddFunctionAttr(fn, LLVMNoAliasAttribute);
+
+   /* patch in the GC_malloc_atomic function */
+   args[0] = LLVMWordType();
+   ret = LLVMPointerType(LLVMInt8Type(), 0);
+   fntype = LLVMFunctionType(ret, args, 1, 0);
+   fn = LLVMAddFunction(jit->module, CS_MALLOC_ATOMIC, fntype);
+   LLVMAddFunctionAttr(fn, LLVMNoAliasAttribute);
+}
 
 /*
    Initialise the LLVM JIT
@@ -76,7 +116,10 @@ jit_t * llvm_init(void)
     LLVMAddPromoteMemoryToRegisterPass(jit->pass);  
     LLVMAddGVNPass(jit->pass);  
     LLVMAddCFGSimplificationPass(jit->pass);
-    
+
+    /* patch in some external functions */
+    llvm_functions(jit);
+
     return jit;
 }
 
@@ -117,6 +160,48 @@ void jit_exception(jit_t * jit, const char * msg)
    exception(msg);
 }
 
+/*
+   Return 1 if type is atomic (i.e. contains no pointers)
+*/
+int is_atomic(type_t * type)
+{
+   typ_t t = type->typ;
+   return (t != ARRAY && t != TUPLE && t != DATATYPE 
+        && t != FN && t != LAMBDA);
+}
+
+/* 
+   Jit a call to GC_malloc
+*/
+LLVMValueRef LLVMBuildGCMalloc(jit_t * jit, LLVMTypeRef type, const char * name, int atomic)
+{
+    LLVMValueRef fn;
+    if (atomic)
+        fn = LLVMGetNamedFunction(jit->module, CS_MALLOC_ATOMIC);
+    else
+        fn = LLVMGetNamedFunction(jit->module, CS_MALLOC);
+    LLVMValueRef arg[1] = { LLVMSizeOf(type) };
+    LLVMValueRef gcmalloc = LLVMBuildCall(jit->builder, fn, arg, 1, "malloc");
+    return LLVMBuildPointerCast(jit->builder, gcmalloc, LLVMPointerType(type, 0), name);
+}
+
+/* 
+   Build llvm struct type from ordinary tuple type
+*/
+LLVMTypeRef tuple_to_llvm(jit_t * jit, type_t * type)
+{
+    int params = type->arity;
+    int i;
+
+    /* get parameter types */
+    LLVMTypeRef * args = (LLVMTypeRef *) GC_MALLOC(params*sizeof(LLVMTypeRef));
+    for (i = 0; i < params; i++)
+        args[i] = type_to_llvm(jit, type->args[i]); 
+
+    /* make LLVM struct type */
+    return LLVMStructType(args, params, 1);
+}
+
 /* 
    Convert a type_t to an LLVMTypeRef 
 */
@@ -140,6 +225,8 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
       return LLVMFloatType();
    else if (type == t_bool)
       return LLVMInt1Type();
+   else if (type->typ == TUPLE)
+      return LLVMPointerType(tuple_to_llvm(jit, type), 0);
    else
       jit_exception(jit, "Unknown type in type_to_llvm\n");
 }
@@ -592,6 +679,41 @@ ret_t * exec_ident(jit_t * jit, ast_t * ast)
 }
 
 /*
+   Jit a tuple expression
+*/
+ret_t * exec_tuple(jit_t * jit, ast_t * ast)
+{
+    int params = ast->type->arity;
+    int i;
+    int atomic = 1;
+    ret_t * p_ret;
+    LLVMValueRef val;
+
+    LLVMTypeRef tup_tref = tuple_to_llvm(jit, ast->type);
+
+    /* determine whether fields are atomic */
+    for (i = 0; i < params; i++)
+        atomic &= is_atomic(ast->type->args[i]);
+
+    val = LLVMBuildGCMalloc(jit, tup_tref, "tuple", atomic);
+
+    ast_t * p = ast->child;
+    for (i = 0; i < params; i++)
+    {
+        p_ret = exec_ast(jit, p);
+        
+         /* insert value into tuple */
+        LLVMValueRef indices[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
+        LLVMValueRef entry = LLVMBuildInBoundsGEP(jit->builder, val, indices, 2, "tuple");
+        LLVMBuildStore(jit->builder, p_ret->val, entry);
+    
+        p = p->next;
+    }
+
+    return ret(0, val);
+}
+
+/*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
 */
@@ -623,6 +745,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_double(jit, ast);
     case T_FLOAT:
         return exec_float(jit, ast);
+    case T_TUPLE:
+        return exec_tuple(jit, ast);
     case T_BINOP:
         return exec_binop(jit, ast);
     case T_IF_ELSE_EXPR:
@@ -659,30 +783,74 @@ void exec_return(jit_t * jit, ast_t * ast, LLVMValueRef val)
 }
 
 /*
+   Print the given entry of a struct
+*/
+void print_struct_entry(jit_t * jit, type_t * type, int i, LLVMGenericValueRef val)
+{
+   type_t * t = type->args[i];
+   LLVMTypeRef lt = type_to_llvm(jit, t);
+   LLVMTypeRef ltype = type_to_llvm(jit, type);
+   LLVMGenericValueRef gen_val;
+   
+   LLVMBuilderRef builder = LLVMCreateBuilder();
+   LLVMTypeRef args[1] = { ltype };
+   LLVMTypeRef fn_type = LLVMFunctionType(lt, args, 1, 0);
+   LLVMValueRef function = LLVMAddFunction(jit->module, "exec2", fn_type);
+   LLVMBasicBlockRef entry = LLVMAppendBasicBlock(function, "entry");
+   LLVMPositionBuilderAtEnd(builder, entry);
+   
+   LLVMValueRef obj = LLVMGetParam(function, 0);
+   LLVMValueRef index[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
+   LLVMValueRef p = LLVMBuildInBoundsGEP(builder, obj, index, 2, "tuple");
+   LLVMValueRef res = LLVMBuildLoad(builder, p, "entry");
+    
+   if (t == t_nil)
+      LLVMBuildRetVoid(builder);
+   else
+      LLVMBuildRet(builder, res);
+
+   LLVMRunFunctionPassManager(jit->pass, function);
+   LLVMGenericValueRef exec_args[1] = { val };
+   gen_val = LLVMRunFunction(jit->engine, function, 1, exec_args);
+   
+   LLVMDeleteFunction(function);
+   LLVMDisposeBuilder(builder);
+
+   print_gen(jit, t, gen_val);
+}
+
+/*
    Print the generic return value from exec
 */
-void print_gen(type_t * type, LLVMGenericValueRef gen_val)
+void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
 {
-   int res;
+   int i, res;
    
    if (type == t_nil)
-      printf("None\n");
+      printf("None");
    else if (type == t_int || type == t_int8 || type == t_int16
        || type == t_int32 || type == t_int64)
-      printf("%ld\n", (long) LLVMGenericValueToInt(gen_val, 1));
+      printf("%ld", (long) LLVMGenericValueToInt(gen_val, 1));
    else if (type == t_uint || type == t_uint8 || type == t_uint16
        || type == t_uint32 || type == t_uint64)
-      printf("%lu\n", (unsigned long) LLVMGenericValueToInt(gen_val, 1));
+      printf("%lu", (unsigned long) LLVMGenericValueToInt(gen_val, 1));
    else if (type == t_double)
-      printf("%lf\n", (double) LLVMGenericValueToFloat(LLVMDoubleType(), gen_val));
+      printf("%lf", (double) LLVMGenericValueToFloat(LLVMDoubleType(), gen_val));
    else if (type == t_float)
-      printf("%f\n", (float) LLVMGenericValueToFloat(LLVMFloatType(), gen_val));
+      printf("%f", (float) LLVMGenericValueToFloat(LLVMFloatType(), gen_val));
    else if (type == t_bool)
    {
       if (LLVMGenericValueToInt(gen_val, 0))
-         printf("true\n");
+         printf("true");
       else
-         printf("false\n");
+         printf("false");
+   } else if (type->typ == TUPLE)
+   {
+      printf("(");
+      for (i = 0; i < type->arity - 1; i++)
+          print_struct_entry(jit, type, i, gen_val), printf(", ");
+      print_struct_entry(jit, type, i, gen_val);
+      printf(")");
    } else
       exception("Unknown type in print_gen\n");
 }
@@ -708,6 +876,6 @@ void exec_root(jit_t * jit, ast_t * ast)
     END_EXEC(gen_val);
 
     /* print the resulting value */
-    print_gen(ast->type, gen_val);
+    print_gen(jit, ast->type, gen_val), printf("\n");
 }
 

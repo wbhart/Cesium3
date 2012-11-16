@@ -50,7 +50,8 @@ typedef enum
    T_UINT32, T_UINT64, T_DOUBLE, T_FLOAT, 
    T_BINOP, T_IDENT, T_BLOCK, T_IF_ELSE_EXPR, 
    T_IF_ELSE_STMT, T_IF_STMT, T_THEN, T_ELSE, 
-   T_ASSIGN, T_WHILE_STMT, T_DO
+   T_ASSIGN, T_WHILE_STMT, T_DO,
+   T_TUPLE
 } tag_t;
 
 typedef struct ast_t

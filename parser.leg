@@ -58,9 +58,12 @@ Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
 Primary       = Float | Double | Int8 | UInt8 | Int16 | UInt16 
                  | Int32 | UInt32 | Int64 | UInt64 | UInt | Int | Identifier
-                 | ( LParen Expression RParen )
+                 | ( LParen Expression RParen ) | Tuple
                 
 Reserved      = While | Do | If | Then | Else | End
+Tuple         = LParen r:TupleBody RParen { $$ = ast1(T_TUPLE, r); }
+TupleBody     = r:Expression Comma s:TupleBody { r->next = s; $$ = r; }
+                 | Expression
 Identifier    = !Reserved < IdentStart IdentCont* > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
@@ -134,6 +137,7 @@ Spacing       = ( Space | Comment )*
 Sp2           = ( Space | EOL | Comment )*
 Space         = ' ' | '\t'
 Comment       = '/*' ( !'*/' . )* '*/'
+Comma         = Spacing ',' Sp2
 While         = Sp2 'while' Sp2
 Do            = Sp2 'do' Sp2
 If            = Sp2 'if' Sp2

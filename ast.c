@@ -94,7 +94,7 @@ void ast_print(ast_t * ast, int indent, int types)
    
    for (i = 0; i < indent; i++)
       printf(" ");
-   printf(":: ");
+   printf("~ ");
 
    switch (ast->tag)
    {
@@ -114,25 +114,30 @@ void ast_print(ast_t * ast, int indent, int types)
       case T_DOUBLE:
       case T_FLOAT:
          printf("%s", ast->sym->name);
-         if (types) printf(" ("), type_print(ast->type), printf(")");
+         if (types) printf(" :: "), type_print(ast->type);
+         printf("\n");
+         break;
+      case T_TUPLE:
+         printf("tuple");
+         if (types) printf(" :: "), type_print(ast->type);
          printf("\n");
          break;
       case T_BINOP:
          printf("%s", ast->sym->name);
-         if (types) printf(" ("), type_print(ast->type), printf(")");
+         if (types) printf(" :: "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent + 3, types);
          break;
       case T_IDENT:
          printf("%s", ast->sym->name);
-         if (types) printf(" ("), type_print(ast->type), printf(")");
+         if (types) printf(" :: "), type_print(ast->type);
          printf("\n");
          break;
       case T_IF_ELSE_EXPR:
       case T_IF_ELSE_STMT:
          printf("if");
-         if (types) printf(" ("), type_print(ast->type), printf(")");
+         if (types) printf(" :: "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
@@ -140,14 +145,14 @@ void ast_print(ast_t * ast, int indent, int types)
          break;
       case T_IF_STMT:
          printf("if");
-         if (types) printf(" ("), type_print(ast->type), printf(")");
+         if (types) printf(" :: "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
          break;
       case T_WHILE_STMT:
          printf("while");
-         if (types) printf(" ("), type_print(ast->type), printf(")");
+         if (types) printf(" :: "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
@@ -190,7 +195,7 @@ void ast_print(ast_t * ast, int indent, int types)
          break;
       case T_ASSIGN:
          printf("assign");
-         if (types) printf(" ("), type_print(ast->type), printf(")");
+         if (types) printf(" :: "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent + 3, types);

@@ -34,6 +34,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "environment.h"
 #include "inference.h"
 #include "ast.h"
+#include "serial.h"
 
 #include <llvm-c/Core.h>  
 #include <llvm-c/Analysis.h>  
@@ -78,9 +79,13 @@ void llvm_reset(jit_t * jit);
 
 void llvm_cleanup(jit_t * jit);
 
+LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type);
+
 ret_t * exec_ast(jit_t * jit, ast_t * ast);
 
 void exec_root(jit_t * jit, ast_t * ast);
+
+void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val);
 
 /* Set things up so we can begin jit'ing */
 #define START_EXEC(ret_type) \
