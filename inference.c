@@ -52,6 +52,7 @@ int final_expression(ast_t * a)
    case T_WHILE_STMT:
       return 0;
    case T_INT:
+   case T_DOUBLE:
    case T_IDENT:
    case T_BINOP:
       return 1;
@@ -72,6 +73,9 @@ void inference1(ast_t * a)
    {
    case T_INT:
       a->type = t_int;
+      break;
+   case T_DOUBLE:
+      a->type = t_double;
       break;
    case T_IDENT:
       bind = find_symbol(a->sym);

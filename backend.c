@@ -124,6 +124,8 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
       return LLVMVoidType();
    else if (type == t_int)
       return LLVMWordType();
+   else if (type == t_double)
+      return LLVMDoubleType();
    else if (type == t_bool)
       return LLVMInt1Type();
    else
@@ -149,6 +151,18 @@ ret_t * exec_int(jit_t * jit, ast_t * ast)
     long num = atol(ast->sym->name);
     
     LLVMValueRef val = LLVMConstInt(LLVMWordType(), num, 0);
+
+    return ret(0, val);
+}
+
+/*
+   Jit a double literal
+*/
+ret_t * exec_double(jit_t * jit, ast_t * ast)
+{
+    double num = atof(ast->sym->name);
+    
+    LLVMValueRef val = LLVMConstReal(LLVMDoubleType(), num);
 
     return ret(0, val);
 }
@@ -527,6 +541,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
     {
     case T_INT:
         return exec_int(jit, ast);
+    case T_DOUBLE:
+        return exec_double(jit, ast);
     case T_BINOP:
         return exec_binop(jit, ast);
     case T_IF_ELSE_EXPR:
@@ -573,6 +589,8 @@ void print_gen(type_t * type, LLVMGenericValueRef gen_val)
       printf("None\n");
    else if (type == t_int)
       printf("%ld\n", (long) LLVMGenericValueToInt(gen_val, 1));
+   else if (type == t_double)
+      printf("%lf\n", (double) LLVMGenericValueToFloat(LLVMDoubleType(), gen_val));
    else if (type == t_bool)
    {
       if (LLVMGenericValueToInt(gen_val, 0))

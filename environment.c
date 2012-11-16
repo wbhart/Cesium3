@@ -35,10 +35,10 @@ void scope_init(void)
 
 void intrinsics_init(void)
 {
-   type_t * int_op, * int_rel;
+   type_t * int_op, * double_op, * int_rel, * double_rel;
    
    type_t ** args = GC_MALLOC(2*sizeof(type_t *));
-   type_t ** fns = GC_MALLOC(sizeof(type_t *));
+   type_t ** fns = GC_MALLOC(2*sizeof(type_t *));
    
    args[0] = t_int;
    args[1] = t_int;
@@ -46,24 +46,42 @@ void intrinsics_init(void)
    int_op = fn_type(t_int, 2, args);
    int_op->intrinsic = 1;
    
-   fns[0] = int_op;
+   args[0] = t_double;
+   args[1] = t_double;
+
+   double_op = fn_type(t_double, 2, args);
+   double_op->intrinsic = 1;
    
-   bind_generic(sym_lookup("+"), generic_type(1, fns));
-   bind_generic(sym_lookup("-"), generic_type(1, fns));
-   bind_generic(sym_lookup("*"), generic_type(1, fns));
-   bind_generic(sym_lookup("/"), generic_type(1, fns));
+   fns[0] = int_op;
+   fns[1] = double_op;
+   
+   bind_generic(sym_lookup("+"), generic_type(2, fns));
+   bind_generic(sym_lookup("-"), generic_type(2, fns));
+   bind_generic(sym_lookup("*"), generic_type(2, fns));
+   bind_generic(sym_lookup("/"), generic_type(2, fns));
    bind_generic(sym_lookup("%"), generic_type(1, fns));
 
+   args[0] = t_int;
+   args[1] = t_int;
+
    int_rel = fn_type(t_bool, 2, args);
-   
+   int_rel->intrinsic = 1;
+
+   args[0] = t_double;
+   args[1] = t_double;
+
+   double_rel = fn_type(t_bool, 2, args);
+   double_rel->intrinsic = 1;
+
    fns[0] = int_rel;
+   fns[1] = double_rel;
    
-   bind_generic(sym_lookup("=="), generic_type(1, fns));
-   bind_generic(sym_lookup("!="), generic_type(1, fns));
-   bind_generic(sym_lookup("<="), generic_type(1, fns));
-   bind_generic(sym_lookup(">="), generic_type(1, fns));
-   bind_generic(sym_lookup("<"), generic_type(1, fns));
-   bind_generic(sym_lookup(">"), generic_type(1, fns));
+   bind_generic(sym_lookup("=="), generic_type(2, fns));
+   bind_generic(sym_lookup("!="), generic_type(2, fns));
+   bind_generic(sym_lookup("<="), generic_type(2, fns));
+   bind_generic(sym_lookup(">="), generic_type(2, fns));
+   bind_generic(sym_lookup("<"), generic_type(2, fns));
+   bind_generic(sym_lookup(">"), generic_type(2, fns));
 }
 
 bind_t * bind_generic(sym_t * sym, type_t * type)

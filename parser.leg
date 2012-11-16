@@ -56,7 +56,7 @@ Infix20       = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r,
 Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
-Primary       = Integer | Identifier
+Primary       = Double | Integer | Identifier
                  | ( LParen Expression RParen )
                 
 Reserved      = While | Do | If | Then | Else | End
@@ -67,6 +67,12 @@ Identifier    = !Reserved < IdentStart IdentCont* > Spacing
               }
 IdentStart    = [a-zA-Z_]
 IdentCont     = IdentStart | [0-9]
+Double        = < ( [1-9] [0-9]* | '0' ) '.' [0-9]* 
+                ( ( 'e' | 'E' ) ( '+' | '-' )? ( [1-9] [0-9]* | '0' ) )? > Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_DOUBLE, sym);
+              }
 Integer       = < ( [1-9] [0-9]* | '0' ) > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);

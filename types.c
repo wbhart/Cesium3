@@ -151,6 +151,9 @@ void type_print(type_t * type)
    case INT:
       printf("int");
       break;
+   case DOUBLE:
+      printf("double");
+      break;
    case BOOL:
       printf("bool");
       break;
