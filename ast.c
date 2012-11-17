@@ -113,6 +113,8 @@ void ast_print(ast_t * ast, int indent, int types)
       case T_UINT64:
       case T_DOUBLE:
       case T_FLOAT:
+      case T_CHAR:
+      case T_STRING:
          printf("%s", ast->sym->name);
          if (types) printf(" :: "), type_print(ast->type);
          printf("\n");

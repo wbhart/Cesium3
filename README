@@ -55,7 +55,7 @@ Syntax:
 
 Here is the syntax available so far....
 
-* int/8/16/32/64, uint/8/16/32/64, float, double literals
+* int/8/16/32/64, uint/8/16/32/64, float, double, char, string literals
 * tuples (expr, ...)
 * +, -, *, /, %
 * <, >, <=, >=, ==, !=

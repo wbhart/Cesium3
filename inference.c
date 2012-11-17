@@ -67,6 +67,8 @@ int final_expression(ast_t * a)
    case T_IDENT:
    case T_BINOP:
    case T_TUPLE:
+   case T_CHAR:
+   case T_STRING:
       return 1;
    default:
       exception("Unknown AST tag in final_expression\n");
@@ -168,6 +170,12 @@ void inference1(ast_t * a)
       break;
    case T_FLOAT:
       a->type = t_float;
+      break;
+   case T_CHAR:
+      a->type = t_char;
+      break;
+   case T_STRING:
+      a->type = t_string;
       break;
    case T_IDENT:
       bind = find_symbol(a->sym);

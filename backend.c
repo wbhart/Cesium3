@@ -223,6 +223,10 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
       return LLVMDoubleType();
    else if (type == t_float)
       return LLVMFloatType();
+   else if (type == t_char)
+      return LLVMInt8Type();
+   else if (type == t_string)
+      return LLVMPointerType(LLVMInt8Type(), 0);
    else if (type == t_bool)
       return LLVMInt1Type();
    else if (type->typ == TUPLE)
@@ -271,7 +275,7 @@ ret_t * exec_int(jit_t * jit, ast_t * ast)
 */
 ret_t * exec_uintN(jit_t * jit, ast_t * ast, unsigned bits)
 {
-    unsigned long num = atol(ast->sym->name);
+    unsigned long num = strtoul(ast->sym->name, NULL, 10);
     
     LLVMValueRef val = LLVMConstInt(LLVMIntType(bits), num, 0);
 
@@ -283,7 +287,7 @@ ret_t * exec_uintN(jit_t * jit, ast_t * ast, unsigned bits)
 */
 ret_t * exec_uint(jit_t * jit, ast_t * ast)
 {
-    unsigned long num = atol(ast->sym->name);
+    unsigned long num = strtoul(ast->sym->name, NULL, 10);
     
     LLVMValueRef val = LLVMConstInt(LLVMWordType(), num, 0);
 
@@ -310,6 +314,60 @@ ret_t * exec_float(jit_t * jit, ast_t * ast)
     double num = atof(ast->sym->name);
     
     LLVMValueRef val = LLVMConstReal(LLVMFloatType(), num);
+
+    return ret(0, val);
+}
+
+/*
+   Jit a char literal
+*/
+ret_t * exec_char(jit_t * jit, ast_t * ast)
+{
+    char c = ast->sym->name[0];
+
+    if (c == '\\')
+    {
+       switch (ast->sym->name[1])
+       {
+       case '\'':
+          c = '\'';
+          break;
+       case '\"':
+          c = '\"';
+          break;
+       case '\\':
+          c = '\\';
+          break;
+       case '0':
+          c = '\0';
+          break;
+       case 'n':
+          c = '\n';
+          break;
+       case 'r':
+          c = '\r';
+          break;
+       case 't':
+          c = '\t';
+          break;
+       default:
+          jit_exception(jit, "Unknown char escape character in exec_char\n");
+       }
+    }
+
+    LLVMValueRef val = LLVMConstInt(LLVMInt8Type(), c, 0);;
+
+    return ret(0, val);
+}
+
+/*
+   Jit a string literal
+*/
+ret_t * exec_string(jit_t * jit, ast_t * ast)
+{
+    char * str = ast->sym->name;
+    
+    LLVMValueRef val = LLVMBuildGlobalStringPtr(jit->builder, str, "string");
 
     return ret(0, val);
 }
@@ -765,6 +823,10 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_double(jit, ast);
     case T_FLOAT:
         return exec_float(jit, ast);
+    case T_CHAR:
+        return exec_char(jit, ast);
+    case T_STRING:
+        return exec_string(jit, ast);
     case T_TUPLE:
         return exec_tuple(jit, ast);
     case T_BINOP:
@@ -842,6 +904,39 @@ void print_struct_entry(jit_t * jit, type_t * type, int i, LLVMGenericValueRef v
 }
 
 /*
+   Print special characters in character format
+*/
+int print_special(char c)
+{
+   switch (c)
+   {
+   case '\'':
+      printf("'\\''");
+      return 1;
+   case '\"':
+      printf("'\"'");
+      return 1;
+   case '\\':
+      printf("'\\\\'");
+      return 1;
+   case '\0':
+      printf("'\\0'");
+      return 1;
+   case '\n':
+      printf("'\\n'");
+      return 1;
+   case '\r':
+      printf("'\\r'");
+      return 1;
+   case '\t':
+      printf("'\\t'");
+      return 1;
+   default:
+      return 0;
+   }
+}
+
+/*
    Print the generic return value from exec
 */
 void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
@@ -855,11 +950,19 @@ void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
       printf("%ld", (long) LLVMGenericValueToInt(gen_val, 1));
    else if (type == t_uint || type == t_uint8 || type == t_uint16
        || type == t_uint32 || type == t_uint64)
-      printf("%lu", (unsigned long) LLVMGenericValueToInt(gen_val, 1));
+      printf("%luu", (unsigned long) LLVMGenericValueToInt(gen_val, 0));
    else if (type == t_double)
       printf("%lf", (double) LLVMGenericValueToFloat(LLVMDoubleType(), gen_val));
    else if (type == t_float)
-      printf("%f", (float) LLVMGenericValueToFloat(LLVMFloatType(), gen_val));
+      printf("%ff", (float) LLVMGenericValueToFloat(LLVMFloatType(), gen_val));
+   else if (type == t_char)
+   {
+      char c = (char) LLVMGenericValueToInt(gen_val, 0);
+      if (!print_special(c))
+         printf("'%c'", c);
+   }
+   else if (type == t_string)
+      printf("\"%s\"", (char *) LLVMGenericValueToPointer(gen_val));
    else if (type == t_bool)
    {
       if (LLVMGenericValueToInt(gen_val, 0))

@@ -59,7 +59,7 @@ Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
 Primary       = Float | Double | Int8 | UInt8 | Int16 | UInt16 
-                 | Int32 | UInt32 | Int64 | UInt64 | UInt | Int | Identifier
+                 | Int32 | UInt32 | Int64 | UInt64 | UInt | Int | String | Char | Identifier
                  | ( LParen Expression RParen ) | Tuple
                 
 Reserved      = While | Do | If | Then | Else | End
@@ -125,15 +125,30 @@ UInt16         = < ( [1-9] [0-9]* | '0' ) > 'u16' Spacing
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_UINT16, sym);
               }
-UInt32       = < ( [1-9] [0-9]* | '0' ) > 'u32' Spacing
+UInt32        = < ( [1-9] [0-9]* | '0' ) > 'u32' Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_UINT32, sym);
               }
-UInt64       = < ( [1-9] [0-9]* | '0' ) > 'u64' Spacing
+UInt64        = < ( [1-9] [0-9]* | '0' ) > 'u64' Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_UINT64, sym);
+              }
+Char          = ( ['] < ![\\'"] . > ['] )
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_CHAR, sym);
+              }
+              | ( ['] < [\\] [\\'"nrt0] > ['] )
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_CHAR, sym);
+              }
+String        = '"' < ( '\\\"' | ( !'"' . ) )* > '"' Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_STRING, sym);
               }
 Spacing       = ( Space | Comment )*
 Sp2           = ( Space | EOL | Comment )*

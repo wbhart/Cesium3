@@ -230,6 +230,12 @@ void type_print(type_t * type)
    case FLOAT:
       printf("float");
       break;
+   case CHAR:
+      printf("char");
+      break;
+   case STRING:
+      printf("string");
+      break;
    case BOOL:
       printf("bool");
       break;
