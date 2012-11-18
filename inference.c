@@ -134,10 +134,6 @@ type_t * resolve_inference1(type_t * t)
 
    switch (t->typ)
    {
-   case DATATYPE:
-      for (i = 0; i < t->arity; i++)
-         t->args[i] = resolve_inference1(t->args[i]);
-      return t;
    case RESOLVE:
       bind = find_symbol(t->sym);
       if (!bind)
@@ -159,6 +155,7 @@ type_t * resolve_inference1(type_t * t)
    case FLOAT:
    case STRING:
    case CHAR:
+   case DATATYPE:
       return t;
    default:
       exception("Unknown type in resolve_inference1\n");
@@ -399,7 +396,9 @@ void inference1(ast_t * a)
       inference1(a1);
       if (i != a1->type->arity)
          exception("Incorrect number of parameters in application\n");
-      a1->type = resolve_inference1(a1->type);
+      t1 = a1->type;
+      for (i = 0; i < t1->arity; i++)
+         t1->args[i] = resolve_inference1(t1->args[i]);
       a2 = a1->next;
       i = 0;
       while (a2 != NULL)
