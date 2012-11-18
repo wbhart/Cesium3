@@ -232,7 +232,7 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
    else if (type->typ == TUPLE)
       return LLVMPointerType(tuple_to_llvm(jit, type), 0);
    else if (type->typ == DATATYPE)
-      return LLVMGetTypeByName(jit->module, type->llvm);
+      return LLVMPointerType(LLVMGetTypeByName(jit->module, type->llvm), 0);
    else
       jit_exception(jit, "Unknown type in type_to_llvm\n");
 }
@@ -815,6 +815,59 @@ ret_t * exec_type_stmt(jit_t * jit, ast_t * ast)
    return ret(0, NULL);
 }
 
+/* 
+   Jit a function application or type constructor application
+*/
+ret_t * exec_appl(jit_t * jit, ast_t * ast)
+{
+   ast_t * id = ast->child;
+   ast_t * exp = id->next;
+
+   bind_t * bind = find_symbol(id->sym);
+
+   int i, count = bind->type->arity;
+
+   LLVMValueRef * vals = GC_MALLOC(count*sizeof(LLVMValueRef));
+   
+   i = 0;
+   while (exp != NULL)
+   {
+      ret_t * r = exec_ast(jit, exp);
+      vals[i] = r->val;
+      i++;
+      exp = exp->next;
+   }
+
+   type_t * type = bind->type;
+   LLVMTypeRef t = LLVMGetTypeByName(jit->module, type->llvm);
+      
+   if (bind->llvm == NULL) /* type not yet defined in LLVM */
+   {
+      LLVMTypeRef * types = GC_MALLOC(count*sizeof(LLVMTypeRef));
+      for (i = 0; i < count; i++)
+         types[i] = type_to_llvm(jit, type->args[i]);
+      LLVMStructSetBody(t, types, count, 0);
+      bind->llvm = type->llvm;
+   }
+
+   /* determine whether types are atomic */
+   int atomic = 1;
+   for (i = 0; i < count; i++)
+        atomic &= is_atomic(type->args[i]);
+
+   LLVMValueRef val = LLVMBuildGCMalloc(jit, t, type->sym->name, atomic);
+
+   for (i = 0; i < count; i++)
+   {
+       /* insert value into datatype */
+       LLVMValueRef indices[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
+       LLVMValueRef entry = LLVMBuildInBoundsGEP(jit->builder, val, indices, 2, type->sym->name);
+       LLVMBuildStore(jit->builder, vals[i], entry);
+   } 
+
+   return ret(0, val);
+}
+
 /*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
@@ -876,6 +929,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_tuple_assign(jit, ast->child, ast->child->next);
     case T_IDENT:
         return exec_ident(jit, ast);
+    case T_APPL:
+        return exec_appl(jit, ast);
     default:
         jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }
@@ -998,6 +1053,13 @@ void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
    } else if (type->typ == TUPLE)
    {
       printf("(");
+      for (i = 0; i < type->arity - 1; i++)
+          print_struct_entry(jit, type, i, gen_val), printf(", ");
+      print_struct_entry(jit, type, i, gen_val);
+      printf(")");
+   } else if (type->typ == DATATYPE)
+   {
+      printf("%s(", type->sym->name);
       for (i = 0; i < type->arity - 1; i++)
           print_struct_entry(jit, type, i, gen_val), printf(", ");
       print_struct_entry(jit, type, i, gen_val);
