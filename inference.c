@@ -301,7 +301,7 @@ void inference1(ast_t * a)
       a2 = a1->next;
       bind = find_symbol(a2->sym);
       if (!bind)
-         a->type = t_resolve;
+         a->type = new_type(a2->sym->name, RESOLVE);
       else
          a->type = bind->type;
       break;

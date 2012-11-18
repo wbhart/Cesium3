@@ -43,37 +43,34 @@ type_t * t_float;
 type_t * t_string;
 type_t * t_char;
 
-type_t * t_resolve;
-
 type_node_t * tuple_type_list;
 
-type_t * new_type(typ_t typ)
+type_t * new_type(char * name, typ_t typ)
 {
    type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
    t->typ = typ;
+   t->sym = sym_lookup(name);
    return t;
 }
 
 void types_init(void)
 {
-   t_nil = new_type(NIL);
-   t_int = new_type(INT);
-   t_int8 = new_type(INT8);
-   t_int16 = new_type(INT16);
-   t_int32 = new_type(INT32);
-   t_int64 = new_type(INT64);
-   t_uint = new_type(UINT);
-   t_uint8 = new_type(UINT8);
-   t_uint16 = new_type(UINT16);
-   t_uint32 = new_type(UINT32);
-   t_uint64 = new_type(UINT64);
-   t_bool = new_type(BOOL);
-   t_double = new_type(DOUBLE);
-   t_float = new_type(FLOAT);
-   t_string = new_type(STRING);
-   t_char = new_type(CHAR);
-
-   t_resolve = new_type(RESOLVE);
+   t_nil = new_type("nil", NIL);
+   t_int = new_type("int", INT);
+   t_int8 = new_type("int8", INT8);
+   t_int16 = new_type("int16", INT16);
+   t_int32 = new_type("int32", INT32);
+   t_int64 = new_type("int64", INT64);
+   t_uint = new_type("uint", UINT);
+   t_uint8 = new_type("uint8", UINT8);
+   t_uint16 = new_type("uint16", UINT16);
+   t_uint32 = new_type("uint32", UINT32);
+   t_uint64 = new_type("uint64", UINT64);
+   t_bool = new_type("bool", BOOL);
+   t_double = new_type("double", DOUBLE);
+   t_float = new_type("float", FLOAT);
+   t_string = new_type("string", STRING);
+   t_char = new_type("char", CHAR);
 
    tuple_type_list = NULL;
 }
@@ -187,7 +184,7 @@ type_t * fn_to_lambda_type(type_t * type)
 type_t * new_typevar(void)
 {
     static long typevarnum = 0;
-    type_t * t = new_type(TYPEVAR);
+    type_t * t = new_type("", TYPEVAR);
     t->arity = typevarnum++;
     return t;
 }
@@ -253,7 +250,7 @@ void type_print(type_t * type)
       printf("nil");
       break;
    case RESOLVE:
-      printf("RESOLVE");
+      printf("%s(unresolved)", type->sym->name);
       break;
    case DATATYPE:
       printf("%s", type->sym->name);

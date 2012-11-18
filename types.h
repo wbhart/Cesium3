@@ -84,9 +84,7 @@ extern type_t * t_float;
 extern type_t * t_string;
 extern type_t * t_char;
 
-extern type_t * t_resolve;
-
-type_t * new_type(typ_t typ);
+type_t * new_type(char * name, typ_t typ);
 
 void types_init(void);
 
