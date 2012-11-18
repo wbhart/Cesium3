@@ -52,13 +52,17 @@ TypeStmt      = Type i:Identifier EOL r:TypeBody End
               { $$ = ast2(T_TYPE_STMT, i, r); }
 TypeBody      = r:TypeSlot EOL s:TypeBody { r->next = s->child; $$ = ast1(T_TYPE_BODY, r); }
                | r:TypeSlot EOL { $$ = ast1(T_TYPE_BODY, r); }
-TypeSlot     = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_SLOT, i, r); }
+TypeSlot      = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_SLOT, i, r); }
 TypeExpr      = < Typename > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_IDENT, sym);
               }
               | Identifier
+ArgList       = r:Expression Comma s:ArgList { r->next = s; $$ = r; }
+               | Expression
+Appl          = r:Identifier LParen s:ArgList RParen { $$ = ast2(T_APPL, r, s); }
+               | r:Identifier LParen RParen { $$ = ast1(T_APPL, r); }
 
 Expression    = r:Infix40 ( ( EQ s:Infix40 { r = ast_binop(sym_lookup("=="), r, s); } )
                | ( NE s:Infix40 { r = ast_binop(sym_lookup("!="), r, s); } ) )* { $$ = r; } 
@@ -71,7 +75,7 @@ Infix20       = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r,
 Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
-Primary       = Float | Double | Int8 | UInt8 | Int16 | UInt16 
+Primary       = Appl | Float | Double | Int8 | UInt8 | Int16 | UInt16 
                  | Int32 | UInt32 | Int64 | UInt64 | UInt | Int | String | Char | Identifier
                  | ( LParen Expression RParen ) | Tuple
                 

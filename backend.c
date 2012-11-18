@@ -792,6 +792,30 @@ ret_t * exec_tuple(jit_t * jit, ast_t * ast)
 }
 
 /*
+   Jit a type declaration. Not much we can do except set up 
+   the empty struct.
+*/
+ret_t * exec_type_stmt(jit_t * jit, ast_t * ast)
+{
+   sym_t * sym = ast->child->sym;
+   int len = strlen(sym->name);
+   char * llvm = GC_MALLOC(len + 12);
+   bind_t * bind;
+
+   strcpy(llvm, sym->name);
+   strcpy(llvm + len, serial());
+   
+   LLVMStructCreateNamed(LLVMGetGlobalContext(), llvm);
+
+   bind = find_symbol(sym);
+   bind->llvm = llvm;
+
+   LLVMTypeRef ref = LLVMGetTypeByName(jit->module, llvm);
+
+   return ret(0, NULL);
+}
+
+/*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
 */
@@ -845,7 +869,7 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
     case T_DO:
         return exec_block(jit, ast);
     case T_TYPE_STMT:
-        return ret(0, NULL);
+        return exec_type_stmt(jit, ast);
     case T_ASSIGN:
         return exec_assign(jit, ast->child, ast->child->next);
     case T_TUPLE_ASSIGN:
