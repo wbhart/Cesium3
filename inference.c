@@ -316,6 +316,7 @@ void inference1(ast_t * a)
    case T_TYPE_STMT:
       a1 = a->child;
       a2 = a1->next;
+      bind = bind_symbol(a1->sym, t_resolve, NULL);
       inference1(a2);
       a2 = a2->child;
       i = 0;
@@ -336,7 +337,7 @@ void inference1(ast_t * a)
          i++;
       }
       a->type = data_type(i, args, a1->sym, slots, 0, NULL);
-      bind_symbol(a1->sym, a->type, NULL);
+      bind->type = a->type;
       break;
    case T_ASSIGN:
    case T_TUPLE_ASSIGN:
