@@ -315,10 +315,7 @@ void inference1(ast_t * a)
       break;
    case T_TYPE_STMT:
       a1 = a->child;
-      a2 = a1->next;
-      bind = bind_symbol(a1->sym, t_resolve, NULL);
-      inference1(a2);
-      a2 = a2->child;
+      a2 = a1->next->child;
       i = 0;
       while (a2 != NULL)
       {
@@ -327,6 +324,9 @@ void inference1(ast_t * a)
       }
       args = GC_MALLOC(i*sizeof(type_t *));
       slots = GC_MALLOC(i*sizeof(sym_t *));
+      a->type = data_type(i, args, a1->sym, slots, 0, NULL);
+      bind = bind_symbol(a1->sym, a->type, NULL);
+      inference1(a1->next);
       i = 0;
       a2 = a1->next->child;
       while (a2 != NULL)
@@ -336,7 +336,6 @@ void inference1(ast_t * a)
          a2 = a2->next;
          i++;
       }
-      a->type = data_type(i, args, a1->sym, slots, 0, NULL);
       bind->type = a->type;
       break;
    case T_ASSIGN:

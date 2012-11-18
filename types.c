@@ -255,6 +255,9 @@ void type_print(type_t * type)
    case RESOLVE:
       printf("RESOLVE");
       break;
+   case DATATYPE:
+      printf("%s", type->sym->name);
+      break;
    default:
       exception("Unknown type in type_print\n");
    }

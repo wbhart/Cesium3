@@ -808,10 +808,8 @@ ret_t * exec_type_stmt(jit_t * jit, ast_t * ast)
    LLVMStructCreateNamed(LLVMGetGlobalContext(), llvm);
 
    bind = find_symbol(sym);
-   bind->llvm = llvm;
-
-   LLVMTypeRef ref = LLVMGetTypeByName(jit->module, llvm);
-
+   bind->type->llvm = llvm;
+   
    return ret(0, NULL);
 }
 
