@@ -70,6 +70,7 @@ int final_expression(ast_t * a)
    case T_TUPLE:
    case T_CHAR:
    case T_STRING:
+   case T_APPL:
       return 1;
    default:
       exception("Unknown AST tag in final_expression\n");
@@ -124,6 +125,44 @@ void assign_inference1(ast_t * a, ast_t * b)
        a->type = b->type;
     } else
        exception("Invalid L-value in assignment\n");
+}
+
+type_t * resolve_inference1(type_t * t)
+{
+   int i;
+   bind_t * bind;
+
+   switch (t->typ)
+   {
+   case DATATYPE:
+      for (i = 0; i < t->arity; i++)
+         t->args[i] = resolve_inference1(t->args[i]);
+      return t;
+   case RESOLVE:
+      bind = find_symbol(t->sym);
+      if (!bind)
+         exception("Unable to resolve type in resolve_inference1\n");
+      return bind->type;
+   case NIL:
+   case BOOL:
+   case INT:
+   case INT8:
+   case INT16:
+   case INT32:
+   case INT64:
+   case UINT:
+   case UINT8:
+   case UINT16:
+   case UINT32:
+   case UINT64:
+   case DOUBLE:
+   case FLOAT:
+   case STRING:
+   case CHAR:
+      return t;
+   default:
+      exception("Unknown type in resolve_inference1\n");
+   }
 }
 
 void inference1(ast_t * a)
@@ -336,7 +375,8 @@ void inference1(ast_t * a)
          a2 = a2->next;
          i++;
       }
-      bind->type = a->type;
+      a->type->args = args;
+      a->type->slots = slots;
       break;
    case T_ASSIGN:
    case T_TUPLE_ASSIGN:
@@ -345,6 +385,34 @@ void inference1(ast_t * a)
       inference1(a2);
       assign_inference1(a1, a2);
       a->type = t_nil;
+      break;
+   case T_APPL:
+      a1 = a->child;
+      a2 = a1->next;
+      i = 0;
+      while (a2 != NULL)
+      {
+         inference1(a2);
+         a2 = a2->next;
+         i++;
+      }
+      inference1(a1);
+      if (i != a1->type->arity)
+         exception("Incorrect number of parameters in application\n");
+      a1->type = resolve_inference1(a1->type);
+      a2 = a1->next;
+      i = 0;
+      while (a2 != NULL)
+      {
+         if (a1->type->args[i] != a2->type)
+            exception("Incorrect expression type in application\n");
+         a2 = a2->next;
+         i++;
+      }
+      if (a1->type->typ == DATATYPE)
+         a->type = a1->type;
+      else
+         exception("Unknown type in application inferencew\n");
       break;
    default:
       exception("Unknown AST tag in inference1\n");

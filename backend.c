@@ -231,6 +231,8 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
       return LLVMInt1Type();
    else if (type->typ == TUPLE)
       return LLVMPointerType(tuple_to_llvm(jit, type), 0);
+   else if (type->typ == DATATYPE)
+      return LLVMGetTypeByName(jit->module, type->llvm);
    else
       jit_exception(jit, "Unknown type in type_to_llvm\n");
 }

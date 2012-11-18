@@ -218,6 +218,17 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent + 3, types);
          break;
+      case T_APPL:
+         printf("appl");
+         if (types) printf(" : "), type_print(ast->type);
+         printf("\n");
+         a = ast->child->next;
+         while (a != NULL)
+         {
+            ast_print(a, indent + 3, types);
+            a = a->next;
+         }
+         break;
       default:
          exception("invalid AST tag in ast_print\n");
    }
