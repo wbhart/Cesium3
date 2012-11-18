@@ -71,6 +71,23 @@ void intrinsics_init(void)
    bind_generic(sym_lookup(">="), generic_type(12, fns));
    bind_generic(sym_lookup("<"), generic_type(12, fns));
    bind_generic(sym_lookup(">"), generic_type(12, fns));
+
+   bind_symbol(sym_lookup("nil"), t_nil, NULL);
+   bind_symbol(sym_lookup("int"), t_int, NULL);
+   bind_symbol(sym_lookup("int8"), t_int8, NULL);
+   bind_symbol(sym_lookup("int16"), t_int16, NULL);
+   bind_symbol(sym_lookup("int32"), t_int32, NULL);
+   bind_symbol(sym_lookup("int64"), t_int64, NULL);
+   bind_symbol(sym_lookup("uint"), t_uint, NULL);
+   bind_symbol(sym_lookup("uint8"), t_uint8, NULL);
+   bind_symbol(sym_lookup("uint16"), t_uint16, NULL);
+   bind_symbol(sym_lookup("uint32"), t_uint32, NULL);
+   bind_symbol(sym_lookup("uint64"), t_uint64, NULL);
+   bind_symbol(sym_lookup("bool"), t_bool, NULL);
+   bind_symbol(sym_lookup("double"), t_double, NULL);
+   bind_symbol(sym_lookup("float"), t_float, NULL);
+   bind_symbol(sym_lookup("string"), t_string, NULL);
+   bind_symbol(sym_lookup("char"), t_char, NULL);
 }
 
 bind_t * bind_generic(sym_t * sym, type_t * type)

@@ -33,20 +33,33 @@ start         = Spacing EOL { root = NULL; }
 Statement     = Spacing IfElseStmt
                  | Spacing IfStmt
                  | Spacing WhileStmt
+                 | Spacing TypeStmt
                  | Spacing Assignment
                  | Spacing TupleAssign
                  | Spacing Expression
 Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
 TupleAssign   = i:Tuple Equals e:Tuple { $$ = ast2(T_TUPLE_ASSIGN, i, e); }
 Block         = s:Statement EOL b:Block { s->next = b; $$ = s; }
-               | Statement 
+               | Statement
                | Expression
-IfStmt        = If e:Expression ( EOL | Then ) b:Block End 
+IfStmt        = If e:Expression ( EOL | Then ) b:Block End
               { $$ = ast2(T_IF_STMT, e, ast1(T_THEN, b)); }
-IfElseStmt    = If e:Expression ( EOL | Then ) b:Block Else c:Block End 
+IfElseStmt    = If e:Expression ( EOL | Then ) b:Block Else c:Block End
               { $$ = ast3(T_IF_ELSE_STMT, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
 WhileStmt     = While e:Expression ( EOL | Do ) b:Block End
               { $$ = ast2(T_WHILE_STMT, e, ast1(T_DO, b)); }
+TypeStmt      = Type i:Identifier EOL r:TypeBody End
+              { $$ = ast2(T_TYPE_STMT, i, r); }
+TypeBody      = r:TypeSlot EOL s:TypeBody { r->next = s->child; $$ = ast1(T_TYPE_BODY, r); }
+               | r:TypeSlot EOL { $$ = ast1(T_TYPE_BODY, r); }
+TypeSlot     = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_SLOT, i, r); }
+TypeExpr      = < Typename > Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_IDENT, sym);
+              }
+              | Identifier
+
 Expression    = r:Infix40 ( ( EQ s:Infix40 { r = ast_binop(sym_lookup("=="), r, s); } )
                | ( NE s:Infix40 { r = ast_binop(sym_lookup("!="), r, s); } ) )* { $$ = r; } 
 Infix40       = r:Infix20 ( ( LE s:Infix20 { r = ast_binop(sym_lookup("<="), r, s); } )
@@ -62,7 +75,11 @@ Primary       = Float | Double | Int8 | UInt8 | Int16 | UInt16
                  | Int32 | UInt32 | Int64 | UInt64 | UInt | Int | String | Char | Identifier
                  | ( LParen Expression RParen ) | Tuple
                 
-Reserved      = While | Do | If | Then | Else | End
+Reserved      = ( 'while' | 'do' | 'if' | 'then' | 'else' | 'end' | 'type' ) ![a-zA-Z0-9_]
+                 | Typename 
+Typename      = ( 'int8' | 'int16' | 'int32' | 'int64' | 'int' 
+                 | 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint'
+                 | 'char' | 'string' | 'double' | 'float' ) ![a-zA-Z0-9_]
 Tuple         = LParen r:TupleBody RParen { $$ = ast1(T_TUPLE, r); }
 TupleBody     = r:Expression Comma s:TupleBody { r->next = s; $$ = r; }
                  | Expression
@@ -155,12 +172,14 @@ Sp2           = ( Space | EOL | Comment )*
 Space         = ' ' | '\t'
 Comment       = '/*' ( !'*/' . )* '*/'
 Comma         = Spacing ',' Sp2
+Colon         = Spacing ':' Sp2
 While         = Sp2 'while' Sp2
 Do            = Sp2 'do' Sp2
 If            = Sp2 'if' Sp2
 Then          = Sp2 'then' Sp2
 Else          = Sp2 'else' Sp2
 End           = Sp2 'end' Spacing
+Type          = Sp2 'type' Sp2
 Equals        = '=' Sp2
 LParen        = '(' Spacing
 RParen        = ')' Spacing 

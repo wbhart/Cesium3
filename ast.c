@@ -116,30 +116,30 @@ void ast_print(ast_t * ast, int indent, int types)
       case T_CHAR:
       case T_STRING:
          printf("%s", ast->sym->name);
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          break;
       case T_TUPLE:
          printf("tuple");
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          break;
       case T_BINOP:
          printf("%s", ast->sym->name);
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent + 3, types);
          break;
       case T_IDENT:
          printf("%s", ast->sym->name);
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          break;
       case T_IF_ELSE_EXPR:
       case T_IF_ELSE_STMT:
          printf("if");
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
@@ -147,14 +147,14 @@ void ast_print(ast_t * ast, int indent, int types)
          break;
       case T_IF_STMT:
          printf("if");
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
          break;
       case T_WHILE_STMT:
          printf("while");
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
@@ -195,10 +195,25 @@ void ast_print(ast_t * ast, int indent, int types)
             a = a->next;
          }
          break;
+      case T_SLOT:
+         printf("%s", ast->child->sym->name);
+         if (types) printf(" : "), type_print(ast->type);
+         printf("\n");
+         break;
+      case T_TYPE_STMT:
+         printf("type %s\n", ast->child->sym->name);
+         a = ast->child->next->child;
+         while (a != NULL)
+         {
+            ast_print(a, indent + 3, types);
+            a = a->next;
+         }
+         ast->type = t_nil;
+         break;
       case T_ASSIGN:
       case T_TUPLE_ASSIGN:
          printf("assign");
-         if (types) printf(" :: "), type_print(ast->type);
+         if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent + 3, types);

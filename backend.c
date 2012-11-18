@@ -844,6 +844,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
     case T_ELSE:
     case T_DO:
         return exec_block(jit, ast);
+    case T_TYPE_STMT:
+        return ret(0, NULL);
     case T_ASSIGN:
         return exec_assign(jit, ast->child, ast->child->next);
     case T_TUPLE_ASSIGN:

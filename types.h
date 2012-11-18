@@ -43,7 +43,8 @@ typedef enum
    NIL, BOOL, INT, INT8, INT16, INT32, INT64, 
    UINT, UINT8, UINT16, UINT32, UINT64, 
    DOUBLE, FLOAT, STRING, CHAR, 
-   FN, LAMBDA, GENERIC, ARRAY, TUPLE, DATATYPE, TYPEVAR
+   FN, LAMBDA, GENERIC, ARRAY, TUPLE, DATATYPE, 
+   TYPEVAR, RESOLVE
 } typ_t;
 
 typedef struct type_t
@@ -81,6 +82,8 @@ extern type_t * t_double;
 extern type_t * t_float;
 extern type_t * t_string;
 extern type_t * t_char;
+
+extern type_t * t_resolve;
 
 type_t * new_type(typ_t typ);
 

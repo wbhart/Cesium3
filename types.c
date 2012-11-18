@@ -43,6 +43,8 @@ type_t * t_float;
 type_t * t_string;
 type_t * t_char;
 
+type_t * t_resolve;
+
 type_node_t * tuple_type_list;
 
 type_t * new_type(typ_t typ)
@@ -70,6 +72,8 @@ void types_init(void)
    t_float = new_type(FLOAT);
    t_string = new_type(STRING);
    t_char = new_type(CHAR);
+
+   t_resolve = new_type(RESOLVE);
 
    tuple_type_list = NULL;
 }
@@ -247,6 +251,9 @@ void type_print(type_t * type)
       break;
    case NIL:
       printf("nil");
+      break;
+   case RESOLVE:
+      printf("RESOLVE");
       break;
    default:
       exception("Unknown type in type_print\n");

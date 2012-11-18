@@ -51,6 +51,7 @@ int final_expression(ast_t * a)
    case T_TUPLE_ASSIGN:
    case T_IF_STMT:
    case T_WHILE_STMT:
+   case T_TYPE_STMT:
       return 0;
    case T_INT:
    case T_INT8:
@@ -130,6 +131,7 @@ void inference1(ast_t * a)
    bind_t * bind;
    type_t * t1, * t2;
    type_t ** args;
+   sym_t ** slots;
    ast_t * a1, * a2, * a3, * a4;
    int i, j;
 
@@ -251,6 +253,7 @@ void inference1(ast_t * a)
       a->type = a1->type;
       break;
    case T_IF_ELSE_EXPR:
+      printf("here2\n");
       a1 = a->child;
       a2 = a1->next;
       a3 = a2->next;
@@ -264,6 +267,7 @@ void inference1(ast_t * a)
       a->type = a2->type;
       break;
    case T_IF_ELSE_STMT:
+      printf("here\n");
       a1 = a->child;
       a2 = a1->next;
       a3 = a2->next;
@@ -291,6 +295,48 @@ void inference1(ast_t * a)
          exception("Boolean expression expected in while statement\n");
       inference1(a2);
       a->type = t_nil;
+      break;
+   case T_SLOT:
+      a1 = a->child;
+      a2 = a1->next;
+      bind = find_symbol(a2->sym);
+      if (!bind)
+         a->type = t_resolve;
+      else
+         a->type = bind->type;
+      break;
+   case T_TYPE_BODY:
+      a1 = a->child;
+      while (a1 != NULL)
+      {
+         inference1(a1);
+         a1 = a1->next;
+      }
+      break;
+   case T_TYPE_STMT:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a2);
+      a2 = a2->child;
+      i = 0;
+      while (a2 != NULL)
+      {
+         a2 = a2->next;
+         i++;
+      }
+      args = GC_MALLOC(i*sizeof(type_t *));
+      slots = GC_MALLOC(i*sizeof(sym_t *));
+      i = 0;
+      a2 = a1->next->child;
+      while (a2 != NULL)
+      {
+         args[i] = a2->type;
+         slots[i] = a2->child->sym;
+         a2 = a2->next;
+         i++;
+      }
+      a->type = data_type(i, args, a1->sym, slots, 0, NULL);
+      bind_symbol(a1->sym, a->type, NULL);
       break;
    case T_ASSIGN:
    case T_TUPLE_ASSIGN:

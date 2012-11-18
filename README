@@ -67,6 +67,7 @@ Here is the syntax available so far....
 (then/do may be substituted with end of line)
 * ident = val assignment
 * tuple = tuple assignment
+* type identifier EOL (identifier : type)* end
 
 MUCH more to come.
 
