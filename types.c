@@ -106,6 +106,23 @@ type_t * generic_type(int arity, type_t ** args)
    return t;
 }
 
+type_t * typeconstr_type(sym_t * sym, type_t * type, int arity, type_t ** args)
+{
+   int i;
+   
+   type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->typ = TYPECONSTR;
+   t->args = (type_t **) GC_MALLOC(sizeof(type_t *)*arity);
+   t->arity = arity;
+   t->ret = type;
+   t->sym = sym;
+
+   for (i = 0; i < arity; i++)
+      t->args[i] = args[i];
+
+   return t;
+}
+
 type_t * tuple_type(int arity, type_t ** args)
 {
    int i;

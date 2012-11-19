@@ -810,7 +810,7 @@ ret_t * exec_type_stmt(jit_t * jit, ast_t * ast)
    LLVMStructCreateNamed(LLVMGetGlobalContext(), llvm);
 
    bind = find_symbol(sym);
-   bind->type->llvm = llvm;
+   bind->type->ret->llvm = llvm;
    
    return ret(0, NULL);
 }
@@ -825,7 +825,7 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
 
    bind_t * bind = find_symbol(id->sym);
 
-   int i, count = bind->type->arity;
+   int i, count = bind->type->ret->arity;
 
    LLVMValueRef * vals = GC_MALLOC(count*sizeof(LLVMValueRef));
    
@@ -838,9 +838,9 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
       exp = exp->next;
    }
 
-   type_t * type = bind->type;
+   type_t * type = bind->type->ret;
    LLVMTypeRef t = LLVMGetTypeByName(jit->module, type->llvm);
-      
+   
    if (bind->llvm == NULL) /* type not yet defined in LLVM */
    {
       LLVMTypeRef * types = GC_MALLOC(count*sizeof(LLVMTypeRef));

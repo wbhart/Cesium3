@@ -195,7 +195,7 @@ void ast_print(ast_t * ast, int indent, int types)
             a = a->next;
          }
          break;
-      case T_SLOT:
+      case T_TYPE_SLOT:
          printf("%s", ast->child->sym->name);
          if (types) printf(" : "), type_print(ast->type);
          printf("\n");
@@ -208,7 +208,6 @@ void ast_print(ast_t * ast, int indent, int types)
             ast_print(a, indent + 3, types);
             a = a->next;
          }
-         ast->type = t_nil;
          break;
       case T_ASSIGN:
       case T_TUPLE_ASSIGN:

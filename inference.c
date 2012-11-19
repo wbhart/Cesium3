@@ -131,6 +131,7 @@ type_t * resolve_inference1(type_t * t)
 {
    int i;
    bind_t * bind;
+   type_t * t1;
 
    switch (t->typ)
    {
@@ -138,7 +139,11 @@ type_t * resolve_inference1(type_t * t)
       bind = find_symbol(t->sym);
       if (!bind)
          exception("Unable to resolve type in resolve_inference1\n");
-      return bind->type;
+      t1 = bind->type;
+      if (t1->typ == TYPECONSTR)
+         return t1->ret;
+      else
+         return t1;
    case NIL:
    case BOOL:
    case INT:
@@ -166,11 +171,11 @@ type_t * resolve_inference1(type_t * t)
 void inference1(ast_t * a)
 {
    bind_t * bind;
-   type_t * t1, * t2;
-   type_t ** args;
+   type_t * t1, * t2, * f1;
+   type_t ** args, ** fns;
    sym_t ** slots;
    ast_t * a1, * a2, * a3, * a4;
-   int i, j;
+   int i, j, k;
 
    switch (a->tag)
    {
@@ -290,7 +295,6 @@ void inference1(ast_t * a)
       a->type = a1->type;
       break;
    case T_IF_ELSE_EXPR:
-      printf("here2\n");
       a1 = a->child;
       a2 = a1->next;
       a3 = a2->next;
@@ -304,7 +308,6 @@ void inference1(ast_t * a)
       a->type = a2->type;
       break;
    case T_IF_ELSE_STMT:
-      printf("here\n");
       a1 = a->child;
       a2 = a1->next;
       a3 = a2->next;
@@ -337,10 +340,12 @@ void inference1(ast_t * a)
       bind = find_symbol(a->sym);
       if (!bind)
          a->type = new_type(a->sym->name, RESOLVE);
+      else if (bind->type->typ == TYPECONSTR)
+         a->type = bind->type->ret;
       else
          a->type = bind->type;
       break;
-   case T_SLOT:
+   case T_TYPE_SLOT:
       a1 = a->child;
       a2 = a1->next;
       inference1(a2);
@@ -365,20 +370,23 @@ void inference1(ast_t * a)
       }
       args = GC_MALLOC(i*sizeof(type_t *));
       slots = GC_MALLOC(i*sizeof(sym_t *));
-      a->type = data_type(i, args, a1->sym, slots, 0, NULL);
-      bind = bind_symbol(a1->sym, a->type, NULL);
+      t1 = data_type(i, args, a1->sym, slots, 0, NULL);
+      f1 = fn_type(t1, i, args);
+      fns = GC_MALLOC(sizeof(type_t *));
+      fns[0] = f1;
+      t2 = typeconstr_type(a1->sym, t1, 1, fns);
+      bind = bind_symbol(a1->sym, t2, NULL);
       inference1(a1->next);
       i = 0;
       a2 = a1->next->child;
       while (a2 != NULL)
       {
-         args[i] = a2->type;
-         slots[i] = a2->child->sym;
+         f1->args[i] = t1->args[i] = a2->type;
+         t1->slots[i] = a2->child->sym;
          a2 = a2->next;
          i++;
       }
-      a->type->args = args;
-      a->type->slots = slots;
+      a->type = t_nil;
       break;
    case T_ASSIGN:
    case T_TUPLE_ASSIGN:
@@ -419,24 +427,31 @@ void inference1(ast_t * a)
          i++;
       }
       inference1(a1);
-      if (i != a1->type->arity)
-         exception("Incorrect number of parameters in application\n");
       t1 = a1->type;
+      if (t1->typ != GENERIC && t1->typ != TYPECONSTR)
+         exception("Invalid function or type constructor in application\n");
+      for (j = 0; j < t1->arity; j++)
+      {
+         t2 = t1->args[j];
+         if (t2->arity == i)
+         {
+            a2 = a1->next;
+            for (k = 0; k < i; k++)
+            {
+               if (t2->args[i] != a2->type)
+                  break;
+               a2 = a2->next;
+            }
+            if (k == i)
+               break;
+         }
+      }
+      if (j != t1->arity)
+         exception("Incorrect signature in application\n");
+      t1 = t1->ret;
       for (i = 0; i < t1->arity; i++)
          t1->args[i] = resolve_inference1(t1->args[i]);
-      a2 = a1->next;
-      i = 0;
-      while (a2 != NULL)
-      {
-         if (a1->type->args[i] != a2->type)
-            exception("Incorrect expression type in application\n");
-         a2 = a2->next;
-         i++;
-      }
-      if (a1->type->typ == DATATYPE)
-         a->type = a1->type;
-      else
-         exception("Unknown type in application inferencew\n");
+      a->type = t1;
       break;
    default:
       exception("Unknown AST tag in inference1\n");

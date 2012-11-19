@@ -44,7 +44,7 @@ typedef enum
    UINT, UINT8, UINT16, UINT32, UINT64, 
    DOUBLE, FLOAT, STRING, CHAR, 
    FN, LAMBDA, GENERIC, ARRAY, TUPLE, DATATYPE, 
-   TYPEVAR, RESOLVE
+   TYPEVAR, RESOLVE, TYPECONSTR
 } typ_t;
 
 typedef struct type_t
@@ -91,6 +91,8 @@ void types_init(void);
 type_t * fn_type(type_t * ret, int arity, type_t ** args);
 
 type_t * generic_type(int arity, type_t ** args);
+
+type_t * typeconstr_type(sym_t * sym, type_t * type, int arity, type_t ** args);
 
 type_t * tuple_type(int arity, type_t ** args);
 
