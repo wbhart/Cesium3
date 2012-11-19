@@ -53,12 +53,15 @@ TypeStmt      = Type i:Identifier EOL r:TypeBody End
 TypeBody      = r:TypeSlot EOL s:TypeBody { r->next = s->child; $$ = ast1(T_TYPE_BODY, r); }
                | r:TypeSlot EOL { $$ = ast1(T_TYPE_BODY, r); }
 TypeSlot      = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_SLOT, i, r); }
-TypeExpr      = < Typename > Spacing
+TypeExpr      = !Reserved < IdentStart IdentCont* > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_IDENT, sym);
+                 $$ = ast_symbol(T_TYPENAME, sym);
               }
-              | Identifier
+              | TupleType
+TupleType     = LParen r:TupleTypeBody RParen { $$ = ast1(T_TUPLE_TYPE, r); }
+TupleTypeBody = r:TypeExpr Comma s:TupleTypeBody { r->next = s; $$ = r; }
+                 | TypeExpr
 ArgList       = r:Expression Comma s:ArgList { r->next = s; $$ = r; }
                | Expression
 Appl          = r:Identifier LParen s:ArgList RParen { $$ = ast2(T_APPL, r, s); }
@@ -80,14 +83,13 @@ Primary       = Appl | Float | Double | Int8 | UInt8 | Int16 | UInt16
                  | ( LParen Expression RParen ) | Tuple
                 
 Reserved      = ( 'while' | 'do' | 'if' | 'then' | 'else' | 'end' | 'type' ) ![a-zA-Z0-9_]
-                 | Typename 
 Typename      = ( 'int8' | 'int16' | 'int32' | 'int64' | 'int' 
                  | 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint'
                  | 'char' | 'string' | 'double' | 'float' ) ![a-zA-Z0-9_]
 Tuple         = LParen r:TupleBody RParen { $$ = ast1(T_TUPLE, r); }
 TupleBody     = r:Expression Comma s:TupleBody { r->next = s; $$ = r; }
                  | Expression
-Identifier    = !Reserved < IdentStart IdentCont* > Spacing
+Identifier    = !Reserved !Typename < IdentStart IdentCont* > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_IDENT, sym);

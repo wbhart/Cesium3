@@ -156,6 +156,7 @@ type_t * resolve_inference1(type_t * t)
    case STRING:
    case CHAR:
    case DATATYPE:
+   case TUPLE:
       return t;
    default:
       exception("Unknown type in resolve_inference1\n");
@@ -332,14 +333,18 @@ void inference1(ast_t * a)
       inference1(a2);
       a->type = t_nil;
       break;
+   case T_TYPENAME:
+      bind = find_symbol(a->sym);
+      if (!bind)
+         a->type = new_type(a->sym->name, RESOLVE);
+      else
+         a->type = bind->type;
+      break;
    case T_SLOT:
       a1 = a->child;
       a2 = a1->next;
-      bind = find_symbol(a2->sym);
-      if (!bind)
-         a->type = new_type(a2->sym->name, RESOLVE);
-      else
-         a->type = bind->type;
+      inference1(a2);
+      a->type = a2->type;
       break;
    case T_TYPE_BODY:
       a1 = a->child;
@@ -382,6 +387,26 @@ void inference1(ast_t * a)
       inference1(a2);
       assign_inference1(a1, a2);
       a->type = t_nil;
+      break;
+   case T_TUPLE_TYPE:
+      a1 = a->child;
+      i = 0;
+      while (a1 != NULL)
+      {
+         inference1(a1);
+         a1 = a1->next;
+         i++;
+      }
+      args = GC_MALLOC(i*sizeof(type_t *));
+      i = 0;
+      a1 = a->child;
+      while (a1 != NULL)
+      {
+         args[i] = a1->type;
+         a1 = a1->next;
+         i++;
+      }
+      a->type = tuple_type(i, args);
       break;
    case T_APPL:
       a1 = a->child;
