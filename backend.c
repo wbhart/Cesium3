@@ -868,6 +868,26 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
    return ret(0, val);
 }
 
+ret_t * exec_slot(jit_t * jit, ast_t * ast)
+{
+   ast_t * dt = ast->child;
+   ast_t * slot = dt->next;
+
+   ret_t * r = exec_ast(jit, dt);
+   type_t * type = dt->type;
+   int i;
+
+   for (i = 0; i < type->arity; i++)
+      if (type->slots[i] == slot->sym)
+            break;
+
+   LLVMValueRef index[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
+   LLVMValueRef p = LLVMBuildInBoundsGEP(jit->builder, r->val, index, 2, "datatype");
+   LLVMValueRef val = LLVMBuildLoad(jit->builder, p, "slot");
+   
+   return ret(0, val);
+}
+
 /*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
@@ -931,6 +951,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_ident(jit, ast);
     case T_APPL:
         return exec_appl(jit, ast);
+    case T_SLOT:
+        return exec_slot(jit, ast);
     default:
         jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }

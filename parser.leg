@@ -69,7 +69,12 @@ AOrS          = r:Identifier ( s:Appl { r = ast2(T_APPL, r, s); }
                              | s:Slot { r = ast2(T_SLOT, r, s); } )+ { $$ = r; }
 Appl          = LParen s:ArgList RParen { $$ = s; }
                | LParen RParen { $$ = NULL; }
-Slot          = Dot i:Identifier { $$ = i; }
+Slot          = Dot i:SlotName { $$ = i; }
+SlotName      = < IdentStart IdentCont* > Spacing
+              {
+                 sym_t * sym = sym_lookup(yytext);
+                 $$ = ast_symbol(T_SLOT_NAME, sym);
+              }
 
 Expression    = r:Infix40 ( ( EQ s:Infix40 { r = ast_binop(sym_lookup("=="), r, s); } )
                | ( NE s:Infix40 { r = ast_binop(sym_lookup("!="), r, s); } ) )* { $$ = r; } 

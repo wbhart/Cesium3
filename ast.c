@@ -228,6 +228,16 @@ void ast_print(ast_t * ast, int indent, int types)
             a = a->next;
          }
          break;
+      case T_SLOT_NAME:
+         printf(".%s\n", ast->sym->name);
+         break;
+      case T_SLOT:
+         printf("slot");
+         if (types) printf(" : "), type_print(ast->type);
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent + 3, types);
+         break;
       default:
          exception("invalid AST tag in ast_print\n");
    }

@@ -71,6 +71,7 @@ int final_expression(ast_t * a)
    case T_CHAR:
    case T_STRING:
    case T_APPL:
+   case T_SLOT:
       return 1;
    default:
       exception("Unknown AST tag in final_expression\n");
@@ -452,6 +453,20 @@ void inference1(ast_t * a)
       for (i = 0; i < t1->arity; i++)
          t1->args[i] = resolve_inference1(t1->args[i]);
       a->type = t1;
+      break;
+   case T_SLOT:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a1);
+      t1 = a1->type;
+      if (t1->typ != DATATYPE)
+         exception("Datatype not known in slot evaluation\n");
+      for (i = 0; i < t1->arity; i++)
+         if (t1->slots[i] == a2->sym)
+            break;
+      if (i == t1->arity)
+         exception("Slot not found in slot evaluation\n");
+      a->type = t1->args[i];
       break;
    default:
       exception("Unknown AST tag in inference1\n");

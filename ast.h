@@ -54,7 +54,7 @@ typedef enum
    T_ASSIGN, T_WHILE_STMT, T_DO,
    T_TUPLE, T_TUPLE_ASSIGN, T_TYPE_SLOT,
    T_SLOT, T_TYPE_STMT, T_TYPE_BODY, T_APPL,
-   T_TUPLE_TYPE, T_TYPENAME
+   T_TUPLE_TYPE, T_TYPENAME, T_SLOT_NAME
 } tag_t;
 
 typedef struct ast_t
