@@ -69,7 +69,7 @@ Here is the syntax available so far....
 * tuple = tuple assignment
 * type identifier EOL (identifier : type)* end
 * automatic type constructors, e.g. mytype(1, 2.3)
-* slot access mytype.a
+* slot access mytype.a and assignment
 
 MUCH more to come.
 

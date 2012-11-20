@@ -725,16 +725,52 @@ ret_t * exec_tuple_assign(jit_t * jit, ast_t * id, ast_t * expr)
 {
     ast_t * a1 = id->child;
     ast_t * a2 = expr->child;
-    
+    ret_t * id_ret, * dt_ret;
+    LLVMValueRef var;
+
+    int i = 0;
+    while (a1 != NULL)
+    {
+       a1 = a1->next;
+       i++;
+    }
+
+    LLVMValueRef * vals = GC_MALLOC(i*sizeof(LLVMValueRef));
+    i = 0;
+    while (a2 != NULL)
+    {
+       vals[i] = exec_ast(jit, a2)->val;
+       a2 = a2->next;
+       i++;
+    }
+
+    i = 0;
+    a1 = id->child;
     while (a1 != NULL)
     {
        if (a1->tag == T_IDENT)
-          exec_assign(jit, a1, a2);
-       else
-          exec_tuple_assign(jit, a1, a2);
-
+       {
+          bind_t * bind = find_symbol(a1->sym);
+          if (bind->llvm == NULL) /* symbol doesn't exist yet */
+          {
+             id_ret = exec_decl(jit, a1);
+             var = id_ret->val;
+          } else
+          {
+             if (scope_is_global(bind))
+                var = LLVMGetNamedGlobal(jit->module, bind->llvm);
+             else
+                var = bind->llvm_val;
+          }
+          LLVMBuildStore(jit->builder, vals[i], var);
+       } else /* a1->tag == T_LSLOT */
+       {
+          dt_ret = exec_ast(jit, a1);
+    
+          LLVMBuildStore(jit->builder, vals[i], dt_ret->val);
+       }
        a1 = a1->next;
-       a2 = a2->next;
+       i++;
     }
 
     return ret(0, NULL);
@@ -868,6 +904,9 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
    return ret(0, val);
 }
 
+/*
+   Jit a load from a slot
+*/
 ret_t * exec_slot(jit_t * jit, ast_t * ast)
 {
    ast_t * dt = ast->child;
@@ -884,6 +923,45 @@ ret_t * exec_slot(jit_t * jit, ast_t * ast)
    LLVMValueRef index[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
    LLVMValueRef p = LLVMBuildInBoundsGEP(jit->builder, r->val, index, 2, "datatype");
    LLVMValueRef val = LLVMBuildLoad(jit->builder, p, "slot");
+   
+   return ret(0, val);
+}
+
+/*
+   Jit a slot assignment statement
+*/
+ret_t * exec_slot_assign(jit_t * jit, ast_t * ast)
+{
+    ast_t * dt = ast->child;
+    ast_t * expr = dt->next;
+    ret_t * dt_ret, * expr_ret;
+    LLVMValueRef val;
+
+    expr_ret = exec_ast(jit, expr);
+    dt_ret = exec_ast(jit, dt);
+    
+    LLVMBuildStore(jit->builder, expr_ret->val, dt_ret->val);
+
+    return ret(0, NULL);
+}
+/*
+   Jit access to a slot as a place
+*/
+ret_t * exec_lslot(jit_t * jit, ast_t * ast)
+{
+   ast_t * dt = ast->child;
+   ast_t * slot = dt->next;
+
+   ret_t * r = exec_ast(jit, dt);
+   type_t * type = dt->type;
+   int i;
+
+   for (i = 0; i < type->arity; i++)
+      if (type->slots[i] == slot->sym)
+            break;
+
+   LLVMValueRef index[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
+   LLVMValueRef val = LLVMBuildInBoundsGEP(jit->builder, r->val, index, 2, "datatype");
    
    return ret(0, val);
 }
@@ -947,12 +1025,16 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_assign(jit, ast->child, ast->child->next);
     case T_TUPLE_ASSIGN:
         return exec_tuple_assign(jit, ast->child, ast->child->next);
+    case T_SLOT_ASSIGN:
+        return exec_slot_assign(jit, ast);
     case T_IDENT:
         return exec_ident(jit, ast);
     case T_APPL:
         return exec_appl(jit, ast);
     case T_SLOT:
         return exec_slot(jit, ast);
+    case T_LSLOT:
+        return exec_lslot(jit, ast);
     default:
         jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }

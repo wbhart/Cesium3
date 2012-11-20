@@ -232,7 +232,15 @@ void ast_print(ast_t * ast, int indent, int types)
          printf(".%s\n", ast->sym->name);
          break;
       case T_SLOT:
+      case T_LSLOT:
          printf("slot");
+         if (types) printf(" : "), type_print(ast->type);
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent + 3, types);
+         break;
+      case T_SLOT_ASSIGN:
+         printf("assign");
          if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);

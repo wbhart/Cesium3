@@ -49,6 +49,7 @@ int final_expression(ast_t * a)
       return final_expression(s);
    case T_ASSIGN:
    case T_TUPLE_ASSIGN:
+   case T_SLOT_ASSIGN:
    case T_IF_STMT:
    case T_WHILE_STMT:
    case T_TYPE_STMT:
@@ -96,6 +97,11 @@ void assign_inference1(ast_t * a, ast_t * b)
              exception("Incompatible types in assignment\n");
           a->type = bind->type;
        }
+    } else if (a->tag == T_LSLOT)
+    {
+       inference1(a);
+       if (a->type != b->type)
+          exception("Incompatible types in assignment\n");
     } else if (a->tag == T_TUPLE)
     {
        if (b->tag != T_TUPLE)
@@ -397,6 +403,13 @@ void inference1(ast_t * a)
       assign_inference1(a1, a2);
       a->type = t_nil;
       break;
+   case T_SLOT_ASSIGN:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a2);
+      inference1(a1);
+      a->type = t_nil;
+      break;
    case T_TUPLE_TYPE:
       a1 = a->child;
       i = 0;
@@ -454,6 +467,7 @@ void inference1(ast_t * a)
          t1->args[i] = resolve_inference1(t1->args[i]);
       a->type = t1;
       break;
+   case T_LSLOT:
    case T_SLOT:
       a1 = a->child;
       a2 = a1->next;

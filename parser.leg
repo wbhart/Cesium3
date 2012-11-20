@@ -36,9 +36,15 @@ Statement     = Spacing IfElseStmt
                  | Spacing TypeStmt
                  | Spacing Assignment
                  | Spacing TupleAssign
+                 | Spacing SlotAssign
                  | Spacing Expression
 Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
-TupleAssign   = i:Tuple Equals e:Tuple { $$ = ast2(T_TUPLE_ASSIGN, i, e); }
+TupleAssign   = i:LTuple Equals e:Tuple { $$ = ast2(T_TUPLE_ASSIGN, i, e); }
+LTuple        = LParen r:LTupleBody RParen { $$ = ast1(T_TUPLE, r); }
+LTupleBody    = r:LValue Comma s:LTupleBody { r->next = s; $$ = r; }
+                | LValue
+LValue        = LSlot | Identifier
+SlotAssign    = i:LSlot Equals e:Expression { $$ = ast2(T_SLOT_ASSIGN, i, e); }
 Block         = s:Statement EOL b:Block { s->next = b; $$ = s; }
                | Statement
                | Expression
@@ -67,6 +73,8 @@ ArgList       = r:Expression Comma s:ArgList { r->next = s; $$ = r; }
                | Expression
 AOrS          = r:Identifier ( s:Appl { r = ast2(T_APPL, r, s); } 
                              | s:Slot { r = ast2(T_SLOT, r, s); } )+ { $$ = r; }
+LSlot         = r:AOrS s:Slot { $$ = ast2(T_LSLOT, r, s); }
+               | r:Identifier s:Slot { $$ = ast2(T_LSLOT, r, s); }
 Appl          = LParen s:ArgList RParen { $$ = s; }
                | LParen RParen { $$ = NULL; }
 Slot          = Dot i:SlotName { $$ = i; }
