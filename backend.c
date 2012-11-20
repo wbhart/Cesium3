@@ -763,17 +763,87 @@ ret_t * exec_tuple_assign(jit_t * jit, ast_t * id, ast_t * expr)
                 var = bind->llvm_val;
           }
           LLVMBuildStore(jit->builder, vals[i], var);
-       } else /* a1->tag == T_LSLOT */
+       } else if (a1->tag == T_LSLOT)
        {
           dt_ret = exec_ast(jit, a1);
     
           LLVMBuildStore(jit->builder, vals[i], dt_ret->val);
-       }
+       } else if (a1->tag == T_TUPLE)
+          exec_tuple_unpack_val(jit, a1, vals[i], expr->type->args[i]);
+       else 
+          jit_exception(jit, "Unknown type in exec_tuple_assign\n");
+
        a1 = a1->next;
        i++;
     }
 
     return ret(0, NULL);
+}
+
+/*
+   Jit a tuple unpack from a value
+*/
+ret_t * exec_tuple_unpack_val(jit_t * jit, ast_t * ast1, LLVMValueRef val, type_t * type)
+{
+    int i = type->arity;
+    LLVMValueRef * vals = GC_MALLOC(i*sizeof(LLVMValueRef));
+    ast_t * a1;
+    LLVMValueRef var;
+    ret_t * id_ret, * dt_ret;
+
+    for (i = 0; i < type->arity; i++)
+    {
+       LLVMValueRef index[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
+       LLVMValueRef p = LLVMBuildInBoundsGEP(jit->builder, val, index, 2, "tuple");
+       LLVMValueRef val = LLVMBuildLoad(jit->builder, p, "entry");
+          
+       vals[i] = val;
+    }
+
+    i = 0;
+    a1 = ast1->child;
+    while (a1 != NULL)
+    {
+       if (a1->tag == T_IDENT)
+       {
+          bind_t * bind = find_symbol(a1->sym);
+          if (bind->llvm == NULL) /* symbol doesn't exist yet */
+          {
+             id_ret = exec_decl(jit, a1);
+             var = id_ret->val;
+          } else
+          {
+             if (scope_is_global(bind))
+                var = LLVMGetNamedGlobal(jit->module, bind->llvm);
+             else
+                var = bind->llvm_val;
+          }
+          LLVMBuildStore(jit->builder, vals[i], var);
+       } else if (a1->tag == T_LSLOT)
+       {
+          dt_ret = exec_ast(jit, a1);
+    
+          LLVMBuildStore(jit->builder, vals[i], dt_ret->val);
+       } else if (a1->tag == T_TUPLE)
+          exec_tuple_unpack_val(jit, a1, vals[i], type->args[i]);
+       else 
+          jit_exception(jit, "Unknown type in exec_tuple_unpack_val\n");
+
+       a1 = a1->next;
+       i++;
+    }
+
+    return ret(0, NULL);
+}
+
+/*
+   Jit a tuple unpack
+*/
+ret_t * exec_tuple_unpack(jit_t * jit, ast_t * ast1, ast_t * ast2)
+{
+    ret_t * a2_ret = exec_ast(jit, ast2);
+
+    return exec_tuple_unpack_val(jit, ast1, a2_ret->val, ast2->type);
 }
 
 /*
@@ -1025,6 +1095,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_assign(jit, ast->child, ast->child->next);
     case T_TUPLE_ASSIGN:
         return exec_tuple_assign(jit, ast->child, ast->child->next);
+    case T_TUPLE_UNPACK:
+        return exec_tuple_unpack(jit, ast->child, ast->child->next);
     case T_SLOT_ASSIGN:
         return exec_slot_assign(jit, ast);
     case T_IDENT:

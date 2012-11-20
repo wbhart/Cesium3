@@ -81,6 +81,8 @@ void llvm_cleanup(jit_t * jit);
 
 LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type);
 
+ret_t * exec_tuple_unpack_val(jit_t * jit, ast_t * ast1, LLVMValueRef val, type_t * type);
+
 ret_t * exec_ast(jit_t * jit, ast_t * ast);
 
 void exec_root(jit_t * jit, ast_t * ast);

@@ -36,14 +36,16 @@ Statement     = Spacing IfElseStmt
                  | Spacing TypeStmt
                  | Spacing Assignment
                  | Spacing TupleAssign
+                 | Spacing TupleUnpack
                  | Spacing SlotAssign
                  | Spacing Expression
 Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
 TupleAssign   = i:LTuple Equals e:Tuple { $$ = ast2(T_TUPLE_ASSIGN, i, e); }
+TupleUnpack   = i:LTuple Equals e:Expression { $$ = ast2(T_TUPLE_UNPACK, i, e); }
 LTuple        = LParen r:LTupleBody RParen { $$ = ast1(T_TUPLE, r); }
 LTupleBody    = r:LValue Comma s:LTupleBody { r->next = s; $$ = r; }
                 | LValue
-LValue        = LSlot | Identifier
+LValue        = LSlot | LTuple | Identifier
 SlotAssign    = i:LSlot Equals e:Expression { $$ = ast2(T_SLOT_ASSIGN, i, e); }
 Block         = s:Statement EOL b:Block { s->next = b; $$ = s; }
                | Statement

@@ -67,6 +67,14 @@ Here is the syntax available so far....
 (then/do may be substituted with end of line)
 * ident = val assignment
 * tuple = tuple assignment
+* tuple unpacking
+* tuple unpacking
+* tuple unpacking
+* tuple unpacking
+* tuple unpacking
+* tuple unpacking
+* tuple unpacking
+* tuple unpacking
 * type identifier EOL (identifier : type)* end
 * automatic type constructors, e.g. mytype(1, 2.3)
 * slot access mytype.a and assignment

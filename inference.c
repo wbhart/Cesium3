@@ -53,6 +53,7 @@ int final_expression(ast_t * a)
    case T_IF_STMT:
    case T_WHILE_STMT:
    case T_TYPE_STMT:
+   case T_TUPLE_UNPACK:
       return 0;
    case T_INT:
    case T_INT8:
@@ -79,7 +80,7 @@ int final_expression(ast_t * a)
    }
 }
 
-void assign_inference1(ast_t * a, ast_t * b)
+void assign_inference1(ast_t * a, type_t * b)
 {
     int i, j;
     bind_t * bind;
@@ -89,47 +90,41 @@ void assign_inference1(ast_t * a, ast_t * b)
        bind = find_symbol(a->sym);
        if (!bind) /* identifier doesn't exist */
        {
-          a->type = b->type;
+          a->type = b;
           bind_symbol(a->sym, a->type, NULL);
        } else
        {
-          if (b->type != bind->type)
+          if (b != bind->type)
              exception("Incompatible types in assignment\n");
           a->type = bind->type;
        }
     } else if (a->tag == T_LSLOT)
     {
        inference1(a);
-       if (a->type != b->type)
+       if (a->type != b)
           exception("Incompatible types in assignment\n");
     } else if (a->tag == T_TUPLE)
     {
-       if (b->tag != T_TUPLE)
-           exception("Attempt to assign non-tuple to tuple\n");
+       if (b->typ != TUPLE)
+             exception("Attempt to assign non-tuple to tuple\n");
        ast_t * a1 = a->child;
-       ast_t * b1 = b->child;
-       i = j = 0;
+       i = 0;
        while (a1 != NULL)
        {
           a1 = a1->next;
           i++;
        }
-       while (b1 != NULL)
-       {
-          b1 = b1->next;
-          j++;
-       }
-       if (i != j)
+       if (i != b->arity)
           exception("Incorrect number of entries in tuple assignment\n");
        a1 = a->child;
-       b1 = b->child;
+       i = 0;
        while (a1 != NULL)
        {
-          assign_inference1(a1, b1);
+          assign_inference1(a1, b->args[i]);
           a1 = a1->next;
-          b1 = b1->next;
+          i++;
        }
-       a->type = b->type;
+       a->type = b;
     } else
        exception("Invalid L-value in assignment\n");
 }
@@ -397,10 +392,11 @@ void inference1(ast_t * a)
       break;
    case T_ASSIGN:
    case T_TUPLE_ASSIGN:
+   case T_TUPLE_UNPACK:
       a1 = a->child;
       a2 = a1->next;
       inference1(a2);
-      assign_inference1(a1, a2);
+      assign_inference1(a1, a2->type);
       a->type = t_nil;
       break;
    case T_SLOT_ASSIGN:
