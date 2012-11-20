@@ -1232,6 +1232,8 @@ void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
       for (i = 0; i < type->arity - 1; i++)
           print_struct_entry(jit, type, i, gen_val), printf(", ");
       print_struct_entry(jit, type, i, gen_val);
+      if (type->arity == 1)
+         printf(",");
       printf(")");
    } else if (type->typ == DATATYPE)
    {
