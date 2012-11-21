@@ -1,0 +1,144 @@
+% (C) 2012, William Hart
+%   This file is part of Cesium.
+
+%   Cesium is free software; you can redistribute it and/or modify
+%   it under the terms of the GNU General Public License as published by
+%   the Free Software Foundation; either version 2 of the License, or
+%   (at your option) any later version.
+
+%   Cesium is distributed in the hope that it will be useful,
+%   but WITHOUT ANY WARRANTY; without even the implied warranty of
+%   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%   GNU General Public License for more details.
+
+%   You should have received a copy of the GNU General Public License
+%   along with Cesium; if not, write to the Free Software
+%   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+\documentclass[a4paper,10pt]{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{eucal}
+\usepackage{amscd}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{textcomp}
+\usepackage{listings}
+\urlstyle{sf}
+
+\addtolength{\oddsidemargin}{-0.75in}
+\addtolength{\evensidemargin}{-0.75in}
+\addtolength{\textwidth}{1.5in}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\HH}{\mathcal{H}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Pee}{\mathbb{P}}
+\newcommand{\EuO}{\mathcal{O}}
+\newcommand{\Qbar}{\overline{\mathbb{Q}}}
+\newcommand{\fn}{\hfill[Function]}
+\newcommand{\macro}{\hfill[Macro]}
+\newcommand{\gmp}{\hfill[GMP]}
+\newcommand{\code}{\lstinline}
+
+\newcommand{\ljk}[2]{\left(\frac{#1}{#2}\right)}
+\newcommand{\modulo}[1]{\;\left(\mbox{mod}\;#1\right)}
+\newcommand{\fr}{\mathfrak}
+
+\def\notdivides{\mathrel{\kern-3pt\not\!\kern4.5pt\bigm|}}
+\def\nmid{\notdivides}
+\def\nsubseteq{\mathrel{\kern-3pt\not\!\kern2.5pt\subseteq}}
+
+\lstdefinelanguage{cesium}
+{ 
+  morekeywords={while,do,if,then,else,end,type},
+  morekeywords={int8,int16,int32,int64,int},
+  morekeywords={uint8,uint16,uint32,uint64},
+  morekeywords={uint,char,string,double,float},
+  morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64},
+  sensitive=true,
+  morestring=[b]",
+  morestring=[b]',
+}
+
+\parindent=0pt
+\parskip 4pt plus 2pt minus 2pt
+
+%\email{w.b.hart@maths.warwick.ac.uk}
+
+\title{Cesium : A New Language}
+\author{William B. Hart}
+
+\begin{document}
+\lstset{
+  language=cesium,
+  keywordstyle=\bfseries\ttfamily\color[rgb]{0,0.6,0.4},
+  identifierstyle=\ttfamily\color[rgb]{0,0.2,0.8},
+  commentstyle=\color[rgb]{0.8,0.05,1},
+  stringstyle=\color[rgb]{0.8,0.1,0.1},
+  basicstyle=\ttfamily,
+  showstringspaces=false,
+}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+Cesium is a new programming language designed primarily for efficiency, easy interface with C libraries
+and with a straightforward high-level syntax. It uses the LLVM Jit to give very performant code, even
+when run in interactive mode. The language is polymorphic, statically typed (with type inference) and
+imperative in style, with some functional features.
+
+The language fills a niche between Python and C. Python is not terribly performant, but has a very
+simple and flexible syntax. C is fiddly and low level, but very fast. 
+
+Cesium is inspired by Julia, but is more suited to computer algebra, rather than numerical tasks.
+Of course Cesium can be used as a general purpose language, but design decisions are influenced by the
+desire to make it useful to a certain class of mathematical/computational people.
+
+\section{The Cesium interpreter}
+
+The Cesium interpreter is started by typing \code{./cs} at the command line.
+
+When the interpreter starts, a prompt is displayed ready to accept Cesium code.
+
+If you type an expression and press enter, Cesium immediately executes the expression and a return 
+value is displayed. If there is no return value, \code{None} is printed.
+
+Note that end-of-lines are significant in Cesium. In many cases they can be elided by addition of
+certain keywords. However, in general, statements end with an end-of-line.
+
+\section{Literals}
+
+We first describe how to enter various types of constant literals in Cesium.  
+
+\subsection{Integer literals}
+
+Here are some examples of signed and unsigned integers in Cesium:
+
+\begin{lstlisting}
+1234
+12u8
+109i8
+278009804u
+234567i32
+\end{lstlisting}
+
+Integers with no suffix are signed and either 32 or 64 bits, depending on whether a 32 or 
+64 bit binary of Cesium is being used.
+
+Integers which are unsigned are given the suffix \code{u}. 
+
+The other suffixes, e.g. \code{i8}, \code{u32}, etc., specify whether the number is signed
+(with a \code{i}) or unsigned (with a \code{u}) and how many bits the type is. The valid 
+numbers of bits are \code{8, 16, 32, 64}.
+
+For example, the literal \code{109i8} is the integer \code{109} stored as a signed 8 bit 
+value.
+
+\end{document}
