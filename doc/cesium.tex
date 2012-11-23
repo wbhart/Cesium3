@@ -428,7 +428,7 @@ code above could also be written as follows, achieving the same thing efficientl
 The path through a program is directed by control flow statements. We now discuss the various 
 control flow statements available in Cesium.
 
-\subsection{The ``if'' statement}
+\subsection{The \textbf{if} statement}
 
 The \code{if} statement executes a series of statements if a given condition is true.
 
@@ -451,15 +451,18 @@ i = 1
 if i < 2 then i = 3 end
 \end{lstlisting}
 
+The branch of an \code{if} statement does not define a new lexical scope. Thus variables defined 
+inside the \code{if} statement also exist outside it.
+
 No value is returned by an \code{if} statement, and so \code{none} will be printed after
 evaluating an \code{if} statement at the Cesium prompt.
 
-\subsection{The ``if..else'' statement}
+\subsection{The \textbf{if}..\textbf{else} statement}
 
-The \code{if.. else} statement executes the statements in one of two branches, depending on a given
+The \code{if..else} statement executes the statements in one of two branches, depending on a given
 condition.
 
-Here is an example of code fragment incorporating an \code{if} statement:
+Here is an example of code fragment incorporating an \code{if..else} statement:
 
 \begin{lstlisting}
 i = 1
@@ -472,8 +475,8 @@ else
 end
 \end{lstlisting}
 
-Note that the branch of an \code{if} statement does not define a new lexical scope. Thus
-variables defined inside the \code{if} statement also exist outside it.
+Note that a branch of an \code{if..else} statement does not define a new lexical scope. Thus
+variables defined inside the \code{if..else} statement also exist outside it.
 
 As with the \code{if} statement and \code{if} expression, the condition can be followed by the keyword
 \code{then}, and if each branch only contains a single simple statement, then the entire thing can
@@ -511,7 +514,7 @@ end
 In this example, the \code{if} expression will have the value \code{4} because the first branch is 
 taken and the final expression in that branch is \code{i + j}, which has the value \code{4}.
 
-\subsection{The ``while'' statement}
+\subsection{The \textbf{while} statement}
 
 A simple loop in Cesium can be obtained with the \code{while} statement. It continues to execute its
 body in a loop so long as a given condition is true.
@@ -541,12 +544,15 @@ while i < 1000000
 end
 \end{lstlisting}
 
+The body of a \code{while} statement does not define a new lexical scope. Thus variables defined 
+inside the \code{while} statement also exist outside it.
+
 A \code{while} statement does not return a value, and so \code{none} is printed if one is evaluated
 at the Cesium prompt.
 
 \section{User defined types}
 
-\subsection{The ``type'' declaration}
+\subsection{The \textbf{type} declaration}
 
 Just as a tuple is an anonymous type in Cesium, the user can define types with names using the
 \code{type} statement.
