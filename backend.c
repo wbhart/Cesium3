@@ -1209,9 +1209,9 @@ void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
        || type == t_uint32 || type == t_uint64)
       printf("%luu", (unsigned long) LLVMGenericValueToInt(gen_val, 0));
    else if (type == t_double)
-      printf("%lf", (double) LLVMGenericValueToFloat(LLVMDoubleType(), gen_val));
+      printf("%lg", (double) LLVMGenericValueToFloat(LLVMDoubleType(), gen_val));
    else if (type == t_float)
-      printf("%ff", (float) LLVMGenericValueToFloat(LLVMFloatType(), gen_val));
+      printf("%gf", (float) LLVMGenericValueToFloat(LLVMFloatType(), gen_val));
    else if (type == t_char)
    {
       char c = (char) LLVMGenericValueToInt(gen_val, 0);

@@ -37,6 +37,9 @@ backend.o: backend.c $(HEADERS)
 parser.c: greg parser.leg
 	greg-0.4.3/greg -o parser.c parser.leg
 
+doc:
+	pdflatex --output-format=pdf -output-directory doc doc/cesium.tex
+
 greg:
 	$(MAKE) -C greg-0.4.3
 
@@ -47,3 +50,4 @@ clean:
 	rm -f greg-0.4.3/greg
 	rm -f parser.c
 
+.PHONY: doc clean 
