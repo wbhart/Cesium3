@@ -60,6 +60,7 @@
   morekeywords={none,int8,int16,int32,int64,int},
   morekeywords={uint8,uint16,uint32,uint64},
   morekeywords={uint,char,string,double,float},
+  morekeywords={true,false,bool},
   morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64,f,e,E},
   morecomment=[s]{/*\ }{*/},        
   morecomment=[s]{/**}{*/},
@@ -287,6 +288,24 @@ Here are some example expressions using the arithmetic operators:
 11 % 3
 \end{lstlisting}
 
+\subsection{Binary relational operators}
 
+A binary relational operator takes two values, performs some comparison on them and then returns
+a \code{bool} depending on the result of the comparison.
+
+The relational operators available in Cesium are \code{<}, \code{>}, \code{<=}, \code{>=}, 
+\code{==} and \code{!=}.
+
+Here are some expression using these operators:
+
+\begin{lstlisting}
+1 < 2
+12.1 >= 15.0
+7 != 7
+4i8 == 4i8
+\end{lstlisting}
+
+Each of them returns either \code{true} or \code{false} depending on whether the stated relation
+holds or not.
 
 \end{document}
