@@ -61,7 +61,7 @@
   morekeywords={uint8,uint16,uint32,uint64},
   morekeywords={uint,char,string,double,float},
   morekeywords={true,false,bool},
-  morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64,f,e,E},
+  morekeywords={u,i8,i16,i32,i64,u8,u16,u32,u64,f,e,E},
   morecomment=[s]{/*\ }{*/},        
   morecomment=[s]{/**}{*/},
   sensitive=true,
@@ -371,12 +371,12 @@ and its value can be used or changed anywhere after that point.
 \subsection{Tuple assignment}
 
 Sometimes it is convenient to be able to assign a whole lot of values at once. This can be done
-with tuple assignment. For example, the following code defines variables \code{i}, \code{j} and 
-\code{k} (if they don't already exist), and assigns the values \code{0}, \code{1} and 
+with tuple assignment. For example, the following code defines variables \code{a}, \code{b} and 
+\code{c} (if they don't already exist), and assigns the values \code{0}, \code{1} and 
 \code{"string"}, respectively, to them:
 
 \begin{lstlisting}
-(i, j, k) = (0, 1, "string")
+(a, b, c) = (0, 1, "string")
 \end{lstlisting}
 
 Note that tuple assignment is done efficiently by the compiler without actually creating a tuple.
