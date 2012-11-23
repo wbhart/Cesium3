@@ -61,7 +61,7 @@
   morekeywords={uint8,uint16,uint32,uint64},
   morekeywords={uint,char,string,double,float},
   morekeywords={true,false,bool},
-  morekeywords={u,i8,i16,i32,i64,u8,u16,u32,u64,f,e,E},
+  morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64,f,e,E},
   morecomment=[s]{/*\ }{*/},        
   morecomment=[s]{/**}{*/},
   sensitive=true,
@@ -114,7 +114,7 @@ When the interpreter starts, a prompt is displayed ready to accept Cesium code.
 If you type an expression and press enter, Cesium immediately executes the expression and a return 
 value is displayed. If there is no return value, \code{none} is printed.
 
-Note that end-of-lines are significant in Cesium. In many cases they can be elided by addition of
+Note that end-of-lines are significant in Cesium. In some cases they can be replaced with
 certain keywords. However, in general, statements must finish with an end-of-line.
 
 \section{Code comments}
@@ -154,7 +154,7 @@ Integers with no suffix are signed and either 32 or 64 bits, depending on whethe
 Integers which are unsigned are given the suffix \code{u}. 
 
 The other suffixes, e.g. \code{i8}, \code{u32}, etc., specify whether the number is signed
-(with a \code{i}) or unsigned (with a \code{u}) and how many bits the type is. The valid 
+(with an \code{i}) or unsigned (with a \code{u}) and how many bits the type is. The valid 
 numbers of bits are \code{8, 16, 32, 64}.
 
 For example, the literal \code{109i8} is the integer \code{109} stored as a signed 8 bit 
@@ -359,10 +359,10 @@ first assigned a value.
 Here are some examples of assignment:
 
 \begin{lstlisting}
-i = 1
+s = 1
 mytup = (1, 'c', "string")
-v = i + 1
-s = if 1 < 2 then 3 else 4 end
+v = s + 1
+t = if s < 2 then 3 else 4 end
 \end{lstlisting}
 
 If a variable is defined at the top level (at the Cesium prompt), it is called a global variable
@@ -435,11 +435,11 @@ The \code{if} statement executes a series of statements if a given condition is 
 Here is an example of code fragment incorporating an \code{if} statement:
 
 \begin{lstlisting}
-i = 1
-j = 2
-if i < 2
-   j = j + 1
-   i = j + 3
+s = 1
+t = 2
+if s < 2
+   t = t + 1
+   s = t + 3
 end
 \end{lstlisting}
 
@@ -447,8 +447,8 @@ As with an \code{if} expression, the condition can be followed by the keyword \c
 the code that is to be executed is a simple statement, the entire thing can be written on one line:
 
 \begin{lstlisting}
-i = 1
-if i < 2 then i = 3 end
+s = 1
+if s < 2 then s = 3 end
 \end{lstlisting}
 
 The branch of an \code{if} statement does not define a new lexical scope. Thus variables defined 
@@ -465,13 +465,13 @@ condition.
 Here is an example of code fragment incorporating an \code{if..else} statement:
 
 \begin{lstlisting}
-i = 1
-j = 2
-if i < 2
-   j = j + 1
-   i = j + 3
+s = 1
+t = 2
+if s < 2
+   t = t + 1
+   s = t + 3
 else
-   i = 4
+   s = 4
 end
 \end{lstlisting}
 
@@ -483,8 +483,8 @@ As with the \code{if} statement and \code{if} expression, the condition can be f
 be written on one line:
 
 \begin{lstlisting}
-i = 1
-if i < 2 then i = 3 else i = 4 end
+s = 1
+if s < 2 then s = 3 else s = 4 end
 \end{lstlisting}
 
 No value is returned by an \code{if..else} statement, and so \code{none} will be printed after
@@ -500,19 +500,19 @@ type is the same as that of the two expressions.
 Here is an example of a multi-line \code{if} expression.
 
 \begin{lstlisting}
-i = 1
-j = 2
-if i < 2
-   j = j + 1
-   i + j
+s = 1
+t = 2
+if s < 2
+   t = t + 1
+   s + t
 else
-   i = 4
+   s = 4
    7
 end
 \end{lstlisting}
 
 In this example, the \code{if} expression will have the value \code{4} because the first branch is 
-taken and the final expression in that branch is \code{i + j}, which has the value \code{4}.
+taken and the final expression in that branch is \code{s + t}, which has the value \code{4}.
 
 \subsection{The \textit{while} statement}
 
@@ -522,11 +522,11 @@ body in a loop so long as a given condition is true.
 Here is a simple example of a \code{while} loop:
 
 \begin{lstlisting}
-i = 0
+c = 0
 s = 0
-while i < 1000000 do
-   s = s + i
-   i = i + 1
+while c < 1000000 do
+   s = s + c
+   c = c + 1
 end
 \end{lstlisting}
 
@@ -536,11 +536,11 @@ written on a single line.
 In the multiline version, the \code{do} keyword can be elided. Thus the example above can be written:
 
 \begin{lstlisting}
-i = 0
+c = 0
 s = 0
-while i < 1000000
-   s = s + i
-   i = i + 1
+while c < 1000000
+   s = s + c
+   c = c + 1
 end
 \end{lstlisting}
 
