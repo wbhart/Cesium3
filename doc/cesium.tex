@@ -456,8 +456,8 @@ evaluating an \code{if} statement at the Cesium prompt.
 
 \subsection{The ``if..else'' statement}
 
-The \code{if.. else} statement has identical syntax to the \code{if} expression, the distinction being
-that in the latter case, the final statement in each branch is an expression rather than a statement.
+The \code{if.. else} statement executes the statements in one of two branches, depending on a given
+condition.
 
 Here is an example of code fragment incorporating an \code{if} statement:
 
@@ -485,8 +485,8 @@ No value is returned by an \code{if..else} statement, and so \code{none} will be
 evaluating an \code{if..else} statement at the Cesium prompt.
 
 Recall that an \code{if..else} statement whose branches both end in expressions (which must be of 
-the same type) is called an \code{if} expression. It does return a value, whose type is the same
-as that of the two expressions. 
+the same type) is called an \code{if} expression. An \code{if} expression does return a value, whose 
+type is the same as that of the two expressions. 
 
 Here is an example of a multi-line \code{if} expression.
 
@@ -502,7 +502,7 @@ else
 end
 \end{lstlisting}
 
-In this example, the expression will have the value \code{4} because the first branch is taken
-and the final expression in that branch has the value \code{4}.
+In this example, the \code{if} expression will have the value \code{4} because the first branch is 
+taken and the final expression in that branch is \code{i + j}, which has the value \code{4}.
 
 \end{document}
