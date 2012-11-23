@@ -371,14 +371,13 @@ and its value can be used or changed anywhere after that point.
 \subsection{Tuple assignment}
 
 Sometimes it is convenient to be able to assign a whole lot of values at once. This can be done
-with tuple assignment. For example:
+with tuple assignment. For example, the following code defines variables \code{i}, \code{j} and 
+\code{k} (if they don't already exist), and assigns the values \code{0}, \code{1} and 
+\code{"string"}, respectively, to them:
 
 \begin{lstlisting}
 (i, j, k) = (0, 1, "string")
 \end{lstlisting}
-
-defines variables \code{i}, \code{j} and \code{k} (if they don't already exist), and assigns the
-values \code{0}, \code{1} and \code{"string"}, respectively, to them.
 
 Note that tuple assignment is done efficiently by the compiler without actually creating a tuple.
 It's simply syntactic sugar for multiple assignment.
@@ -400,7 +399,7 @@ We can extract the three values in the tuple \code{t} as follows:
 (a, b, c) = t
 \end{lstlisting}
 
-Now \code{a} will have the value \code{0}, \code{b} the value \code{1} and \code{c} the value 
+Now, \code{a} will have the value \code{0}, \code{b} the value \code{1} and \code{c} the value 
 \code{"string"}.
 
 Of course, the compiler does not actually create a tuple on the left hand side. It merely assigns
