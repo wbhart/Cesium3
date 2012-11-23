@@ -331,12 +331,14 @@ end
 \end{lstlisting}
 
 This format also allows for additional lines of code to be inserted in each branch (see
-\code{if} statements later in the documentation for examples). However, the (final) expressions
-in each branch are restricted to having the same type, which then becomes the type of the entire 
-\code{if} expression. Thus, for example, the type of the \code{if} expression in the above 
-example is \code{int}.
+\code{if} statements later in the documentation for examples). 
 
-For convenience, the \code{then} keyword may be elided in the multiline version:
+The expressions in each branch of an \code{if} expression must have the same type. This then 
+becomes the type of the entire expression. Thus, for example, the type of the \code{if} 
+expression in the above example is \code{int}.
+
+For convenience, the \code{then} keyword may be elided in the multiline version of an \code{if}
+expression:
 
 \begin{lstlisting}
 if 1 < 2
