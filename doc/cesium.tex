@@ -266,4 +266,27 @@ later.
 The type of a tuple value is given by a tuple of types, e.g. the tuple \code{(1, 'c', "string")}
 has type \code{(int, char, string)}.
 
+\subsection{Binary arithmetic operators}
+
+To perform computations with values, one has the binary arithmetic operators \code{+}, \code{-},
+\code{*}, \code{/} and \code{%}, representing binary addition, subtraction, multiplication,
+division and remainder, respectively. 
+
+These operators are defined for each of the integer and floating point types. 
+
+The ordinary mathematics rules for operator precedence and associativity apply. But to evaluate
+in a different order, one can group using parentheses.
+
+Here are some example expressions using the arithmetic operators:
+
+\begin{lstlisting}
+1 + 2
+1 - 2*3 - (4 - 7*6)
+2.3 / 4.0
+12.7 % 1.2
+11 % 3
+\end{lstlisting}
+
+
+
 \end{document}
