@@ -348,4 +348,80 @@ else
 end
 \end{lstlisting}
 
+\section{Variables and assignment}
+
+\subsection{Global variables}
+
+To define a variable in Cesium, one uses an assignment to assign a given value to that variable.
+It is not necessary to declare variables in advance. They begin to exist at the moment they are
+first assigned a value.
+
+Here are some examples of assignment:
+
+\begin{lstlisting}
+i = 1
+mytup = (1, 'c', "string")
+v = i + 1
+s = if 1 < 2 then 3 else 4 end
+\end{lstlisting}
+
+If a variable is defined at the top level (at the Cesium prompt), it is called a global variable
+and its value can be used or changed anywhere after that point.
+
+\subsection{Tuple assignment}
+
+Sometimes it is convenient to be able to assign a whole lot of values at once. This can be done
+with tuple assignment. For example:
+
+\begin{lstlisting}
+(i, j, k) = (0, 1, "string")
+\end{lstlisting}
+
+defines variables \code{i}, \code{j} and \code{k} (if they don't already exist), and assigns the
+values \code{0}, \code{1} and \code{"string"}, respectively, to them.
+
+Note that tuple assignment is done efficiently by the compiler without actually creating a tuple.
+It's simply syntactic sugar for multiple assignment.
+
+\subsection{Tuple unpacking}
+
+Sometimes one has a value which is a tuple and one wants to extract the values individually. This
+is called tuple unpacking. 
+
+For example, suppose that, at some point in our code, we have:
+
+\begin{lstlisting}
+t = (0, 1, "string")
+\end{lstlisting}
+
+We can extract the three values in the tuple \code{t} as follows:
+
+\begin{lstlisting}
+(a, b, c) = t
+\end{lstlisting}
+
+Now \code{a} will have the value \code{0}, \code{b} the value \code{1} and \code{c} the value 
+\code{"string"}.
+
+Of course, the compiler does not actually create a tuple on the left hand side. It merely assigns
+the three values from inside the tuple to the given variables.
+
+Tuple assignment and unpacking can be combined, e.g.
+
+\begin{lstlisting}
+(a, b, (c, d)) = (1, 2, (3, 4))
+\end{lstlisting}
+
+Here tuple assignment is used to assign the values of \code{a} and \code{b} without creating a
+tuple. Then the tuple \code{(3, 4)} is created and unpacked using tuple unpacking into \code{c}
+and \code{d}. 
+
+The compiler could optimise this case further by not creating the tuple \code{(3, 4)} and simply
+assigning the values directly to \code{c} and \code{d}. However, this is not important as the
+code above could also be written as follows, achieving the same thing efficiently:
+
+\begin{lstlisting}
+(a, b, c, d) = (1, 2, 3, 4)
+\end{lstlisting}
+
 \end{document}
