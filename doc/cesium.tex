@@ -228,4 +228,36 @@ To include a double quotation mark in a string, it must be escaped with a backsl
 "this \"string\" contains double quotes"
 \end{lstlisting}
 
+\section{Expressions}
+
+When an expression is entered at the Cesium prompt, it immediately evaluates the 
+expression and prints the result. For example, typing the expression \code{1 + 1} at
+the prompt results in the value \code{2}.
+
+We now discuss the various ways of constructing expressions in Cesium.
+
+\subsection{Tuples}
+
+A tuple of values can be entered by separating the individual expressions by commas and
+wrapping in parentheses. Note that a tuple with only one entry must have a comma before
+the final parenthesis to distinguish it from a set of parentheses around an expression
+which are acting as a grouping rather than as a tuple constructor.
+
+Here are some examples of tuples expressions:
+
+\begin{lstlisting}
+(1, 2, 3)
+(0,)
+(3, 'c', "string", (2.3, 1.1f, 3u8))
+\end{lstlisting}
+
+A tuple can be thought of as an anonymous data type in Cesium. It can contain inhomogeneous
+data, i.e. the types of the expressions in the tuple do not need to be the same. This is 
+different to arrays, which must have homogeneous data. However, unlike arrays, tuples cannot 
+be accessed by index. To extract values from a tuple, one needs to use tuple unpacking, described 
+later.
+
+The type of a tuple value is given by a tuple of types, e.g. the tuple \code{(1, 'c', "string")}
+has type \code{(int, char, string)}.
+
 \end{document}
