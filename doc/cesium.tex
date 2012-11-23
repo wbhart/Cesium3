@@ -472,6 +472,9 @@ else
 end
 \end{lstlisting}
 
+Note that the branch of an \code{if} statement does not define a new lexical scope. Thus
+variables defined inside the \code{if} statement also exist outside it.
+
 As with the \code{if} statement and \code{if} expression, the condition can be followed by the keyword
 \code{then}, and if each branch only contains a single simple statement, then the entire thing can
 be written on one line:
@@ -483,6 +486,9 @@ if i < 2 then i = 3 else i = 4 end
 
 No value is returned by an \code{if..else} statement, and so \code{none} will be printed after
 evaluating an \code{if..else} statement at the Cesium prompt.
+
+Note that the branches of an \code{if..else} statement do not define a new lexical scope. Thus
+variables defined inside a branch of an \code{if..else} statement also exist outside the statement.
 
 Recall that an \code{if..else} statement whose branches both end in expressions (which must be of 
 the same type) is called an \code{if} expression. An \code{if} expression does return a value, whose 
@@ -504,5 +510,38 @@ end
 
 In this example, the \code{if} expression will have the value \code{4} because the first branch is 
 taken and the final expression in that branch is \code{i + j}, which has the value \code{4}.
+
+\subsection{The ``while'' statement}
+
+A simple loop in Cesium can be obtained with the \code{while} statement. It continues to execute its
+body in a loop so long as a given condition is true.
+
+Here is a simple example of a \code{while} loop:
+
+\begin{lstlisting}
+i = 0
+s = 0
+while i < 1000000 do
+   s = s + i
+   i = i + 1
+end
+\end{lstlisting}
+
+If there is only a single simple expression in the body of a while loop, the entire thing can be
+written on a single line. 
+
+In the multiline version, the \code{do} keyword can be elided. Thus the example above can be written:
+
+\begin{lstlisting}
+i = 0
+s = 0
+while i < 1000000
+   s = s + i
+   i = i + 1
+end
+\end{lstlisting}
+
+A \code{while} statement does not return a value, and so \code{none} is printed if one is evaluated
+at the Cesium prompt.
 
 \end{document}
