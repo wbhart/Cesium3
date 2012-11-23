@@ -57,7 +57,7 @@
 \lstdefinelanguage{cesium}
 { 
   morekeywords={while,do,if,then,else,end,type},
-  morekeywords={int8,int16,int32,int64,int},
+  morekeywords={none,int8,int16,int32,int64,int},
   morekeywords={uint8,uint16,uint32,uint64},
   morekeywords={uint,char,string,double,float},
   morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64},
@@ -95,7 +95,8 @@ when run in interactive mode. The language is polymorphic, statically typed (wit
 imperative in style, with some functional features.
 
 The language fills a niche between Python and C. Python is not terribly performant, but has a very
-simple and flexible syntax. C is fiddly and low level, but very fast. 
+simple and flexible syntax. C is fiddly and low level, statically compiled and not interactive, but very 
+fast. 
 
 Cesium is inspired by Julia, but is more suited to computer algebra, rather than numerical tasks.
 Of course Cesium can be used as a general purpose language, but design decisions are influenced by the
@@ -140,5 +141,12 @@ numbers of bits are \code{8, 16, 32, 64}.
 
 For example, the literal \code{109i8} is the integer \code{109} stored as a signed 8 bit 
 value.
+
+The suffixes are necessary in Cesium because it uses type inference to infer the type of a
+value from the value itself. In the case of numbers this is not possible without the extra 
+annotation. 
+
+In practice, only unannotated types are required unless one has some specific bit fiddling 
+to do or if one is interfacing with a C program which makes use of specific types.
 
 \end{document}

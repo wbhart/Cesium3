@@ -1201,7 +1201,7 @@ void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
    int i, res;
    
    if (type == t_nil)
-      printf("None");
+      printf("none");
    else if (type == t_int || type == t_int8 || type == t_int16
        || type == t_int32 || type == t_int64)
       printf("%ld", (long) LLVMGenericValueToInt(gen_val, 1));
