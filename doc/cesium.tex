@@ -308,4 +308,42 @@ Here are some expression using these operators:
 Each of them returns either \code{true} or \code{false} depending on whether the stated relation
 holds or not.
 
+\subsection{Ternary ``if'' expressions}
+
+An \code{if} expression in Cesium is an expression which takes one of two values, depending on the
+outcome of a comparison. It is best illustrated with an example:
+
+\begin{lstlisting}
+if 1 < 2 then 3 else 4 end
+\end{lstlisting}
+
+This expression has the value \code{3} if \code{1 < 2}, otherwise it has the value \code{4}.
+
+There is no requirement that an \code{if} expression must be all on one line. For example,
+the following is equivalent to the above.
+
+\begin{lstlisting}
+if 1 < 2 then 
+  3 
+else 
+  4 
+end
+\end{lstlisting}
+
+This format also allows for additional lines of code to be inserted in each branch (see
+\code{if} statements later in the documentation for examples). However, the (final) expressions
+in each branch are restricted to having the same type, which then becomes the type of the entire 
+\code{if} expression. Thus, for example, the type of the \code{if} expression in the above 
+example is \code{int}.
+
+For convenience, the \code{then} keyword may be elided in the multiline version:
+
+\begin{lstlisting}
+if 1 < 2
+  3 
+else 
+  4 
+end
+\end{lstlisting}
+
 \end{document}
