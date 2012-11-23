@@ -423,4 +423,65 @@ code above could also be written as follows, achieving the same thing efficientl
 (a, b, c, d) = (1, 2, 3, 4)
 \end{lstlisting}
 
+\section{Control flow statements}
+
+The path through a program is directed by control flow statements. Different paths (and loops)
+are taken depending on the value of various comparisons.
+
+\subsection{The ``if'' statement}
+
+The \code{if} statement executes a series of statements if a given condition is true.
+
+Here is an example of code fragment incorporating an \code{if} statement:
+
+\begin{lstlisting}
+i = 1
+j = 2
+if i < 2
+   j = j + 1
+   i = j + 3
+end
+\end{lstlisting}
+
+As with an \code{if} expression, the condition can be followed by the keyword \code{then}, and if 
+the code that is to be executed is a simple statement, the entire thing can be written on one line:
+
+\begin{lstlisting}
+i = 1
+if i < 2 then i = 3 end
+\end{lstlisting}
+
+No value is returned by an \code{if} statement, and so \code{none} will be printed after
+evaluating an \code{if} statement at the Cesium prompt.
+
+\subsection{The ``if..else'' statement}
+
+The \code{if.. else} statement has identical syntax to the \code{if} expression, the distinction being
+that in the latter case, the final statement in each branch is an expression rather than a statement.
+
+Here is an example of code fragment incorporating an \code{if} statement:
+
+\begin{lstlisting}
+i = 1
+j = 2
+if i < 2
+   j = j + 1
+   i = j + 3
+else
+   i = 4
+end
+\end{lstlisting}
+
+As with the \code{if} statement and \code{if} expression, the condition can be followed by the keyword
+\code{then}, and if each branch only contains a single simple statement, then the entire thing can
+be written on one line:
+
+\begin{lstlisting}
+i = 1
+if i < 2 then i = 3 else i = 4 end
+\end{lstlisting}
+
+No value is returned by an \code{if..else} statement, and so \code{none} will be printed after
+evaluating an \code{if..else} statement at the Cesium prompt.
+
 \end{document}
