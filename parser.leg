@@ -28,7 +28,7 @@ static int eat_eol = 0;
 %}
 
 start         = Spacing EOL { root = NULL; }
-                 | Spacing r:Statement EOL { root = r; }
+                 | Spacing r:Statement Spacing EOL { root = r; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
 Statement     = Spacing IfElseStmt
                  | Spacing IfStmt

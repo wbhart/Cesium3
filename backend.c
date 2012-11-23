@@ -1171,7 +1171,7 @@ int print_special(char c)
       printf("'\\''");
       return 1;
    case '\"':
-      printf("'\"'");
+      printf("'\\\"'");
       return 1;
    case '\\':
       printf("'\\\\'");

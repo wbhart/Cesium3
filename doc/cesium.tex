@@ -61,6 +61,8 @@
   morekeywords={uint8,uint16,uint32,uint64},
   morekeywords={uint,char,string,double,float},
   morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64,f,e,E},
+  morecomment=[s]{/*\ }{*/},        
+  morecomment=[s]{/**}{*/},
   sensitive=true,
   morestring=[b]",
   morestring=[b]',
@@ -113,6 +115,21 @@ value is displayed. If there is no return value, \code{none} is printed.
 
 Note that end-of-lines are significant in Cesium. In many cases they can be elided by addition of
 certain keywords. However, in general, statements must finish with an end-of-line.
+
+\section{Code comments}
+
+Cesium allows you to add comments to your code, which are ignored by the parser. For example, 
+\code{/* this is a comment */}.
+
+Comments are allowed anywhere that a space is allowed.
+
+\begin{lstlisting}
+if 1 < 2 /* check if 1 is less than 2 */
+   3 /* if it is, return 3 */
+else
+   4 /* if not, return 4 */
+end /* end of if */
+\end{lstlisting}
 
 \section{Literals}
 
@@ -170,5 +187,30 @@ Here are some example floating point values:
 \end{lstlisting}
 
 For example, \code{1.4E-11f} is the single precision floating point value $1.4\times 10^{-11}$.
+
+\subsection{Character literals}
+
+Cesium has a \code{char} type for single ASCII characters. To represent a character one simply
+wraps it in single quote marks.
+
+\begin{lstlisting}
+'c'
+'s'
+','
+' '
+\end{lstlisting}
+
+Some special characters are also available. These characters all begin with a backslash:
+
+\begin{lstlisting}
+'\n' /* new line */
+'\r' /* carriage return */
+'\t' /* tab */
+'\0' /* null character */
+'\\' /* backslash */
+'\"' /* double quotes */
+'\'' /* single quotes */
+\end{lstlisting}
+
 
 \end{document}
