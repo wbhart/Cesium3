@@ -585,12 +585,14 @@ type mytype2
 end
 \end{lstlisting}
 
+The advantage of a \code{type} declaration over a tuple is that the fields inside the type
+can be referred to by name (see the dot operator below). 
+
 \subsection{Default constructors}
 
 Once a new type has been defined using a \code{type} statement, Cesium automatically creates a
-default constructor for the type of the same name. This is a function which takes a set of values
-as parameters and returns a value of the newly defined type with those values in the respective
-fields of the type.
+default constructor for the type of the same name. A constructor is a function which takes a set of 
+values as parameters and returns an instance of the newly defined type with those values inside.
 
 For example, the \code{blah} type declaration above automatically creates a \code{blah} function
 which can be called as follows:
@@ -600,5 +602,50 @@ v = blah(1, 2.3, (2, 's', "hello"))
 \end{lstlisting}
 
 The value \code{v} now has type \code{blah} with the given data inside it.
+
+\subsection{The dot operator}
+
+Given a value whose type is user defined using a \code{type} statement, the individual fields of
+the value can be accessed by name using the dot operator.
+
+For example, to access the field \code{c} of the value \code{v} of type \code{blah} in the above
+examples, we use the expression \code{v.c}.
+
+Here are some examples of this:
+
+\begin{lstlisting}
+type circle
+   x : int
+   y : int
+   radius : int
+end
+
+c = circle(20, 20, 10)
+m1 = c.radius + c.x
+
+c.x = 40
+\end{lstlisting}
+
+In the expression \code{m1}, we initially have that \code{c.x} has the value \code{20}. This value is
+then used in the expression for \code{m1} before it is subsequently changed to \code{40}.  
+
+Note that when a value of user defined type is assigned to another variable, the new variable points
+to the same actual data. Thus modifying the fields of the second variable modifies the value of the 
+original. 
+
+For example:
+
+\begin{lstlisting}
+type t1
+   x : int
+end
+
+c = t1(20)
+d = c
+d.x = 40
+\end{lstlisting}
+
+In this example, \code{c.x} starts with the value \code{20}. But \code{d.x} aliases the same data
+and thus the final value of \code{c.x} is \code{40}.
 
 \end{document}
