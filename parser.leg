@@ -184,7 +184,7 @@ UInt64        = < ( [1-9] [0-9]* | '0' ) > 'u64' Spacing
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_UINT64, sym);
               }
-Char          = ( ['] < ![\\'"] . > ['] )
+Char          = ( ['] < ![\\'"] . > ['] ) Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_CHAR, sym);
