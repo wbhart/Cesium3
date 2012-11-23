@@ -425,8 +425,8 @@ code above could also be written as follows, achieving the same thing efficientl
 
 \section{Control flow statements}
 
-The path through a program is directed by control flow statements. Different paths (and loops)
-are taken depending on the value of various comparisons.
+The path through a program is directed by control flow statements. We now discuss the various 
+control flow statements available in Cesium.
 
 \subsection{The ``if'' statement}
 
@@ -483,5 +483,26 @@ if i < 2 then i = 3 else i = 4 end
 
 No value is returned by an \code{if..else} statement, and so \code{none} will be printed after
 evaluating an \code{if..else} statement at the Cesium prompt.
+
+Recall that an \code{if..else} statement whose branches both end in expressions (which must be of 
+the same type) is called an \code{if} expression. It does return a value, whose type is the same
+as that of the two expressions. 
+
+Here is an example of a multi-line \code{if} expression.
+
+\begin{lstlisting}
+i = 1
+j = 2
+if i < 2
+   j = j + 1
+   i + j
+else
+   i = 4
+   7
+end
+\end{lstlisting}
+
+In this example, the expression will have the value \code{4} because the first branch is taken
+and the final expression in that branch has the value \code{4}.
 
 \end{document}
