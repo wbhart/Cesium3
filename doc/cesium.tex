@@ -60,7 +60,7 @@
   morekeywords={none,int8,int16,int32,int64,int},
   morekeywords={uint8,uint16,uint32,uint64},
   morekeywords={uint,char,string,double,float},
-  morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64,f},
+  morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64,f,e},
   sensitive=true,
   morestring=[b]",
   morestring=[b]',
@@ -109,7 +109,7 @@ The Cesium interpreter is started by typing \code{./cs} at the command line.
 When the interpreter starts, a prompt is displayed ready to accept Cesium code.
 
 If you type an expression and press enter, Cesium immediately executes the expression and a return 
-value is displayed. If there is no return value, \code{None} is printed.
+value is displayed. If there is no return value, \code{none} is printed.
 
 Note that end-of-lines are significant in Cesium. In many cases they can be elided by addition of
 certain keywords. However, in general, statements must finish with an end-of-line.
