@@ -544,4 +544,46 @@ end
 A \code{while} statement does not return a value, and so \code{none} is printed if one is evaluated
 at the Cesium prompt.
 
+\section{User defined types}
+
+\subsection{The ``type'' declaration}
+
+Just as a tuple is an anonymous type in Cesium, the user can define types with names using the
+\code{type} statement.
+
+The body of a type statement contains a list of fields, each of which is given a type. Any Cesium
+or user defined type can be used for such a type declaration.
+
+Here is a simple example of declaring a new type called \code{mytype}.
+
+\begin{lstlisting}
+type mytype
+  a : int
+  b : double
+  c : (int, char, string)
+end
+\end{lstlisting}
+
+This type contains three fields, \code{a} of type \code{int}, \code{b} of type \code{double} and
+\code{c} which has the tuple type \code{(int, char, string)}.
+
+Type declarations in Cesium can refer to other user defined types, even ones which don't exist 
+yet. So long as the type is not instantiated before all the required types are defined, the compiler
+will not complain about undefined type references.
+
+Here is an example of a type referring to another type which is defined subsequently:
+
+\begin{lstlisting}
+type mytype1
+  a : int
+  b : mytype2
+end
+
+type mytype2
+  c : int
+  d : double
+end
+\end{lstlisting}
+
+
 \end{document}
