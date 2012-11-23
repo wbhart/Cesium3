@@ -554,10 +554,10 @@ Just as a tuple is an anonymous type in Cesium, the user can define types with n
 The body of a type statement contains a list of fields, each of which is given a type. Any Cesium
 or user defined type can be used for such a type declaration.
 
-Here is a simple example of declaring a new type called \code{mytype}.
+Here is a simple example of declaring a new type called \code{blah}.
 
 \begin{lstlisting}
-type mytype
+type blah
   a : int
   b : double
   c : (int, char, string)
@@ -585,5 +585,20 @@ type mytype2
 end
 \end{lstlisting}
 
+\subsection{Default constructors}
+
+Once a new type has been defined using a \code{type} statement, Cesium automatically creates a
+default constructor for the type of the same name. This is a function which takes a set of values
+as parameters and returns a value of the newly defined type with those values in the respective
+fields of the type.
+
+For example, the \code{blah} type declaration above automatically creates a \code{blah} function
+which can be called as follows:
+
+\begin{lstlisting}
+v = blah(1, 2.3, (2, 's', "hello"))
+\end{lstlisting}
+
+The value \code{v} now has type \code{blah} with the given data inside it.
 
 \end{document}
