@@ -26,15 +26,20 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "inference.h"
 
-int final_expression(ast_t * a)
+/*
+   Determine whether the ast node corresponds to an expression 
+   or statement
+   Switch if statements to expressions if necessary
+*/
+int ast_expression(ast_t * a)
 {
    ast_t * s;
    
    switch (a->tag)
    {
    case T_IF_ELSE_STMT:
-      if (final_expression(a->child->next)
-       && final_expression(a->child->next->next))
+      if (ast_expression(a->child->next)
+       && ast_expression(a->child->next->next))
       {
          a->tag = T_IF_ELSE_EXPR;
          return 1;
@@ -46,7 +51,7 @@ int final_expression(ast_t * a)
       s = a->child;
       while (s->next != NULL)
          s = s->next;
-      return final_expression(s);
+      return ast_expression(s);
    case T_ASSIGN:
    case T_TUPLE_ASSIGN:
    case T_SLOT_ASSIGN:
@@ -76,10 +81,14 @@ int final_expression(ast_t * a)
    case T_SLOT:
       return 1;
    default:
-      exception("Unknown AST tag in final_expression\n");
+      exception("Unknown AST tag in ast_expression\n");
    }
 }
 
+/*
+   Annotate AST node for the left hand side of an assignment
+   given the type being assigned on the RHS
+*/
 void assign_inference1(ast_t * a, type_t * b)
 {
     int i, j;
@@ -129,6 +138,9 @@ void assign_inference1(ast_t * a, type_t * b)
        exception("Invalid L-value in assignment\n");
 }
 
+/*
+   Resolve unresolved type
+*/
 type_t * resolve_inference1(type_t * t)
 {
    int i;
@@ -170,6 +182,126 @@ type_t * resolve_inference1(type_t * t)
    }
 }
 
+/* 
+   count the nodes in an AST list
+*/
+int ast_count(ast_t * a)
+{
+   int i = 0;
+
+   while (a != NULL)
+   {
+      a = a->next;
+      i++;
+   }
+
+   return i;   
+}
+
+/* 
+   do inference1 for each node of an AST list
+   and return the type of the final node
+*/
+type_t * list_inference1(ast_t * a)
+{
+   int i = 0;
+
+   if (a == NULL)
+      return t_nil;
+
+   while (a->next != NULL)
+   {
+      inference1(a);
+      a = a->next;
+      i++;
+   }
+   inference1(a);
+      
+   return a->type;
+}
+
+/*
+   Assign args array to types of AST nodes in list
+*/
+int assign_args(type_t ** args, ast_t * a)
+{
+   int i = 0;
+
+   while (a != NULL)
+   {
+      args[i] = a->type;
+      a = a->next;
+      i++;
+   }
+
+   return i;
+}
+
+/*
+   Assign args array to syms of children of AST nodes in list
+*/
+int assign_syms(sym_t ** args, ast_t * a)
+{
+   int i = 0;
+
+   while (a != NULL)
+   {
+      args[i] = a->child->sym;
+      a = a->next;
+      i++;
+   }
+
+   return i;
+}
+
+/*
+   Find prototype in generic type function list
+*/
+type_t * find_prototype(type_t * gen, ast_t * a)
+{
+   int i, j;
+
+   for (i = 0; i < gen->arity; i++)
+   {
+      type_t * fn = gen->args[i];
+      ast_t * a2 = a;
+
+      int c = ast_count(a);
+
+      if (fn->arity == c)
+      {
+         for (j = 0; j < c; j++)
+         {
+            if (fn->args[j] != a2->type)
+               break;
+            a2 = a2->next;
+         }
+
+         if (j == c)
+            return fn->ret;
+      }
+   }
+   
+   return NULL; /* didn't find an op with that prototype */
+}
+     
+/*
+   Find the index of a slot in a data type by symbol name
+*/
+int find_slot(type_t * t, sym_t * sym)
+{
+   int i;
+   
+   for (i = 0; i < t->arity; i++)
+      if (t->slots[i] == sym)
+         break;
+
+   return i;
+}
+  
+/*
+   Annotate an AST with known types
+*/
 void inference1(ast_t * a)
 {
    bind_t * bind;
@@ -231,40 +363,18 @@ void inference1(ast_t * a)
       break;
    case T_TUPLE:
       a1 = a->child;
-      i = 0;
-      while (a1 != NULL)
-      {
-         inference1(a1);
-         a1 = a1->next;
-         i++;
-      }
+      list_inference1(a1);
+      i = ast_count(a1);
       args = GC_MALLOC(i*sizeof(type_t *));
-      i = 0;
-      a1 = a->child;
-      while (a1 != NULL)
-      {
-         args[i] = a1->type;
-         a1 = a1->next;
-         i++;
-      }
+      assign_args(args, a1);
       a->type = tuple_type(i, args);
       break;
    case T_BINOP:
       inference1(a->child);
       inference1(a->child->next);
       bind = find_symbol(a->sym);
-      t1 = bind->type;
-      for (i = 0; i < t1->arity; i++)
-      {
-         t2 = t1->args[i];
-         if (t2->args[0] == a->child->type
-          && t2->args[1] == a->child->next->type)
-         {
-            a->type = t2->ret;
-            break;
-         }
-      }
-      if (i == t1->arity) /* didn't find an op with that prototype */
+      a->type = find_prototype(bind->type, a->child);
+      if (!a->type) /* didn't find an op with that prototype */
       {
          printf("Operator %s(", a->sym->name), type_print(a->child->type),
             printf(", "), type_print(a->child->next->type);
@@ -274,27 +384,13 @@ void inference1(ast_t * a)
    case T_BLOCK:
       scope_up();
       a->env = current_scope;
-      a1 = a->child;
-      while (a1->next != NULL)
-      {
-         inference1(a1);
-         a1 = a1->next;
-      }
-      inference1(a1);
-      a->type = a1->type;
+      a->type = list_inference1(a->child);
       scope_down();
       break;
    case T_THEN:
    case T_ELSE:
    case T_DO:
-      a1 = a->child;
-      while (a1->next != NULL)
-      {
-         inference1(a1);
-         a1 = a1->next;
-      }
-      inference1(a1);
-      a->type = a1->type;
+      a->type = list_inference1(a->child);
       break;
    case T_IF_ELSE_EXPR:
       a1 = a->child;
@@ -354,22 +450,12 @@ void inference1(ast_t * a)
       a->type = a2->type;
       break;
    case T_TYPE_BODY:
-      a1 = a->child;
-      while (a1 != NULL)
-      {
-         inference1(a1);
-         a1 = a1->next;
-      }
+      list_inference1(a->child);
       break;
    case T_TYPE_STMT:
       a1 = a->child;
       a2 = a1->next->child;
-      i = 0;
-      while (a2 != NULL)
-      {
-         a2 = a2->next;
-         i++;
-      }
+      i = ast_count(a2);
       args = GC_MALLOC(i*sizeof(type_t *));
       slots = GC_MALLOC(i*sizeof(sym_t *));
       t1 = data_type(i, args, a1->sym, slots, 0, NULL);
@@ -379,15 +465,9 @@ void inference1(ast_t * a)
       t2 = typeconstr_type(a1->sym, t1, 1, fns);
       bind = bind_symbol(a1->sym, t2, NULL);
       inference1(a1->next);
-      i = 0;
-      a2 = a1->next->child;
-      while (a2 != NULL)
-      {
-         f1->args[i] = t1->args[i] = a2->type;
-         t1->slots[i] = a2->child->sym;
-         a2 = a2->next;
-         i++;
-      }
+      assign_args(f1->args, a2);
+      assign_args(t1->args, a2);
+      assign_syms(t1->slots, a2);
       a->type = t_nil;
       break;
    case T_ASSIGN:
@@ -408,60 +488,25 @@ void inference1(ast_t * a)
       break;
    case T_TUPLE_TYPE:
       a1 = a->child;
-      i = 0;
-      while (a1 != NULL)
-      {
-         inference1(a1);
-         a1 = a1->next;
-         i++;
-      }
+      list_inference1(a1);
+      i = ast_count(a1);
       args = GC_MALLOC(i*sizeof(type_t *));
-      i = 0;
-      a1 = a->child;
-      while (a1 != NULL)
-      {
-         args[i] = a1->type;
-         a1 = a1->next;
-         i++;
-      }
+      assign_args(args, a->child);
       a->type = tuple_type(i, args);
       break;
    case T_APPL:
       a1 = a->child;
       a2 = a1->next;
-      i = 0;
-      while (a2 != NULL)
-      {
-         inference1(a2);
-         a2 = a2->next;
-         i++;
-      }
+      list_inference1(a2);
       inference1(a1);
       t1 = a1->type;
       if (t1->typ != GENERIC && t1->typ != TYPECONSTR)
          exception("Invalid function or type constructor in application\n");
-      for (j = 0; j < t1->arity; j++)
-      {
-         t2 = t1->args[j];
-         if (t2->arity == i)
-         {
-            a2 = a1->next;
-            for (k = 0; k < i; k++)
-            {
-               if (t2->args[i] != a2->type)
-                  break;
-               a2 = a2->next;
-            }
-            if (k == i)
-               break;
-         }
-      }
-      if (j != t1->arity)
+      a->type = find_prototype(t1, a2);
+      if (!a->type)
          exception("Incorrect signature in application\n");
-      t1 = t1->ret;
-      for (i = 0; i < t1->arity; i++)
-         t1->args[i] = resolve_inference1(t1->args[i]);
-      a->type = t1;
+      for (i = 0; i < a->type->arity; i++)
+         a->type->args[i] = resolve_inference1(a->type->args[i]);
       break;
    case T_LSLOT:
    case T_SLOT:
@@ -470,10 +515,8 @@ void inference1(ast_t * a)
       inference1(a1);
       t1 = a1->type;
       if (t1->typ != DATATYPE)
-         exception("Datatype not known in slot evaluation\n");
-      for (i = 0; i < t1->arity; i++)
-         if (t1->slots[i] == a2->sym)
-            break;
+         exception("Unknown data type in dot operator\n");
+      i = find_slot(t1, a2->sym);
       if (i == t1->arity)
          exception("Slot not found in slot evaluation\n");
       a->type = t1->args[i];
