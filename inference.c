@@ -117,21 +117,13 @@ void assign_inference1(ast_t * a, type_t * b)
        if (b->typ != TUPLE)
              exception("Attempt to assign non-tuple to tuple\n");
        ast_t * a1 = a->child;
-       i = 0;
-       while (a1 != NULL)
-       {
-          a1 = a1->next;
-          i++;
-       }
+       i = ast_count(a1);
        if (i != b->arity)
           exception("Incorrect number of entries in tuple assignment\n");
-       a1 = a->child;
-       i = 0;
-       while (a1 != NULL)
+       for (j = 0; j < i; j++)
        {
-          assign_inference1(a1, b->args[i]);
+          assign_inference1(a1, b->args[j]);
           a1 = a1->next;
-          i++;
        }
        a->type = b;
     } else
@@ -375,11 +367,7 @@ void inference1(ast_t * a)
       bind = find_symbol(a->sym);
       a->type = find_prototype(bind->type, a->child);
       if (!a->type) /* didn't find an op with that prototype */
-      {
-         printf("Operator %s(", a->sym->name), type_print(a->child->type),
-            printf(", "), type_print(a->child->next->type);
-         exception(") not found in inference1\n");
-      }
+         exception("Operator not found in inference1\n");
       break;
    case T_BLOCK:
       scope_up();
