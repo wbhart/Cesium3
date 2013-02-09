@@ -1,7 +1,7 @@
 INC=-I/home/wbhart/gc/include
 LIB=-L/home/wbhart/gc/lib
-OBJS=eval.o symbol.o input.o ast.o exception.o parser.o
-HEADERS=ast.h exception.h parser.h input.h symbol.h eval.h
+OBJS=vm.o eval.o symbol.o input.o ast.o exception.o parser.o
+HEADERS=ast.h exception.h parser.h input.h symbol.h eval.h vm.h
 
 calc: calc.c $(HEADERS) $(OBJS)
 	gcc -O2 -o calc calc.c $(INC) $(OBJS) $(LIB) -lgc
@@ -23,4 +23,7 @@ symbol.o: symbol.c $(HEADERS)
 
 eval.o: eval.c $(HEADERS)
 	gcc -c -O2 -o eval.o eval.c $(INC)
+
+vm.o: vm.c $(HEADERS)
+	gcc -c -O2 -o vm.o vm.c $(INC)
 

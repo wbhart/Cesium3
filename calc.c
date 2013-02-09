@@ -27,6 +27,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include "parser.h"
 #include "eval.h"
+#include "vm.h"
 
 extern jmp_buf exc;
 
@@ -35,10 +36,12 @@ int main(void)
    ast_t * a;
    input_t * in = new_input();
    int jval;
+   void ** stack, ** prog, ** opcodes, * return_val;
 
    ast_init();
    sym_tab_init();
    eval_init();
+   vm_init(&stack, &prog, &opcodes);
 
    printf("Welcome to Calc\n\n");
    printf("> ");
@@ -132,7 +135,6 @@ int main(void)
       printf("\n> ");
       in->start = 0;
       in->length = 0;
-
    }
 
    printf("\n");
