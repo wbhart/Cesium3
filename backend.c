@@ -161,6 +161,20 @@ void jit_exception(jit_t * jit, const char * msg)
 }
 
 /*
+   Serialise a string (identifier)
+*/
+char * serialise(const char * name)
+{
+   int len = strlen(name);
+   char * ser = GC_MALLOC(len + 12);
+
+   strcpy(ser, name);
+   strcpy(ser + len, serial());
+   
+   return ser;
+}
+
+/*
    Return 1 if type is atomic (i.e. contains no pointers)
 */
 int is_atomic(type_t * type)
@@ -556,7 +570,7 @@ ret_t * exec_if_else_stmt(jit_t * jit, ast_t * ast)
     ast_t * con = exp->next;
     ast_t * alt = con->next;
     
-    ret_t * exp_ret;
+    ret_t * exp_ret, * con_ret, * alt_ret;
 
     LLVMBasicBlockRef i = LLVMAppendBasicBlock(jit->function, "if");
     LLVMBasicBlockRef b1 = LLVMAppendBasicBlock(jit->function, "ifbody");
@@ -571,19 +585,27 @@ ret_t * exec_if_else_stmt(jit_t * jit, ast_t * ast)
     LLVMBuildCondBr(jit->builder, exp_ret->val, b1, b2);
     LLVMPositionBuilderAtEnd(jit->builder, b1); 
    
-    exec_ast(jit, con); /* stmt1 */
+    con_ret = exec_ast(jit, con); /* stmt1 */
     
-    LLVMBuildBr(jit->builder, e);
+    if (!con_ret->closed)
+       LLVMBuildBr(jit->builder, e);
 
     LLVMPositionBuilderAtEnd(jit->builder, b2);  
 
-    exec_ast(jit, alt); /* stmt2 */
+    alt_ret = exec_ast(jit, alt); /* stmt2 */
     
-    LLVMBuildBr(jit->builder, e);
+    if (!alt_ret->closed)
+       LLVMBuildBr(jit->builder, e);
 
-    LLVMPositionBuilderAtEnd(jit->builder, e); 
-      
-    return ret(0, NULL);
+    if (con_ret->closed && alt_ret->closed)
+    {
+       LLVMDeleteBasicBlock(e);
+       return ret(1, NULL);
+    } else
+    {
+       LLVMPositionBuilderAtEnd(jit->builder, e); 
+       return ret(0, NULL);
+    }
 }
 
 /*
@@ -594,7 +616,7 @@ ret_t * exec_if_stmt(jit_t * jit, ast_t * ast)
     ast_t * exp = ast->child;
     ast_t * con = exp->next;
     
-    ret_t * exp_ret;
+    ret_t * exp_ret, * con_ret;
 
     LLVMBasicBlockRef i = LLVMAppendBasicBlock(jit->function, "if");
     LLVMBasicBlockRef b = LLVMAppendBasicBlock(jit->function, "ifbody");
@@ -608,9 +630,10 @@ ret_t * exec_if_stmt(jit_t * jit, ast_t * ast)
     LLVMBuildCondBr(jit->builder, exp_ret->val, b, e);
     LLVMPositionBuilderAtEnd(jit->builder, b); 
    
-    exec_ast(jit, con); /* stmt1 */
+    con_ret = exec_ast(jit, con); /* stmt1 */
     
-    LLVMBuildBr(jit->builder, e);
+    if (!con_ret->closed)
+       LLVMBuildBr(jit->builder, e);
 
     LLVMPositionBuilderAtEnd(jit->builder, e); 
       
@@ -651,12 +674,9 @@ ret_t * exec_while_stmt(jit_t * jit, ast_t * ast)
 
 ret_t * exec_decl(jit_t * jit, ast_t * ast)
 {
-   int len = strlen(ast->sym->name);
-   char * llvm = GC_MALLOC(len + 12);
    LLVMValueRef val;
+   char * llvm = serialise(ast->sym->name);
    
-   strcpy(llvm, ast->sym->name);
-   strcpy(llvm + len, serial());
    bind_t * bind = bind_symbol(ast->sym, ast->type, llvm);
 
    LLVMTypeRef type = type_to_llvm(jit, ast->type); /* convert to llvm type */
@@ -891,12 +911,8 @@ ret_t * exec_tuple(jit_t * jit, ast_t * ast)
 ret_t * exec_type_stmt(jit_t * jit, ast_t * ast)
 {
    sym_t * sym = ast->child->sym;
-   int len = strlen(sym->name);
-   char * llvm = GC_MALLOC(len + 12);
    bind_t * bind;
-
-   strcpy(llvm, sym->name);
-   strcpy(llvm + len, serial());
+   char * llvm = serialise(sym->name);
    
    LLVMStructCreateNamed(LLVMGetGlobalContext(), llvm);
 
@@ -951,8 +967,7 @@ ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
    LLVMValueRef fn_save;
 
    sym_t * sym = ast->child->sym;
-   int len = strlen(sym->name);
-   char * llvm = GC_MALLOC(len + 12);
+   char * llvm;
    
    env_t * scope_save;
    LLVMBuilderRef build_save;
@@ -969,8 +984,7 @@ ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
    fn_type = LLVMFunctionType(llvm_ret, args, params, 0);
     
    /* serialise function name */
-   strcpy(llvm, sym->name);
-   strcpy(llvm + len, serial());
+   llvm = serialise(sym->name);
    
    /* make llvm function object */
    fn_save = jit->function;

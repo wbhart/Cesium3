@@ -439,7 +439,6 @@ void inference1(ast_t * a)
       inference1(a2);
       inference1(a3);
       bind_symbol(sym_lookup("return"), a3->type, NULL);
-      inference1(a4);
       i = ast_count(a2->child);
       args = GC_MALLOC(i*sizeof(type_t *));
       f1 = fn_type(a3->type, i, args);
@@ -454,6 +453,9 @@ void inference1(ast_t * a)
          bind_generic(a1->sym, generic_type(1, fns));
       } else /* insert fn into existing generic */
          generic_insert(bind->type, f1);
+      current_scope = a->env;
+      inference1(a4);
+      scope_down();
       a->type = t_nil;
       break;
    case T_RETURN:
