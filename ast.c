@@ -43,6 +43,13 @@ void ast_init()
     ast_nil->tag = T_NONE;
 }
 
+ast_t * ast0(tag_t tag)
+{
+   ast_t * ast = new_ast();
+   ast->tag = tag;
+   return ast;
+}
+
 ast_t * ast1(tag_t tag, ast_t * a1)
 {
    ast_t * ast = new_ast();
@@ -161,6 +168,9 @@ void ast_print(ast_t * ast, int indent, int types)
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent, types);
+         break;
+      case T_BREAK:
+         printf("break\n");
          break;
       case T_BLOCK:
          printf("block\n");

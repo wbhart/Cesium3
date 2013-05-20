@@ -32,6 +32,7 @@ start         = Spacing r:Statement { root = r; }
 Statement     = Spacing IfElseStmt
                  | Spacing IfStmt
                  | Spacing WhileStmt
+                 | Spacing BreakStmt ';'
                  | Spacing TypeStmt
                  | Spacing FnStmt
                  | Spacing ReturnStmt ';'
@@ -67,6 +68,7 @@ IfElseExpr    = If LParen e:Expression RParen b:BlockExpr (Space | Comment)* Els
               { $$ = ast3(T_IF_ELSE_EXPR, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
 WhileStmt     = While LParen e:Expression RParen b:Block 
               { $$ = ast2(T_WHILE_STMT, e, ast1(T_DO, b)); }
+BreakStmt     = Break { $$ = ast0(T_BREAK); }
 TypeStmt      = Type i:Identifier LBrace r:TypeBody RBrace
               { $$ = ast2(T_TYPE_STMT, i, r); }
 TypeBody      = r:TypeSlot ';' Spacing s:TypeBody { r->next = s->child; $$ = ast1(T_TYPE_BODY, r); }
@@ -181,6 +183,7 @@ Comma         = ',' Spacing
 Colon         = ':' Spacing
 Dot           = '.' Spacing
 While         = 'while' Spacing
+Break         = 'break' Spacing
 If            = 'if' Spacing
 Else          = 'else' Spacing
 Type          = 'type' Spacing

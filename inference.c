@@ -333,6 +333,8 @@ void inference1(ast_t * a)
       inference1(a2);
       a->type = t_nil;
       break;
+   case T_BREAK:
+      break;
    case T_TYPENAME:
       bind = find_symbol(a->sym);
       if (!bind)

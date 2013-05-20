@@ -65,6 +65,7 @@ typedef struct jit_t
     LLVMExecutionEngineRef engine;  
     LLVMPassManagerRef pass;
     LLVMModuleRef module;
+    LLVMBasicBlockRef breakto;
 } jit_t;
 
 typedef struct ret_t

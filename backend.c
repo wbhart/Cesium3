@@ -650,6 +650,8 @@ ret_t * exec_while_stmt(jit_t * jit, ast_t * ast)
     
     ret_t * exp_ret, * con_ret;
 
+    LLVMBasicBlockRef breaksave = jit->breakto;
+
     LLVMBasicBlockRef w = LLVMAppendBasicBlock(jit->function, "while");
     LLVMBasicBlockRef b = LLVMAppendBasicBlock(jit->function, "whilebody");
     LLVMBasicBlockRef e = LLVMAppendBasicBlock(jit->function, "whileend");
@@ -662,14 +664,31 @@ ret_t * exec_while_stmt(jit_t * jit, ast_t * ast)
     LLVMBuildCondBr(jit->builder, exp_ret->val, b, e);
     LLVMPositionBuilderAtEnd(jit->builder, b); 
    
+    jit->breakto = e;
+
     con_ret = exec_ast(jit, con); /* stmt1 */
     
+    jit->breakto = breaksave;
+
     if (!con_ret->closed)
         LLVMBuildBr(jit->builder, w);
  
     LLVMPositionBuilderAtEnd(jit->builder, e); 
       
     return ret(0, NULL);
+}
+
+/*
+   Jit a break statement
+*/
+ret_t * exec_break(jit_t * jit, ast_t * ast)
+{
+    if (jit->breakto == NULL)
+        jit_exception(jit, "Attempt to break outside loop");
+
+    LLVMBuildBr(jit->builder, jit->breakto);
+         
+    return ret(1, NULL);
 }
 
 ret_t * exec_decl(jit_t * jit, ast_t * ast)
@@ -1237,6 +1256,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_if_stmt(jit, ast);
     case T_WHILE_STMT:
         return exec_while_stmt(jit, ast);
+    case T_BREAK:
+        return exec_break(jit, ast);
     case T_BLOCK:
     case T_THEN:
     case T_ELSE:

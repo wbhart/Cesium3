@@ -49,7 +49,7 @@ typedef enum
    T_FLOAT, T_CHAR, T_STRING,
    T_BINOP, T_IDENT, T_BLOCK, T_IF_ELSE_EXPR, 
    T_IF_ELSE_STMT, T_IF_STMT, T_THEN, T_ELSE, 
-   T_ASSIGN, T_WHILE_STMT, T_DO,
+   T_ASSIGN, T_WHILE_STMT, T_DO, T_BREAK,
    T_TUPLE, T_TUPLE_ASSIGN, T_TYPE_SLOT,
    T_SLOT, T_TYPE_STMT, T_TYPE_BODY, T_APPL,
    T_TUPLE_TYPE, T_TYPENAME, T_SLOT_NAME,
@@ -76,6 +76,8 @@ ast_t * new_ast();
 void ast_init();
 
 void ast_print(ast_t * ast, int indent, int types);
+
+ast_t * ast0(tag_t tag);
 
 ast_t * ast1(tag_t tag, ast_t * a1);
 
