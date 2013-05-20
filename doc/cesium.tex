@@ -57,11 +57,9 @@
 \lstdefinelanguage{cesium}
 { 
   morekeywords={while,do,if,then,else,end,type},
-  morekeywords={none,int8,int16,int32,int64,int},
-  morekeywords={uint8,uint16,uint32,uint64},
-  morekeywords={uint,char,string,double,float},
+  morekeywords={none,int,uint,char,string,double,float},
   morekeywords={true,false,bool},
-  morekeywords={i,u,i8,i16,i32,i64,u8,u16,u32,u64,f,e,E},
+  morekeywords={d,f,e,E,U,u},
   morecomment=[s]{/*\ }{*/},        
   morecomment=[s]{/**}{*/},
   sensitive=true,
@@ -142,33 +140,14 @@ Here are some examples of signed and unsigned integers in Cesium:
 
 \begin{lstlisting}
 1234
-12u8
-109i8
-278009804u
-234567i32
+1234U
+123u
 \end{lstlisting}
 
 Integers with no suffix are signed and either 32 or 64 bits, depending on whether a 32 or 
 64 bit binary of Cesium is being used.
 
-Integers which are unsigned are given the suffix \code{u}. 
-
-The other suffixes, e.g. \code{i8}, \code{u32}, etc., specify whether the number is signed
-(with an \code{i}) or unsigned (with a \code{u}) and how many bits the type is. The valid 
-numbers of bits are \code{8, 16, 32, 64}.
-
-For example, the literal \code{109i8} is the integer \code{109} stored as a signed 8 bit 
-value.
-
-The suffixes are necessary in Cesium because it uses type inference to infer the type of a
-value from the value itself. In the case of numbers this is not possible without the extra 
-annotation. 
-
-In practice, only unannotated types are required unless one has some specific bit fiddling 
-to do or if one is interfacing with a C program which makes use of specific types.
-
-The Cesium types for integer values are \code{int8}, \code{uint8}, \code{int16}, 
-\code{uint16}, etc., depending on the suffix the value has.
+Integers with the suffix \code{U} or \code{u} are unsigned 32 or 64 bit integers.
 
 \subsection{Floating point literals}
 
@@ -177,15 +156,16 @@ There are two types of floating point values in Cesium, \code{float} and \code{d
 Floating point values must have a decimal point and have an optional exponent. The exponents 
 begin with an optional sign, followed by an integer. 
 
-Without a suffix, floating point values are considered to be double precision floating point 
-values. However, if they have the suffix \code{f} they are considered to be single precision 
-floats.
+Without a suffix or with the suffix \code{d}, floating point values are considered to be double 
+precision floating point values. However, if they have the suffix \code{f} they are considered 
+to be single precision floats.
 
 Here are some example floating point values:
 
 \begin{lstlisting}
 1.0
 2.1f
+1.2d
 123.4
 1.3e+12
 1.4E-11f

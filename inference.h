@@ -37,8 +37,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  extern "C" {
 #endif
 
-int ast_expression(ast_t * a);
-
 void inference1(ast_t * a);
 
 #ifdef __cplusplus

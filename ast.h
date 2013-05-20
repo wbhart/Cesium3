@@ -45,17 +45,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef enum
 {
-   T_NONE, T_BOOL, T_INT, T_INT8, T_INT16, 
-   T_INT32, T_INT64, T_UINT, T_UINT8, T_UINT16, 
-   T_UINT32, T_UINT64, T_DOUBLE, T_FLOAT, 
-   T_CHAR, T_STRING,
+   T_NONE, T_BOOL, T_INT, T_UINT, T_DOUBLE, 
+   T_FLOAT, T_CHAR, T_STRING,
    T_BINOP, T_IDENT, T_BLOCK, T_IF_ELSE_EXPR, 
    T_IF_ELSE_STMT, T_IF_STMT, T_THEN, T_ELSE, 
    T_ASSIGN, T_WHILE_STMT, T_DO,
    T_TUPLE, T_TUPLE_ASSIGN, T_TYPE_SLOT,
    T_SLOT, T_TYPE_STMT, T_TYPE_BODY, T_APPL,
    T_TUPLE_TYPE, T_TYPENAME, T_SLOT_NAME,
-   T_SLOT_ASSIGN, T_LSLOT, T_TUPLE_UNPACK
+   T_SLOT_ASSIGN, T_LSLOT, T_TUPLE_UNPACK,
+   T_FN_STMT, T_PARAM_BODY, T_PARAM
 } tag_t;
 
 typedef struct ast_t
@@ -70,6 +69,8 @@ typedef struct ast_t
 
 extern ast_t * root;
 
+extern ast_t * ast_nil;
+
 ast_t * new_ast();
 
 void ast_init();
@@ -81,6 +82,8 @@ ast_t * ast1(tag_t tag, ast_t * a1);
 ast_t * ast2(tag_t tag, ast_t * a1, ast_t * a2);
 
 ast_t * ast3(tag_t tag, ast_t * a1, ast_t * a2, ast_t * a3);
+
+ast_t * ast4(tag_t tag, ast_t * a1, ast_t * a2, ast_t * a3, ast_t * a4);
 
 ast_t * ast_binop(sym_t * sym, ast_t * a1, ast_t * a2);
 

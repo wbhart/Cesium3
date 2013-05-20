@@ -27,65 +27,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "inference.h"
 
 /*
-   Determine whether the ast node corresponds to an expression 
-   or statement
-   Switch if statements to expressions if necessary
-*/
-int ast_expression(ast_t * a)
-{
-   ast_t * s;
-   
-   switch (a->tag)
-   {
-   case T_IF_ELSE_STMT:
-      if (ast_expression(a->child->next)
-       && ast_expression(a->child->next->next))
-      {
-         a->tag = T_IF_ELSE_EXPR;
-         return 1;
-      } else
-         return 0;
-   case T_BLOCK:
-   case T_THEN:
-   case T_ELSE:
-      s = a->child;
-      while (s->next != NULL)
-         s = s->next;
-      return ast_expression(s);
-   case T_ASSIGN:
-   case T_TUPLE_ASSIGN:
-   case T_SLOT_ASSIGN:
-   case T_IF_STMT:
-   case T_WHILE_STMT:
-   case T_TYPE_STMT:
-   case T_TUPLE_UNPACK:
-      return 0;
-   case T_INT:
-   case T_INT8:
-   case T_INT16:
-   case T_INT32:
-   case T_INT64:
-   case T_UINT:
-   case T_UINT8:
-   case T_UINT16:
-   case T_UINT32:
-   case T_UINT64:
-   case T_DOUBLE:
-   case T_FLOAT:
-   case T_IDENT:
-   case T_BINOP:
-   case T_TUPLE:
-   case T_CHAR:
-   case T_STRING:
-   case T_APPL:
-   case T_SLOT:
-      return 1;
-   default:
-      exception("Unknown AST tag in ast_expression\n");
-   }
-}
-
-/*
    Annotate AST node for the left hand side of an assignment
    given the type being assigned on the RHS
 */
@@ -153,15 +94,7 @@ type_t * resolve_inference1(type_t * t)
    case NIL:
    case BOOL:
    case INT:
-   case INT8:
-   case INT16:
-   case INT32:
-   case INT64:
    case UINT:
-   case UINT8:
-   case UINT16:
-   case UINT32:
-   case UINT64:
    case DOUBLE:
    case FLOAT:
    case STRING:
@@ -305,35 +238,14 @@ void inference1(ast_t * a)
 
    switch (a->tag)
    {
+   case T_NONE:
+      a->type = t_nil;
+      break;
    case T_INT:
       a->type = t_int;
       break;
-   case T_INT8:
-      a->type = t_int8;
-      break;
-   case T_INT16:
-      a->type = t_int16;
-      break;
-   case T_INT32:
-      a->type = t_int32;
-      break;
-   case T_INT64:
-      a->type = t_int64;
-      break;
    case T_UINT:
       a->type = t_uint;
-      break;
-   case T_UINT8:
-      a->type = t_uint8;
-      break;
-   case T_UINT16:
-      a->type = t_uint16;
-      break;
-   case T_UINT32:
-      a->type = t_uint32;
-      break;
-   case T_UINT64:
-      a->type = t_uint64;
       break;
    case T_DOUBLE:
       a->type = t_double;
@@ -370,8 +282,7 @@ void inference1(ast_t * a)
          exception("Operator not found in inference1\n");
       break;
    case T_BLOCK:
-      scope_up();
-      a->env = current_scope;
+      a->env = scope_up();
       a->type = list_inference1(a->child);
       scope_down();
       break;
@@ -451,7 +362,7 @@ void inference1(ast_t * a)
       fns = GC_MALLOC(sizeof(type_t *));
       fns[0] = f1;
       t2 = typeconstr_type(a1->sym, t1, 1, fns);
-      bind = bind_symbol(a1->sym, t2, NULL);
+      bind_symbol(a1->sym, t2, NULL);
       inference1(a1->next);
       assign_args(f1->args, a2);
       assign_args(t1->args, a2);
@@ -508,6 +419,40 @@ void inference1(ast_t * a)
       if (i == t1->arity)
          exception("Slot not found in slot evaluation\n");
       a->type = t1->args[i];
+      break;
+   case T_PARAM_BODY:
+      list_inference1(a->child);
+      break;
+   case T_PARAM:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a2);
+      bind_symbol(a1->sym, a2->type, NULL);
+      a->type = a2->type;
+      break;
+   case T_FN_STMT:
+      a1 = a->child; /* identifier */
+      a2 = a1->next; /* param list */
+      a3 = a2->next; /* return type */
+      a4 = a3->next; /* block */
+      a->env = scope_up();
+      inference1(a2);
+      inference1(a3);
+      inference1(a4);
+      i = ast_count(a2->child);
+      args = GC_MALLOC(i*sizeof(type_t *));
+      f1 = fn_type(a3->type, i, args);
+      assign_args(f1->args, a2->child);
+      scope_down();
+      bind = find_symbol(a1->sym);
+      if (bind == NULL) /* new generic */
+      {
+         fns = GC_MALLOC(sizeof(type_t *));
+         fns[0] = f1;
+         bind_generic(a1->sym, generic_type(1, fns));
+      } else /* insert fn into existing generic */
+         generic_insert(bind->type, f1);
+      a->type = t_nil;
       break;
    default:
       exception("Unknown AST tag in inference1\n");

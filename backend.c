@@ -249,18 +249,6 @@ ret_t * ret(int closed, LLVMValueRef val)
 }
 
 /*
-   Jit an int literal of the given number of bits
-*/
-ret_t * exec_intN(jit_t * jit, ast_t * ast, unsigned bits)
-{
-    long num = atol(ast->sym->name);
-    
-    LLVMValueRef val = LLVMConstInt(LLVMIntType(bits), num, 1);
-
-    return ret(0, val);
-}
-
-/*
    Jit an int literal
 */
 ret_t * exec_int(jit_t * jit, ast_t * ast)
@@ -268,18 +256,6 @@ ret_t * exec_int(jit_t * jit, ast_t * ast)
     long num = atol(ast->sym->name);
     
     LLVMValueRef val = LLVMConstInt(LLVMWordType(), num, 1);
-
-    return ret(0, val);
-}
-
-/*
-   Jit a uint literal of the given number of bits
-*/
-ret_t * exec_uintN(jit_t * jit, ast_t * ast, unsigned bits)
-{
-    unsigned long num = strtoul(ast->sym->name, NULL, 10);
-    
-    LLVMValueRef val = LLVMConstInt(LLVMIntType(bits), num, 0);
 
     return ret(0, val);
 }
@@ -1037,6 +1013,15 @@ ret_t * exec_lslot(jit_t * jit, ast_t * ast)
 }
 
 /*
+   Jit a function statement. We don't jit the
+   function until it is actually called the first time.
+*/
+ret_t * exec_fn_stmt(jit_t * jit, ast_t * ast)
+{
+   return ret(0, NULL);
+}
+
+/*
    As we traverse the ast we dispatch on ast tag to various jit 
    functions defined above
 */
@@ -1046,24 +1031,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
     {
     case T_INT:
         return exec_int(jit, ast);
-    case T_INT8:
-        return exec_intN(jit, ast, 8);
-    case T_INT16:
-        return exec_intN(jit, ast, 16);
-    case T_INT32:
-        return exec_intN(jit, ast, 32);
-    case T_INT64:
-        return exec_intN(jit, ast, 64);
     case T_UINT:
         return exec_uint(jit, ast);
-    case T_UINT8:
-        return exec_uintN(jit, ast, 8);
-    case T_UINT16:
-        return exec_uintN(jit, ast, 16);
-    case T_UINT32:
-        return exec_uintN(jit, ast, 32);
-    case T_UINT64:
-        return exec_uintN(jit, ast, 64);
     case T_DOUBLE:
         return exec_double(jit, ast);
     case T_FLOAT:
@@ -1107,6 +1076,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_slot(jit, ast);
     case T_LSLOT:
         return exec_lslot(jit, ast);
+    case T_FN_STMT:
+        return exec_fn_stmt(jit, ast);
     default:
         jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }

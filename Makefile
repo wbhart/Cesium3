@@ -1,11 +1,11 @@
-INC=-I/home/wbhart/llvm/include -I/home/wbhart/gc/include
-LIB=-L/home/wbhart/llvm/lib -L/home/wbhart/gc/lib
+INC=-I/usr/local/include -I/home/wbhart/gc/include
+LIB=-L/usr/local/lib -L/home/wbhart/gc/lib
 OBJS=backend.o serial.o inference.o environment.o types.o symbol.o ast.o exception.o parser.o
 HEADERS=ast.h exception.h symbol.h types.h environment.h inference.h serial.h backend.h
 CS_FLAGS=-O2 -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 
 cesium: cesium.c $(HEADERS) $(OBJS)
-	g++ $(CS_FLAGS) cesium.c -o $(INC) $(OBJS) $(LIB) -lgc `/home/wbhart/llvm/bin/llvm-config --libs --cflags --ldflags core analysis executionengine jit interpreter native` -o cs
+	g++ $(CS_FLAGS) cesium.c -o $(INC) $(OBJS) $(LIB) -lgc `/usr/local/bin/llvm-config --libs --cflags --ldflags core analysis executionengine jit interpreter native` -o cs -ldl
 
 ast.o: ast.c $(HEADERS)
 	gcc $(CS_FLAGS) -c ast.c -o ast.o $(INC)

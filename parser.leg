@@ -27,18 +27,19 @@ static int eat_eol = 0;
 }
 %}
 
-start         = Spacing EOL { root = NULL; }
-                 | Spacing r:Statement Spacing EOL { root = r; }
+start         = Spacing r:Statement { root = r; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
 Statement     = Spacing IfElseStmt
                  | Spacing IfStmt
                  | Spacing WhileStmt
                  | Spacing TypeStmt
-                 | Spacing Assignment
-                 | Spacing TupleAssign
+                 | Spacing FnStmt
+                 | Spacing Assignment ';'
+                 | Spacing TupleAssign ';'
                  | Spacing TupleUnpack
                  | Spacing SlotAssign
-                 | Spacing Expression
+                 | Spacing Expression ';'
+                 | Spacing ';'
 Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
 TupleAssign   = i:LTuple Equals e:Tuple { $$ = ast2(T_TUPLE_ASSIGN, i, e); }
 TupleUnpack   = i:LTuple Equals e:Expression { $$ = ast2(T_TUPLE_UNPACK, i, e); }
@@ -48,24 +49,37 @@ LTupleBody    = r:LValue Comma s:LTupleBody { r->next = s; $$ = r; }
                 | LValue
 LValue        = LSlot | LTuple | Identifier
 SlotAssign    = i:LSlot Equals e:Expression { $$ = ast2(T_SLOT_ASSIGN, i, e); }
-Block         = s:Statement EOL b:Block { s->next = b; $$ = s; }
+BlockBody     = s:Statement Spacing b:Block { s->next = b; $$ = s; }
                | Statement
+Block         = LBrace b:BlockBody RBrace { $$ = ast1(T_BLOCK, b); }
+               | LBrace RBrace { $$ = ast1(T_BLOCK, NULL); }
+               | Statement
+BlockExprBody = s:Statement Spacing b:Block { s->next = b; $$ = s; }
                | Expression
-BlockExpr     = s:Statement EOL b:Block { s->next = b; $$ = s; }
+BlockExpr     = LBrace BlockExprBody RBrace
                | Expression
-IfStmt        = If e:Expression ( EOL | Then ) b:Block End
+IfStmt        = If LParen e:Expression RParen b:Block EOL
               { $$ = ast2(T_IF_STMT, e, ast1(T_THEN, b)); }
-IfElseStmt    = If e:Expression ( EOL | Then ) b:Block Else c:Block End
+IfElseStmt    = If LParen e:Expression RParen b:Block (Space | Comment)* Else c:Block
               { $$ = ast3(T_IF_ELSE_STMT, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
-IfElseExpr    = If e:Expression ( EOL | Then ) b:BlockExpr Else c:BlockExpr End
+IfElseExpr    = If LParen e:Expression RParen b:BlockExpr (Space | Comment)* Else c:BlockExpr
               { $$ = ast3(T_IF_ELSE_EXPR, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
-WhileStmt     = While e:Expression ( EOL | Do ) b:Block End
+WhileStmt     = While LParen e:Expression RParen b:Block 
               { $$ = ast2(T_WHILE_STMT, e, ast1(T_DO, b)); }
-TypeStmt      = Type i:Identifier EOL r:TypeBody End
+TypeStmt      = Type i:Identifier LBrace r:TypeBody RBrace
               { $$ = ast2(T_TYPE_STMT, i, r); }
-TypeBody      = r:TypeSlot EOL s:TypeBody { r->next = s->child; $$ = ast1(T_TYPE_BODY, r); }
-               | r:TypeSlot EOL { $$ = ast1(T_TYPE_BODY, r); }
+TypeBody      = r:TypeSlot ';' Spacing s:TypeBody { r->next = s->child; $$ = ast1(T_TYPE_BODY, r); }
+               | r:TypeSlot ';' { $$ = ast1(T_TYPE_BODY, r); }
 TypeSlot      = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_TYPE_SLOT, i, r); }
+FnStmt        = Fn i:Identifier p:ParamList b:FnBlock { $$ = ast4(T_FN_STMT, i, p, ast_nil, b); }
+               | Fn i:Identifier p:ParamList Colon t:TypeExpr b:FnBlock { $$ = ast4(T_FN_STMT, i, p, t, b); }
+FnBlock       = LBrace b:BlockBody RBrace { $$ = ast1(T_BLOCK, b); }
+               | LBrace RBrace { $$ = ast1(T_BLOCK, NULL); }
+ParamList     = LParen p:ParamBody RParen 
+               | LParen RParen { $$ = ast1(T_PARAM_BODY, NULL); }
+ParamBody     = r:Param Comma s:ParamBody { r->next = s->child; $$ = ast1(T_PARAM_BODY, r); }
+               | r:Param { $$ = ast1(T_PARAM_BODY, r); }
+Param         = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_PARAM, i, r); }
 TypeExpr      = Typename
               | TupleType
 Typename      = !Reserved < IdentStart IdentCont* > Spacing
@@ -103,13 +117,11 @@ Infix20       = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r,
 Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
-Primary       = AOrS | Float | Double | Int8 | UInt8 | Int16 | UInt16 
-                 | Int32 | UInt32 | Int64 | UInt64 | UInt | Int | String | Char | Identifier
+Primary       = AOrS | Float | Double | UInt | Int | String | Char | Identifier
                  | ( LParen Expression RParen ) | Tuple | IfElseExpr
                 
-Reserved      = ( 'while' | 'do' | 'if' | 'then' | 'else' | 'end' | 'type' ) ![a-zA-Z0-9_]
-TypeRes      = ( 'int8' | 'int16' | 'int32' | 'int64' | 'int' 
-                 | 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint'
+Reserved      = ( 'while' | 'if' | 'else' |'type' ) ![a-zA-Z0-9_]
+TypeRes      = ( 'int' | 'uint'
                  | 'char' | 'string' | 'double' | 'float' ) ![a-zA-Z0-9_]
 Tuple         = LParen r:TupleBody RParen { $$ = ast1(T_TUPLE, r); }
 TupleBody     = r:Expression Comma s:TupleBody { r->next = s; $$ = r; }
@@ -123,7 +135,7 @@ Identifier    = !Reserved !TypeRes < IdentStart IdentCont* > Spacing
 IdentStart    = [a-zA-Z_]
 IdentCont     = IdentStart | [0-9]
 Double        = < ( [1-9] [0-9]* | '0' ) '.' [0-9]* 
-                ( ( 'e' | 'E' ) ( '+' | '-' )? ( [1-9] [0-9]* | '0' ) )? > Spacing
+                ( ( 'e' | 'E' ) ( '+' | '-' )? ( [1-9] [0-9]* | '0' ) )? > 'd'? Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_DOUBLE, sym);
@@ -139,50 +151,10 @@ Int           = < ( [1-9] [0-9]* | '0' ) > Spacing
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_INT, sym);
               }
-Int8          = < ( [1-9] [0-9]* | '0' ) > 'i8' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_INT8, sym);
-              }
-Int16         = < ( [1-9] [0-9]* | '0' ) > 'i16' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_INT16, sym);
-              }
-Int32       = < ( [1-9] [0-9]* | '0' ) > 'i32' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_INT32, sym);
-              }
-Int64       = < ( [1-9] [0-9]* | '0' ) > 'i64' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_INT64, sym);
-              }
-UInt           = < ( [1-9] [0-9]* | '0' ) > 'u' Spacing
+UInt           = < ( [1-9] [0-9]* | '0' ) > ( 'U' | 'u' ) Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_UINT, sym);
-              }
-UInt8          = < ( [1-9] [0-9]* | '0' ) > 'u8' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_UINT8, sym);
-              }
-UInt16         = < ( [1-9] [0-9]* | '0' ) > 'u16' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_UINT16, sym);
-              }
-UInt32        = < ( [1-9] [0-9]* | '0' ) > 'u32' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_UINT32, sym);
-              }
-UInt64        = < ( [1-9] [0-9]* | '0' ) > 'u64' Spacing
-              {
-                 sym_t * sym = sym_lookup(yytext);
-                 $$ = ast_symbol(T_UINT64, sym);
               }
 Char          = ( ['] < ![\\'"] . > ['] ) Spacing
               {
@@ -199,32 +171,31 @@ String        = '"' < ( '\\\"' | ( !'"' . ) )* > '"' Spacing
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_STRING, sym);
               }
-Spacing       = ( Space | Comment )*
-Sp2           = ( Space | EOL | Comment )*
+Spacing       = ( Space | EOL | Comment )*
 Space         = ' ' | '\t'
 Comment       = '/*' ( !'*/' . )* '*/'
-Comma         = Spacing ',' Sp2
-Colon         = Spacing ':' Sp2
-Dot           = Spacing '.' Sp2
-While         = Sp2 'while' Sp2
-Do            = Sp2 'do' Sp2
-If            = Sp2 'if' Sp2
-Then          = Sp2 'then' Sp2
-Else          = Sp2 'else' Sp2
-End           = Sp2 'end' Spacing
-Type          = Sp2 'type' Sp2
-Equals        = '=' Sp2
+Comma         = ',' Spacing
+Colon         = ':' Spacing
+Dot           = '.' Spacing
+While         = 'while' Spacing
+If            = 'if' Spacing
+Else          = 'else' Spacing
+Type          = 'type' Spacing
+Fn            = 'fn' Spacing
+Equals        = '=' Spacing
 LParen        = '(' Spacing
 RParen        = ')' Spacing 
-Plus          = '+' Sp2
-Minus         = '-' Sp2
-Times         = '*' Sp2
-Div           = '/' Sp2
-Mod           = '%' Sp2
-EQ            = '==' Sp2
-NE            = '!=' Sp2
-LE            = '<=' Sp2
-GE            = '>=' Sp2
-LT            = '<' Sp2
-GT            = '>' Sp2
+LBrace        = '{' Spacing
+RBrace        = Spacing '}' 
+Plus          = '+' Spacing
+Minus         = '-' Spacing
+Times         = '*' Spacing
+Div           = '/' Spacing
+Mod           = '%' Spacing
+EQ            = '==' Spacing
+NE            = '!=' Spacing
+LE            = '<=' Spacing
+GE            = '>=' Spacing
+LT            = '<' Spacing
+GT            = '>' Spacing
 EOL           = '\r\n' | '\n' | '\r'

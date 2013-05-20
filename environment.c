@@ -101,6 +101,12 @@ bind_t * bind_generic(sym_t * sym, type_t * type)
    return b;
 }
 
+void generic_insert(type_t * gen, type_t * fn)
+{
+   gen->args = GC_REALLOC(gen->args, (gen->arity + 1)*sizeof(type_t *));
+   gen->args[gen->arity++] = fn;
+}
+
 bind_t * bind_symbol(sym_t * sym, type_t * type, char * llvm)
 {
    bind_t * scope = current_scope->scope;
@@ -135,11 +141,12 @@ bind_t * find_symbol(sym_t * sym)
    return NULL;
 }
 
-void scope_up(void)
+env_t * scope_up(void)
 {
    env_t * env = (env_t *) GC_MALLOC(sizeof(env_t));
    env->next = current_scope;
    current_scope = env;
+   return current_scope;
 }
 
 void scope_down(void)

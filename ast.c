@@ -70,6 +70,17 @@ ast_t * ast3(tag_t tag, ast_t * a1, ast_t * a2, ast_t * a3)
    return ast;
 }
 
+ast_t * ast4(tag_t tag, ast_t * a1, ast_t * a2, ast_t * a3, ast_t * a4)
+{
+   ast_t * ast = new_ast();
+   ast->tag = tag;
+   ast->child = a1;
+   a1->next = a2;
+   a2->next = a3;
+   a3->next = a4;
+   return ast;
+}
+
 ast_t * ast_binop(sym_t * sym, ast_t * a1, ast_t * a2)
 {
    ast_t * ast = new_ast();
@@ -102,15 +113,7 @@ void ast_print(ast_t * ast, int indent, int types)
          printf("none\n");
          break;
       case T_INT:
-      case T_INT8:
-      case T_INT16:
-      case T_INT32:
-      case T_INT64:
       case T_UINT:
-      case T_UINT8:
-      case T_UINT16:
-      case T_UINT32:
-      case T_UINT64:
       case T_DOUBLE:
       case T_FLOAT:
       case T_CHAR:
@@ -200,6 +203,10 @@ void ast_print(ast_t * ast, int indent, int types)
          if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          break;
+      case T_TYPENAME:
+         if (types) type_print(ast->type);
+         printf("\n");
+         break;
       case T_TYPE_STMT:
          printf("type %s\n", ast->child->sym->name);
          a = ast->child->next->child;
@@ -246,6 +253,23 @@ void ast_print(ast_t * ast, int indent, int types)
          printf("\n");
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent + 3, types);
+         break;
+      case T_PARAM:
+         printf("%s", ast->child->sym->name);
+         if (types) printf(" : "), type_print(ast->type);
+         printf("\n");
+         break;
+      case T_FN_STMT:
+         printf("fn %s\n", ast->child->sym->name);
+         a = ast->child->next->child;
+         while (a != NULL)
+         {
+            ast_print(a, indent + 3, types);
+            a = a->next;
+         }
+         a = ast->child->next->next;
+         ast_print(a, indent + 3, types);
+         ast_print(a->next, indent + 3, types);
          break;
       default:
          exception("invalid AST tag in ast_print\n");
