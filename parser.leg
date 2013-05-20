@@ -50,7 +50,7 @@ LTupleBody    = r:LValue Comma s:LTupleBody { r->next = s; $$ = r; }
                 | LValue
 LValue        = LSlot | LTuple | Identifier
 SlotAssign    = i:LSlot Equals e:Expression { $$ = ast2(T_SLOT_ASSIGN, i, e); }
-BlockBody     = s:Statement Spacing b:Block { s->next = b; $$ = s; }
+BlockBody     = s:Statement Spacing b:BlockBody { s->next = b; $$ = s; }
                | Statement
 Block         = LBrace b:BlockBody RBrace { $$ = ast1(T_BLOCK, b); }
                | LBrace RBrace { $$ = ast1(T_BLOCK, NULL); }
