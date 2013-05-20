@@ -37,6 +37,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  extern "C" {
 #endif
 
+type_t * find_prototype(type_t * gen, ast_t * a);
+
 void inference1(ast_t * a);
 
 #ifdef __cplusplus

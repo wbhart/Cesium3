@@ -170,6 +170,15 @@ int is_atomic(type_t * type)
         && t != FN && t != LAMBDA);
 }
 
+/*
+   Return 1 if the type is structured.
+*/
+int is_structured(type_t * type)
+{
+   typ_t t = type->typ;
+   return (t == ARRAY || t == TUPLE || t == DATATYPE);
+}
+
 /* 
    Jit a call to GC_malloc
 */
@@ -897,6 +906,122 @@ ret_t * exec_type_stmt(jit_t * jit, ast_t * ast)
    return ret(0, NULL);
 }
 
+/*
+   Jit a list of function parameters making allocas for them
+*/
+ret_t * exec_fnparams(jit_t * jit, ast_t * ast)
+{
+   ast_t * p = ast->child;
+   int i = 0;
+
+   while (p != NULL)
+   {
+      bind_t * bind = find_symbol(p->child->sym);
+      LLVMValueRef param, palloca;
+
+      p->type = bind->type;
+      
+      param = LLVMGetParam(jit->function, i);
+              
+      palloca = LLVMBuildAlloca(jit->builder, type_to_llvm(jit, p->type), p->child->sym->name);
+      LLVMBuildStore(jit->builder, param, palloca);
+       
+      bind->llvm_val = palloca;
+      bind->llvm = p->child->sym->name;
+         
+      i++;
+      p = p->next;
+   }
+
+   return ret(0, NULL);
+}
+
+/*
+   Jit a function definition, given its type.
+*/
+ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
+{
+   int i, params = type->arity;
+   ast_t * fn_params = ast->child->next;
+   ast_t * p = fn_params->next->next;
+
+   LLVMTypeRef * args = (LLVMTypeRef *) GC_MALLOC(params*sizeof(LLVMTypeRef));
+   LLVMTypeRef llvm_ret, fn_type;
+   LLVMValueRef fn_save;
+
+   sym_t * sym = ast->child->sym;
+   int len = strlen(sym->name);
+   char * llvm = GC_MALLOC(len + 12);
+   
+   env_t * scope_save;
+   LLVMBuilderRef build_save;
+   LLVMBasicBlockRef entry;
+
+   /* get llvm parameter types */
+   for (i = 0; i < params; i++)
+      args[i] = type_to_llvm(jit, type->args[i]); 
+
+   /* get llvm return type */
+   llvm_ret = type_to_llvm(jit, type->ret); 
+
+   /* get llvm function type */
+   fn_type = LLVMFunctionType(llvm_ret, args, params, 0);
+    
+   /* serialise function name */
+   strcpy(llvm, sym->name);
+   strcpy(llvm + len, serial());
+   
+   /* make llvm function object */
+   fn_save = jit->function;
+   jit->function = LLVMAddFunction(jit->module, llvm, fn_type);
+   type->llvm = llvm; /* store serialised name in type */
+   
+   /* set nocapture on all structured params */
+   for (i = 0; i < params; i++)
+   {
+      type_t * t = type->args[i];
+      if (is_structured(t))
+         LLVMAddAttribute(LLVMGetParam(jit->function, i), LLVMNoCaptureAttribute);
+   }
+
+   /* set noalias on all structured return values */
+   if (is_structured(type->ret))
+      LLVMAddFunctionAttr(jit->function, LLVMNoAliasAttribute);
+   
+   /* enter function scope */
+   scope_save = current_scope;
+   current_scope = ast->env;
+
+   /* setup jit builder */
+   build_save = jit->builder;
+   jit->builder = LLVMCreateBuilder();
+
+   /* first basic block */
+   entry = LLVMAppendBasicBlock(jit->function, "entry");
+   LLVMPositionBuilderAtEnd(jit->builder, entry);
+    
+   /* make allocas for the function parameters */
+   exec_fnparams(jit, fn_params);
+   
+   /* jit the statements in the function body */
+   while (p != NULL)
+   {
+      exec_ast(jit, p);
+      p = p->next;
+   }
+   
+   /* run the pass manager on the jit'd function */
+   LLVMRunFunctionPassManager(jit->pass, jit->function); 
+    
+   /* clean up */
+   LLVMDisposeBuilder(jit->builder);  
+   jit->builder = build_save;
+   jit->function = fn_save;    
+   current_scope = scope_save;
+
+   return ret(0, NULL);
+}
+
 /* 
    Jit a function application or type constructor application
 */
@@ -904,10 +1029,19 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
 {
    ast_t * id = ast->child;
    ast_t * exp = id->next;
-
+   
    bind_t * bind = find_symbol(id->sym);
+   type_t * fn;
+   typ_t typ = bind->type->typ;
 
-   int i, count = bind->type->ret->arity;
+   LLVMValueRef val;
+
+   int i, count;
+   
+   if (typ == TYPECONSTR) fn = bind->type->ret;
+   else fn = find_prototype(bind->type, exp);
+   
+   count = fn->arity;
 
    LLVMValueRef * vals = GC_MALLOC(count*sizeof(LLVMValueRef));
    
@@ -919,33 +1053,47 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
       i++;
       exp = exp->next;
    }
-
-   type_t * type = bind->type->ret;
-   LLVMTypeRef t = LLVMGetTypeByName(jit->module, type->llvm);
    
-   if (bind->llvm == NULL) /* type not yet defined in LLVM */
+   if (typ == GENERIC) /* calling an actual function */
    {
-      LLVMTypeRef * types = GC_MALLOC(count*sizeof(LLVMTypeRef));
+      ret_t * r;
+      LLVMValueRef f; /* jit'd function */
+
+      if (fn->llvm == NULL) /* function not yet jit'd */
+         r = exec_fndef(jit, fn->ast, fn);
+
+      f = LLVMGetNamedFunction(jit->module, fn->llvm);
+
+      /* call function */
+      val = LLVMBuildCall(jit->builder, f, vals, count, fn->llvm);
+   } else /* typ == TYPECONSTR */
+   {                
+      LLVMTypeRef t = LLVMGetTypeByName(jit->module, fn->llvm);
+   
+      if (bind->llvm == NULL) /* type not yet defined in LLVM */
+      {
+         LLVMTypeRef * types = GC_MALLOC(count*sizeof(LLVMTypeRef));
+         for (i = 0; i < count; i++)
+            types[i] = type_to_llvm(jit, fn->args[i]);
+         LLVMStructSetBody(t, types, count, 0);
+         bind->llvm = fn->llvm;
+      }
+
+      /* determine whether types are atomic */
+      int atomic = 1;
       for (i = 0; i < count; i++)
-         types[i] = type_to_llvm(jit, type->args[i]);
-      LLVMStructSetBody(t, types, count, 0);
-      bind->llvm = type->llvm;
+           atomic &= is_atomic(fn->args[i]);
+
+      val = LLVMBuildGCMalloc(jit, t, fn->sym->name, atomic);
+
+      for (i = 0; i < count; i++)
+      {
+         /* insert value into datatype */
+         LLVMValueRef indices[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
+         LLVMValueRef entry = LLVMBuildInBoundsGEP(jit->builder, val, indices, 2, fn->sym->name);
+         LLVMBuildStore(jit->builder, vals[i], entry);
+      } 
    }
-
-   /* determine whether types are atomic */
-   int atomic = 1;
-   for (i = 0; i < count; i++)
-        atomic &= is_atomic(type->args[i]);
-
-   LLVMValueRef val = LLVMBuildGCMalloc(jit, t, type->sym->name, atomic);
-
-   for (i = 0; i < count; i++)
-   {
-       /* insert value into datatype */
-       LLVMValueRef indices[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), i, 0) };
-       LLVMValueRef entry = LLVMBuildInBoundsGEP(jit->builder, val, indices, 2, type->sym->name);
-       LLVMBuildStore(jit->builder, vals[i], entry);
-   } 
 
    return ret(0, val);
 }
@@ -1013,6 +1161,28 @@ ret_t * exec_lslot(jit_t * jit, ast_t * ast)
 }
 
 /*
+   Jit a return statement
+*/
+ret_t * exec_return(jit_t * jit, ast_t * ast)
+{
+    printf("here00\n");
+    ast_t * p = ast->child;
+    
+    printf("here01\n");
+    if (p != ast_nil)
+    {
+        printf("here02\n");
+        ret_t * r = exec_ast(jit, p);
+        
+        printf("here03\n");
+        LLVMBuildRet(jit->builder, r->val);    
+    } else
+        LLVMBuildRetVoid(jit->builder);
+    printf("here01\n");
+        
+    return ret(1, NULL);
+}
+/*
    Jit a function statement. We don't jit the
    function until it is actually called the first time.
 */
@@ -1078,6 +1248,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_lslot(jit, ast);
     case T_FN_STMT:
         return exec_fn_stmt(jit, ast);
+    case T_RETURN:
+        return exec_return(jit, ast);
     default:
         jit_exception(jit, "Unknown AST tag in exec_ast\n");
     }
@@ -1086,7 +1258,7 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
 /* 
    Jit a return
 */
-void exec_return(jit_t * jit, ast_t * ast, LLVMValueRef val)
+void exec_ret(jit_t * jit, ast_t * ast, LLVMValueRef val)
 {
    if (ast->type == t_nil)
       LLVMBuildRetVoid(jit->builder);
@@ -1232,7 +1404,7 @@ void exec_root(jit_t * jit, ast_t * ast)
     ret = exec_ast(jit, ast);
 
     /* jit the return statement for the exec function */
-    exec_return(jit, ast, ret->val);
+    exec_ret(jit, ast, ret->val);
     
     /* get the generic return value from exec */
     END_EXEC(gen_val);

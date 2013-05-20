@@ -59,6 +59,7 @@ typedef struct type_t
    struct sym_t ** slots; /* names of type args/slots */
    int intrinsic; /* intrinsic function/operator? */
    char * llvm; /* llvm serialised name of type */
+   struct ast_t * ast; /* the ast (required for functions) */
 } type_t;
 
 typedef struct type_node_t

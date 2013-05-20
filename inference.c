@@ -203,7 +203,7 @@ type_t * find_prototype(type_t * gen, ast_t * a)
          }
 
          if (j == c)
-            return fn->ret;
+            return fn;
       }
    }
    
@@ -277,9 +277,9 @@ void inference1(ast_t * a)
       inference1(a->child);
       inference1(a->child->next);
       bind = find_symbol(a->sym);
-      a->type = find_prototype(bind->type, a->child);
-      if (!a->type) /* didn't find an op with that prototype */
+      if (!(t1 = find_prototype(bind->type, a->child))) /* didn't find an op with that prototype */
          exception("Operator not found in inference1\n");
+      a->type = t1->ret;
       break;
    case T_BLOCK:
       a->env = scope_up();
@@ -401,9 +401,9 @@ void inference1(ast_t * a)
       t1 = a1->type;
       if (t1->typ != GENERIC && t1->typ != TYPECONSTR)
          exception("Invalid function or type constructor in application\n");
-      a->type = find_prototype(t1, a2);
-      if (!a->type)
+      if (!(t1 = find_prototype(t1, a2)))
          exception("Incorrect signature in application\n");
+      a->type = t1->ret;
       for (i = 0; i < a->type->arity; i++)
          a->type->args[i] = resolve_inference1(a->type->args[i]);
       break;
@@ -443,6 +443,7 @@ void inference1(ast_t * a)
       args = GC_MALLOC(i*sizeof(type_t *));
       f1 = fn_type(a3->type, i, args);
       assign_args(f1->args, a2->child);
+      f1->ast = a; /* store ast for jit'ing */
       scope_down();
       bind = find_symbol(a1->sym);
       if (bind == NULL) /* new generic */
@@ -452,6 +453,10 @@ void inference1(ast_t * a)
          bind_generic(a1->sym, generic_type(1, fns));
       } else /* insert fn into existing generic */
          generic_insert(bind->type, f1);
+      a->type = t_nil;
+      break;
+   case T_RETURN:
+      inference1(a->child);
       a->type = t_nil;
       break;
    default:

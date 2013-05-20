@@ -271,6 +271,10 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(a, indent + 3, types);
          ast_print(a->next, indent + 3, types);
          break;
+      case T_RETURN:
+         printf("return\n");
+         ast_print(ast->child, indent + 3, types);
+         break;
       default:
          exception("invalid AST tag in ast_print\n");
    }

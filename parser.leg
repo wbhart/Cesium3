@@ -34,6 +34,7 @@ Statement     = Spacing IfElseStmt
                  | Spacing WhileStmt
                  | Spacing TypeStmt
                  | Spacing FnStmt
+                 | Spacing ReturnStmt ';'
                  | Spacing Assignment ';'
                  | Spacing TupleAssign ';'
                  | Spacing TupleUnpack
@@ -80,6 +81,8 @@ ParamList     = LParen p:ParamBody RParen
 ParamBody     = r:Param Comma s:ParamBody { r->next = s->child; $$ = ast1(T_PARAM_BODY, r); }
                | r:Param { $$ = ast1(T_PARAM_BODY, r); }
 Param         = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_PARAM, i, r); }
+ReturnStmt    = Return e:Expression { $$ = ast1(T_RETURN, e); }
+               | Return { $$ = ast1(T_RETURN, ast_nil); }
 TypeExpr      = Typename
               | TupleType
 Typename      = !Reserved < IdentStart IdentCont* > Spacing
@@ -120,7 +123,7 @@ Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r
 Primary       = AOrS | Float | Double | UInt | Int | String | Char | Identifier
                  | ( LParen Expression RParen ) | Tuple | IfElseExpr
                 
-Reserved      = ( 'while' | 'if' | 'else' |'type' ) ![a-zA-Z0-9_]
+Reserved      = ( 'while' | 'if' | 'else' | 'type' | 'return' ) ![a-zA-Z0-9_]
 TypeRes      = ( 'int' | 'uint'
                  | 'char' | 'string' | 'double' | 'float' ) ![a-zA-Z0-9_]
 Tuple         = LParen r:TupleBody RParen { $$ = ast1(T_TUPLE, r); }
@@ -182,6 +185,7 @@ If            = 'if' Spacing
 Else          = 'else' Spacing
 Type          = 'type' Spacing
 Fn            = 'fn' Spacing
+Return        = 'return' Spacing
 Equals        = '=' Spacing
 LParen        = '(' Spacing
 RParen        = ')' Spacing 
