@@ -483,7 +483,7 @@ ret_t * exec_binop(jit_t * jit, ast_t * ast)
 ret_t * exec_block(jit_t * jit, ast_t * ast)
 {
     ast_t * c = ast->child;
-    ret_t * c_ret;
+    ret_t * c_ret = ret(0, NULL);
     
     if (ast->tag == T_BLOCK)
        current_scope = ast->env;
@@ -941,9 +941,10 @@ ret_t * exec_fnparams(jit_t * jit, ast_t * ast)
 */
 ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
 {
-   int i, params = type->arity;
+   int i, last_return = 0, params = type->arity;
    ast_t * fn_params = ast->child->next;
    ast_t * p = fn_params->next->next;
+   ret_t * r;
 
    LLVMTypeRef * args = (LLVMTypeRef *) GC_MALLOC(params*sizeof(LLVMTypeRef));
    LLVMTypeRef llvm_ret, fn_type;
@@ -1004,12 +1005,16 @@ ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
    exec_fnparams(jit, fn_params);
    
    /* jit the statements in the function body */
-   while (p != NULL)
+   r = exec_ast(jit, p);
+
+   if (!r->closed) /* no return */
    {
-      exec_ast(jit, p);
-      p = p->next;
+      if (type->ret == t_nil)
+         LLVMBuildRetVoid(jit->builder);
+      else
+         jit_exception(jit, "Function does not return value at end of block");
    }
-   
+
    /* run the pass manager on the jit'd function */
    LLVMRunFunctionPassManager(jit->pass, jit->function); 
     
@@ -1065,7 +1070,7 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
       f = LLVMGetNamedFunction(jit->module, fn->llvm);
 
       /* call function */
-      val = LLVMBuildCall(jit->builder, f, vals, count, fn->llvm);
+      val = LLVMBuildCall(jit->builder, f, vals, count, "");
    } else /* typ == TYPECONSTR */
    {                
       LLVMTypeRef t = LLVMGetTypeByName(jit->module, fn->llvm);
@@ -1165,20 +1170,15 @@ ret_t * exec_lslot(jit_t * jit, ast_t * ast)
 */
 ret_t * exec_return(jit_t * jit, ast_t * ast)
 {
-    printf("here00\n");
     ast_t * p = ast->child;
     
-    printf("here01\n");
     if (p != ast_nil)
     {
-        printf("here02\n");
         ret_t * r = exec_ast(jit, p);
         
-        printf("here03\n");
         LLVMBuildRet(jit->builder, r->val);    
     } else
         LLVMBuildRetVoid(jit->builder);
-    printf("here01\n");
         
     return ret(1, NULL);
 }

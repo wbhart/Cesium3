@@ -438,6 +438,7 @@ void inference1(ast_t * a)
       a->env = scope_up();
       inference1(a2);
       inference1(a3);
+      bind_symbol(sym_lookup("return"), a3->type, NULL);
       inference1(a4);
       i = ast_count(a2->child);
       args = GC_MALLOC(i*sizeof(type_t *));
@@ -457,6 +458,11 @@ void inference1(ast_t * a)
       break;
    case T_RETURN:
       inference1(a->child);
+      bind = find_symbol(sym_lookup("return"));
+      if (bind == NULL)
+         exception("Return outside of a function");
+      if (bind->type != a->child->type)
+         exception("Return type does not match prototype in function definition");
       a->type = t_nil;
       break;
    default:
