@@ -269,7 +269,7 @@ void ast_print(ast_t * ast, int indent, int types)
          if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          break;
-      case T_FN_STMT:
+      case T_FN_PROTO:
          printf("fn %s\n", ast->child->sym->name);
          a = ast->child->next->child;
          while (a != NULL)
@@ -279,7 +279,6 @@ void ast_print(ast_t * ast, int indent, int types)
          }
          a = ast->child->next->next;
          ast_print(a, indent + 3, types);
-         ast_print(a->next, indent + 3, types);
          break;
       case T_RETURN:
          printf("return\n");

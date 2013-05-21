@@ -432,11 +432,10 @@ void inference1(ast_t * a)
       bind_symbol(a1->sym, a2->type, NULL);
       a->type = a2->type;
       break;
-   case T_FN_STMT:
+   case T_FN_PROTO:
       a1 = a->child; /* identifier */
       a2 = a1->next; /* param list */
       a3 = a2->next; /* return type */
-      a4 = a3->next; /* block */
       a->env = scope_up();
       inference1(a2);
       inference1(a3);
@@ -455,10 +454,13 @@ void inference1(ast_t * a)
          bind_generic(a1->sym, generic_type(1, fns));
       } else /* insert fn into existing generic */
          generic_insert(bind->type, f1);
-      current_scope = a->env;
-      inference1(a4);
-      scope_down();
       a->type = t_nil;
+      break;
+   case T_FN_STMT:
+      a1 = a->child->next->next->next;
+      current_scope = a->env;
+      inference1(a1);
+      scope_down();
       break;
    case T_RETURN:
       inference1(a->child);

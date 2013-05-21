@@ -74,8 +74,8 @@ TypeStmt      = Type i:Identifier LBrace r:TypeBody RBrace
 TypeBody      = r:TypeSlot ';' Spacing s:TypeBody { r->next = s->child; $$ = ast1(T_TYPE_BODY, r); }
                | r:TypeSlot ';' { $$ = ast1(T_TYPE_BODY, r); }
 TypeSlot      = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_TYPE_SLOT, i, r); }
-FnStmt        = Fn i:Identifier p:ParamList b:FnBlock { $$ = ast4(T_FN_STMT, i, p, ast_nil, b); }
-               | Fn i:Identifier p:ParamList Colon t:TypeExpr b:FnBlock { $$ = ast4(T_FN_STMT, i, p, t, b); }
+FnStmt        = Fn i:Identifier p:ParamList b:FnBlock { $$ = ast4(T_FN_PROTO, i, p, ast_nil, b); }
+               | Fn i:Identifier p:ParamList Colon t:TypeExpr b:FnBlock { $$ = ast4(T_FN_PROTO, i, p, t, b); }
 FnBlock       = LBrace b:BlockBody RBrace { $$ = ast1(T_BLOCK, b); }
                | LBrace RBrace { $$ = ast1(T_BLOCK, NULL); }
 ParamList     = LParen p:ParamBody RParen 

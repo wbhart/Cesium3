@@ -1098,7 +1098,10 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
       LLVMValueRef f; /* jit'd function */
 
       if (fn->llvm == NULL) /* function not yet jit'd */
+      {
+         inference1(fn->ast);
          r = exec_fndef(jit, fn->ast, fn);
+      }
 
       f = LLVMGetNamedFunction(jit->module, fn->llvm);
 
@@ -1219,8 +1222,9 @@ ret_t * exec_return(jit_t * jit, ast_t * ast)
    Jit a function statement. We don't jit the
    function until it is actually called the first time.
 */
-ret_t * exec_fn_stmt(jit_t * jit, ast_t * ast)
+ret_t * exec_fn_proto(jit_t * jit, ast_t * ast)
 {
+   ast->tag = T_FN_STMT; /* needed for type inference of body */
    return ret(0, NULL);
 }
 
@@ -1281,8 +1285,8 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_slot(jit, ast);
     case T_LSLOT:
         return exec_lslot(jit, ast);
-    case T_FN_STMT:
-        return exec_fn_stmt(jit, ast);
+    case T_FN_PROTO:
+        return exec_fn_proto(jit, ast);
     case T_RETURN:
         return exec_return(jit, ast);
     default:
