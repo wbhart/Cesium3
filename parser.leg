@@ -27,14 +27,11 @@ static int eat_eol = 0;
 }
 %}
 
-start         = Spacing r:Statement { root = r; }
+start         = Spacing r:GloStatement { root = r; }
                  | ( !EOL .)* EOL { root = NULL; eat_eol = 0; printf("Syntax error\n"); }
-Statement     = Spacing IfElseStmt
-                 | Spacing IfStmt
+LocStatement  = Spacing IfStmt
                  | Spacing WhileStmt
                  | Spacing BreakStmt ';'
-                 | Spacing TypeStmt
-                 | Spacing FnStmt
                  | Spacing ReturnStmt ';'
                  | Spacing Assignment ';'
                  | Spacing TupleAssign ';'
@@ -42,6 +39,12 @@ Statement     = Spacing IfElseStmt
                  | Spacing SlotAssign
                  | Spacing Expression ';'
                  | Spacing ';'
+GloStatement  = Spacing FnStmt
+                 | Spacing TypeStmt
+                 | GloIfElseStmt
+                 | LocStatement
+Statement     = Spacing IfElseStmt
+                 | LocStatement
 Assignment    = i:Identifier Equals e:Expression { $$ = ast2(T_ASSIGN, i, e); }
 TupleAssign   = i:LTuple Equals e:Tuple { $$ = ast2(T_TUPLE_ASSIGN, i, e); }
 TupleUnpack   = i:LTuple Equals e:Expression { $$ = ast2(T_TUPLE_UNPACK, i, e); }
@@ -62,9 +65,11 @@ BlockExpr     = LBrace BlockExprBody RBrace
                | Expression
 IfStmt        = If LParen e:Expression RParen b:Block EOL
               { $$ = ast2(T_IF_STMT, e, ast1(T_THEN, b)); }
-IfElseStmt    = If LParen e:Expression RParen b:Block (Space | Comment)* Else c:Block
+IfElseStmt    = If LParen e:Expression RParen b:Block Spacing Else c:Block
               { $$ = ast3(T_IF_ELSE_STMT, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
-IfElseExpr    = If LParen e:Expression RParen b:BlockExpr (Space | Comment)* Else c:BlockExpr
+GloIfElseStmt = If LParen e:Expression RParen b:Block ( Space | Comment )* Else c:Block
+              { $$ = ast3(T_IF_ELSE_STMT, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
+IfElseExpr    = If LParen e:Expression RParen b:BlockExpr Spacing Else c:BlockExpr
               { $$ = ast3(T_IF_ELSE_EXPR, e, ast1(T_THEN, b), ast1(T_ELSE, c)); }
 WhileStmt     = While LParen e:Expression RParen b:Block 
               { $$ = ast2(T_WHILE_STMT, e, ast1(T_DO, b)); }
