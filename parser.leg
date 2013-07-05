@@ -88,6 +88,7 @@ ParamList     = LParen p:ParamBody RParen
 ParamBody     = r:Param Comma s:ParamBody { r->next = s->child; $$ = ast1(T_PARAM_BODY, r); }
                | r:Param { $$ = ast1(T_PARAM_BODY, r); }
 Param         = Spacing i:Identifier Colon r:TypeExpr { $$ = ast2(T_PARAM, i, r); }
+               | Spacing i:Identifier { $$ = ast2(T_PARAM, i, ast0(T_TYPE_VAR)); }
 ReturnStmt    = Return e:Expression { $$ = ast1(T_RETURN, e); }
                | Return { $$ = ast1(T_RETURN, ast_nil); }
 TypeExpr      = Typename

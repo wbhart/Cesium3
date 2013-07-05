@@ -230,6 +230,18 @@ LLVMTypeRef tuple_to_llvm(jit_t * jit, type_t * type)
 */
 LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
 {
+   if (type->typ == TYPEVAR)
+      substitute_type(&type);
+
+   if (type->typ == TYPEVAR)
+   {
+      unify();
+      substitute_type(&type);
+   }
+    
+   if (type->typ == TYPEVAR)
+      jit_exception(jit, "Unable to infer type\n");
+   
    if (type == t_nil)
       return LLVMVoidType();
    else if (type == t_int || type == t_uint)
@@ -488,6 +500,8 @@ ret_t * exec_binop(jit_t * jit, ast_t * ast)
     if (ast->sym == sym_lookup(">"))
         return exec_gt(jit, ast);
 
+    printf("here2\n");
+    
     jit_exception(jit, "Unknown symbol in binop\n");
 }
 
@@ -1039,7 +1053,7 @@ ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
    
    /* jit the statements in the function body */
    r = exec_ast(jit, p);
-
+   
    if (!r->closed) /* no return */
    {
       if (type->ret == t_nil)
@@ -1056,7 +1070,7 @@ ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
    jit->builder = build_save;
    jit->function = fn_save;    
    current_scope = scope_save;
-
+   
    return ret(0, NULL);
 }
 
@@ -1076,11 +1090,17 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
 
    int i, count;
    
+   unify();
+   substitute_type(&bind->type);
+   substitute_type_list(exp);
+   
    if (typ == TYPECONSTR) fn = bind->type->ret;
    else fn = find_prototype(bind->type, exp);
    
+   substitute_type(&fn);
+   
    count = fn->arity;
-
+   
    LLVMValueRef * vals = GC_MALLOC(count*sizeof(LLVMValueRef));
    
    i = 0;
@@ -1092,7 +1112,7 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
       exp = exp->next;
    }
    
-   if (typ == GENERIC) /* calling an actual function */
+   if (typ == GENERIC || typ == FN) /* calling an actual function */
    {
       ret_t * r;
       LLVMValueRef f; /* jit'd function */
@@ -1102,9 +1122,9 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
          inference1(fn->ast);
          r = exec_fndef(jit, fn->ast, fn);
       }
-
+      
       f = LLVMGetNamedFunction(jit->module, fn->llvm);
-
+      
       /* call function */
       val = LLVMBuildCall(jit->builder, f, vals, count, "");
    } else /* typ == TYPECONSTR */
@@ -1441,7 +1461,7 @@ void exec_root(jit_t * jit, ast_t * ast)
          
     /* jit the ast */
     ret = exec_ast(jit, ast);
-
+    
     /* jit the return statement for the exec function */
     exec_ret(jit, ast, ret->val);
     
@@ -1449,6 +1469,7 @@ void exec_root(jit_t * jit, ast_t * ast)
     END_EXEC(gen_val);
 
     /* print the resulting value */
+    substitute_type(&ast->type);
     print_gen(jit, ast->type, gen_val), printf("\n");
 }
 

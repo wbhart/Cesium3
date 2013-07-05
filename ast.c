@@ -285,6 +285,7 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(ast->child, indent + 3, types);
          break;
       default:
+         printf("%d\n", ast->tag);
          exception("invalid AST tag in ast_print\n");
    }
 }

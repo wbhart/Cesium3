@@ -26,6 +26,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "inference.h"
 
+infer_t * infer_stack;
+infer_t * deduce_stack;
+infer_t * generic_stack;
+
 /*
    Annotate AST node for the left hand side of an assignment
    given the type being assigned on the RHS
@@ -180,37 +184,6 @@ int assign_syms(sym_t ** args, ast_t * a)
 }
 
 /*
-   Find prototype in generic type function list
-*/
-type_t * find_prototype(type_t * gen, ast_t * a)
-{
-   int i, j;
-
-   for (i = 0; i < gen->arity; i++)
-   {
-      type_t * fn = gen->args[i];
-      ast_t * a2 = a;
-
-      int c = ast_count(a);
-
-      if (fn->arity == c)
-      {
-         for (j = 0; j < c; j++)
-         {
-            if (fn->args[j] != a2->type)
-               break;
-            a2 = a2->next;
-         }
-
-         if (j == c)
-            return fn;
-      }
-   }
-   
-   return NULL; /* didn't find an op with that prototype */
-}
-     
-/*
    Find the index of a slot in a data type by symbol name
 */
 int find_slot(type_t * t, sym_t * sym)
@@ -223,7 +196,402 @@ int find_slot(type_t * t, sym_t * sym)
 
    return i;
 }
-  
+ 
+/* 
+   Check if a list has types for each node or whether it
+   includes some typevars
+*/
+int list_typed(ast_t * a)
+{
+   int typed = 1;
+
+   while (a != NULL)
+   {
+      if (a->child->next->tag == T_TYPE_VAR)
+      {
+         typed = 0;
+         break;
+      }
+      a = a->next;
+   }
+
+   return typed;
+}
+
+/* return 1 if the two types will unify, otherwise 0 */
+int types_unify(type_t * t1, type_t * t2)
+{
+   int i;
+   
+   if (t1 == t2)
+      return 1;
+
+   if (t1->typ == TYPEVAR || t2->typ == TYPEVAR)
+      return 1;
+
+   if (t1->typ == FN || t2->typ == FN || t1->typ == TUPLE || t2->typ == TUPLE)
+   {      
+      /* make sure both are functions */
+      if (t1->typ != t2->typ)
+         return 0;
+
+      /* make sure both have same arity */
+      if (t1->arity != t2->arity)
+         return 0;
+
+      /* make sure return types unify */
+      if (t1->typ == FN && !types_unify(t1->ret, t2->ret))
+         return 0;
+
+      for (i = 0; i < t1->arity; i++)
+         if (!types_unify(t1->args[i], t2->args[i]))
+            return 0;
+
+      return 1;
+   }
+
+   return 0;
+}
+
+/*
+   Find prototype in generic type function list
+*/
+type_t * find_prototype(type_t * t, ast_t * a)
+{
+   int i, j;
+   int c = ast_count(a);
+   ast_t * a2;
+
+   if (t->typ == FN)
+   {
+      a2 = a;
+
+      if (t->arity == c)
+      {
+         for (j = 0; j < c; j++)
+         {
+            if (t->args[j] != a2->type)
+               break;
+            a2 = a2->next;
+         }
+
+         if (j == c)
+         return t;
+      }
+   } else /* generic or type constructor */
+   {
+      for (i = 0; i < t->arity; i++)
+      {
+         type_t * fn = t->args[i];
+         a2 = a;
+
+         if (fn->arity == c)
+         {
+            for (j = 0; j < c; j++)
+            {
+               if (fn->args[j] != a2->type)
+                  break;
+               a2 = a2->next;
+            }
+
+            if (j == c)
+               return fn;
+         }
+      }
+   }
+   
+   return NULL; /* didn't find an op with that prototype */
+}
+
+/* 
+   return 1 if any of the function prototypes will unify with
+   the types of the given ast list
+*/
+int exists_prototype(type_t * t, ast_t * a)
+{
+   int i, j, c = ast_count(a);
+   ast_t * a2;
+
+   if (t->typ == FN)
+   {
+      if (t->arity != c)
+         return 0;
+
+      a2 = a;
+
+      for (j = 0; j < c; j++)
+      {
+         if (!types_unify(t->args[j], a2->type))
+               return 0;
+         a2 = a2->next;
+      }
+
+      return 1;
+   } else /* generic or type constructor */
+   {
+      for (i = 0; i < t->arity; i++)
+      {
+         type_t * fn = t->args[i];
+         a2 = a;
+
+         if (fn->arity == c)
+         {
+            for (j = 0; j < c; j++)
+            {
+               if (!types_unify(fn->args[j], a2->type))
+                  break;
+               a2 = a2->next;
+            }
+
+            if (j == c)
+               return 1;
+         }
+      }
+
+      return 0;
+   }
+}
+
+/* 
+   Initialise the type inference and deduction
+   stacks 
+*/
+void infer_stack_init(void)
+{
+    infer_stack = NULL;
+    deduce_stack = NULL;
+    generic_stack = NULL;
+}
+
+void infer_print(infer_t * st)
+{
+   while (st != NULL)
+   {
+      type_print(st->t1);
+      printf(" : ");
+      type_print(st->t2);
+      printf("\n");
+      st = st->next;
+   }
+}
+
+/* Push a function inference relation onto the stack */
+void push_generic(type_t * t1, type_t * t2)
+{
+   infer_t * t = (infer_t *) GC_MALLOC(sizeof(infer_t));
+   t->t1 = t1;
+   t->t2 = t2;
+   t->next = generic_stack;
+   generic_stack = t;
+}
+
+/* Push an inference relation onto the stack */
+void push_inference(type_t * t1, type_t * t2)
+{
+   infer_t * t = (infer_t *) GC_MALLOC(sizeof(infer_t));
+   t->t1 = t1;
+   t->t2 = t2;
+   t->next = infer_stack;
+   infer_stack = t;
+}
+
+/* Push an deduction onto the deduction stack */
+void push_deduction(infer_t * inf)
+{
+   inf->next = deduce_stack;
+   deduce_stack = inf;
+}
+
+/* Pop an inference relation off the stack */
+infer_t * pop_inference(void)
+{
+   if (infer_stack == NULL)
+      exception("Attempt to pop empty inference stack!\n");
+
+   infer_t * t = infer_stack;
+   infer_stack = t->next;
+   t->next = NULL;
+   return t;
+}
+
+/* 
+   Substitute a type according to an inference
+   relation. We take a pointer to the type so
+   that it can be replaced
+*/
+void infer_subst_type(type_t ** tin, infer_t * rel)
+{
+    type_t * t = *tin;
+    int i;
+
+    if (t == NULL)
+        return;
+    
+    if (t->typ == TYPEVAR)
+    {
+        if (*tin == rel->t1)
+            *tin = rel->t2;
+    }
+    else if (t->typ == FN)
+    {
+        for (i = 0; i < t->arity; i++)
+            infer_subst_type(t->args + i, rel);
+        if (t->ret != NULL)
+            infer_subst_type(&(t->ret), rel);
+    } else if (t->typ == TUPLE || t->typ == DATATYPE)
+    {
+        for (i = 0; i < t->arity; i++)
+            infer_subst_type(t->args + i, rel);
+    }
+}
+
+/* 
+   Substitute types according to supplied inference
+   relation on the inference stack and deduction stack
+   according to which flags are set
+*/
+void infer_subst(infer_t * inf)
+{
+    infer_t * rel;
+    
+    rel = infer_stack;
+       
+    while (rel != NULL)
+    {
+       infer_subst_type(&(rel->t1), inf);
+       infer_subst_type(&(rel->t2), inf);
+       rel = rel->next;
+    }
+
+    rel = deduce_stack;
+       
+    while (rel != NULL)
+    {
+       infer_subst_type(&(rel->t2), inf);
+       rel = rel->next;
+    }
+
+    rel = generic_stack;
+       
+    while (rel != NULL)
+    {
+       infer_subst_type(&(rel->t1), inf);
+       rel = rel->next;
+    }
+}
+
+/* 
+   Substitute a type for its deduction. We pass a
+   pointer to the type so it can be replaced
+*/
+void substitute_type(type_t ** tin)
+{
+    infer_t * rel = deduce_stack;
+   
+    while (rel != NULL)
+    {
+        infer_subst_type(tin, rel);
+        rel = rel->next;
+    }
+}
+
+/*
+   Substitute types in an ast list
+*/
+void substitute_type_list(ast_t * a)
+{
+   while (a != NULL)
+   {
+      substitute_type(&a->type);
+      a = a->next;
+   }
+}
+
+/* 
+   The heart of the Hindley-Milner type inference,
+   the unification algorithm. Processes the inference
+   stack and makes deductions, placing them on a
+   deduction stack.
+*/
+void unify()
+{
+   int i, j;
+
+   while (infer_stack != NULL)
+   {
+      while (infer_stack != NULL)
+      {
+         infer_t * rel = pop_inference();
+
+         if (rel->t1 == rel->t2)
+            continue;
+         else if (rel->t1->typ == TYPEVAR)
+         {
+            infer_subst(rel);
+            push_deduction(rel);
+         } else if (rel->t2->typ == TYPEVAR)
+            push_inference(rel->t2, rel->t1);
+         else if (rel->t1->typ == FN)
+         {
+            if (rel->t2->typ != FN || rel->t1->arity != rel->t2->arity)
+               exception("Type mismatch: function type not matched!\n");
+            push_inference(rel->t1->ret, rel->t2->ret);
+            for (i = 0; i < rel->t1->arity; i++)
+               push_inference(rel->t1->args[i], rel->t2->args[i]);
+         } else if (rel->t1->typ == TUPLE)
+         {
+            if (rel->t2->typ != TUPLE || rel->t1->arity != rel->t2->arity)
+               exception("Type mismatch: tuple type not matched!\n");
+            for (i = 0; i < rel->t1->arity; i++)
+               push_inference(rel->t1->args[i], rel->t2->args[i]);
+         } else if (rel->t1->typ != rel->t2->typ)
+         {
+            printf("%d %d\n", rel->t1->typ, rel->t2->typ);
+            exception("Type mismatch!\n");
+         }
+      }
+
+      { /* unify generics */
+         infer_t * rel = generic_stack;
+         infer_t * rel_old = NULL;
+         type_t * t = NULL;
+         
+         while (rel != NULL)
+         {
+            for (i = 0; i < rel->t2->arity; i++)
+            {
+               if (types_unify(rel->t1, rel->t2->args[i]))
+               {
+                  if (t != NULL) /* more than one possibility */
+                  {
+                     t = NULL;
+                     break;
+                  } else
+                     t = rel->t2->args[i];
+               }
+            }
+
+            if (i == rel->t2->arity && t == NULL) /* no possibilities */
+               exception("Unable to match generic function\n");
+
+            if (t != NULL) /* we have found a single matching function type */
+            {
+               push_inference(rel->t1, t);
+               if (rel_old != NULL) /* remove relation */
+                  rel_old->next = rel->next;
+               else
+                  generic_stack = rel->next;
+
+               t = NULL;
+            }
+
+            rel_old = rel;
+            rel = rel->next;
+         }
+      }
+   }
+}
+
 /*
    Annotate an AST with known types
 */
@@ -274,12 +642,22 @@ void inference1(ast_t * a)
       a->type = tuple_type(i, args);
       break;
    case T_BINOP:
-      inference1(a->child);
-      inference1(a->child->next);
+      a1 = a->child;
+      list_inference1(a1);
       bind = find_symbol(a->sym);
-      if (!(t1 = find_prototype(bind->type, a->child))) /* didn't find an op with that prototype */
+      if (!exists_prototype(bind->type, a1)) /* check if any op has that prototype */
          exception("Operator not found in inference1\n");
-      a->type = t1->ret;
+      if ((t1 = find_prototype(bind->type, a1))) /* find exactly one op with that prototype */
+         a->type = t1->ret;
+      else /* prototype must be inferred */
+      {
+         a->type = new_typevar();
+         i = 2;
+         args = GC_MALLOC(i*sizeof(type_t *));
+         f1 = fn_type(a->type, i, args);
+         assign_args(f1->args, a1);
+         push_generic(f1, bind->type);
+      }
       break;
    case T_BLOCK:
       a->env = scope_up();
@@ -296,12 +674,18 @@ void inference1(ast_t * a)
       a2 = a1->next;
       a3 = a2->next;
       inference1(a1);
-      if (a1->type != t_bool)
+      if (!types_unify(a1->type, t_bool))
          exception("Boolean expression expected in if..else expression\n");
+      if (a1->type->typ == TYPEVAR)
+         push_inference(a1->type, t_bool);
       inference1(a2);
       inference1(a3);
-      if (a2->type != a3->type)
+      if (!types_unify(a2->type, a3->type))
          exception("Types not equal in branches of if..else expression\n");
+      if (a2->type->typ == TYPEVAR)
+         push_inference(a2->type, a3->type);
+      else if (a3->type->typ == TYPEVAR)
+         push_inference(a3->type, a2->type);
       a->type = a2->type;
       break;
    case T_IF_ELSE_STMT:
@@ -309,8 +693,10 @@ void inference1(ast_t * a)
       a2 = a1->next;
       a3 = a2->next;
       inference1(a1);
-      if (a1->type != t_bool)
+      if (!types_unify(a1->type, t_bool))
          exception("Boolean expression expected in if..else statement\n");
+      if (a1->type->typ == TYPEVAR)
+         push_inference(a1->type, t_bool);
       inference1(a2);
       inference1(a3);
       a->type = t_nil;
@@ -319,8 +705,10 @@ void inference1(ast_t * a)
       a1 = a->child;
       a2 = a1->next;
       inference1(a1);
-      if (a1->type != t_bool)
+      if (!types_unify(a1->type, t_bool))
          exception("Boolean expression expected in if statement\n");
+      if (a1->type->typ == TYPEVAR)
+         push_inference(a1->type, t_bool);
       inference1(a2);
       a->type = t_nil;
       break;
@@ -328,8 +716,10 @@ void inference1(ast_t * a)
       a1 = a->child;
       a2 = a1->next;
       inference1(a1);
-      if (a1->type != t_bool)
+      if (!types_unify(a1->type, t_bool))
          exception("Boolean expression expected in while statement\n");
+      if (a1->type->typ == TYPEVAR)
+         push_inference(a1->type, t_bool);
       inference1(a2);
       a->type = t_nil;
       break;
@@ -401,13 +791,27 @@ void inference1(ast_t * a)
       list_inference1(a2);
       inference1(a1);
       t1 = a1->type;
-      if (t1->typ != GENERIC && t1->typ != TYPECONSTR)
+      if (t1->typ != GENERIC && t1->typ != TYPECONSTR && t1->typ != FN)
          exception("Invalid function or type constructor in application\n");
-      if (!(t1 = find_prototype(t1, a2)))
+      if (!exists_prototype(t1, a2))
          exception("Incorrect signature in application\n");
-      a->type = t1->ret;
-      for (i = 0; i < a->type->arity; i++)
-         a->type->args[i] = resolve_inference1(a->type->args[i]);
+      if ((t2 = find_prototype(t1, a2)))
+      {
+         a->type = t2->ret;
+         for (i = 0; i < a->type->arity; i++)
+            a->type->args[i] = resolve_inference1(a->type->args[i]);
+      } else
+      {
+         a->type = new_typevar();
+         i = ast_count(a2);
+         args = GC_MALLOC(i*sizeof(type_t *));
+         f1 = fn_type(a->type, i, args);
+         assign_args(f1->args, a2);
+         if (t1->typ == GENERIC)
+            push_generic(f1, t1);
+         else
+            push_inference(f1, t1);
+      }
       break;
    case T_LSLOT:
    case T_SLOT:
@@ -428,7 +832,8 @@ void inference1(ast_t * a)
    case T_PARAM:
       a1 = a->child;
       a2 = a1->next;
-      inference1(a2);
+      if (a2->tag == T_TYPE_VAR) a2->type = new_typevar();
+      else inference1(a2);
       bind_symbol(a1->sym, a2->type, NULL);
       a->type = a2->type;
       break;
@@ -447,13 +852,18 @@ void inference1(ast_t * a)
       f1->ast = a; /* store ast for jit'ing */
       scope_down();
       bind = find_symbol(a1->sym);
-      if (bind == NULL) /* new generic */
+      if (list_typed(a2->child)) /* check if params all have types */
       {
-         fns = GC_MALLOC(sizeof(type_t *));
-         fns[0] = f1;
-         bind_generic(a1->sym, generic_type(1, fns));
-      } else /* insert fn into existing generic */
-         generic_insert(bind->type, f1);
+         if (bind != NULL && bind->type->typ == GENERIC) /* insert fn into existing generic */
+            generic_insert(bind->type, f1);
+         else /* new generic */
+         {
+            fns = GC_MALLOC(sizeof(type_t *));
+            fns[0] = f1;
+            bind_generic(a1->sym, generic_type(1, fns));
+         }  
+      } else /* have a type inferred function */
+         bind_symbol(a1->sym, f1, NULL);
       a->type = t_nil;
       break;
    case T_FN_STMT:
@@ -467,8 +877,12 @@ void inference1(ast_t * a)
       bind = find_symbol(sym_lookup("return"));
       if (bind == NULL)
          exception("Return outside of a function");
-      if (bind->type != a->child->type)
+      if (!types_unify(bind->type, a->child->type))
          exception("Return type does not match prototype in function definition");
+      else if (bind->type->typ == TYPEVAR)
+         push_inference(bind->type, a->child->type);
+      else if (a->child->type->typ == TYPEVAR)
+         push_inference(a->child->type, bind->type);
       a->type = t_nil;
       break;
    default:

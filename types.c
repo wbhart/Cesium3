@@ -201,7 +201,7 @@ type_t * fn_to_lambda_type(type_t * type)
 type_t * new_typevar(void)
 {
     static long typevarnum = 0;
-    type_t * t = new_type("", TYPEVAR);
+    type_t * t = new_type("*T", TYPEVAR);
     t->arity = typevarnum++;
     return t;
 }
@@ -271,6 +271,26 @@ void type_print(type_t * type)
       break;
    case DATATYPE:
       printf("%s", type->sym->name);
+      break;
+   case TYPEVAR:
+      printf("%s%d", type->sym->name, type->arity);
+      break;
+   case FN:
+      for (i = 0; i < type->arity - 1; i++)
+         type_print(type->args[i]), printf(", ");
+      if (type->arity)
+         type_print(type->args[i]);
+      else
+         printf("()");
+      printf(" -> ");
+      type_print(type->ret);
+      break;
+   case GENERIC:
+      printf("generic\n");
+      for (i = 0; i < type->arity - 1; i++)
+         type_print(type->args[i]), printf("\n");
+      if (type->arity)
+         type_print(type->args[i]);
       break;
    default:
       exception("Unknown type in type_print\n");

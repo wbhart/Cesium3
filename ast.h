@@ -55,7 +55,8 @@ typedef enum
    T_TUPLE_TYPE, T_TYPENAME, T_SLOT_NAME,
    T_SLOT_ASSIGN, T_LSLOT, T_TUPLE_UNPACK,
    T_FN_STMT, T_FN_PROTO, T_PARAM_BODY, T_PARAM, 
-   T_RETURN
+   T_RETURN,
+   T_TYPE_VAR
 } tag_t;
 
 typedef struct ast_t

@@ -36,6 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUG1 0 /* print ast */
 #define DEBUG2 1 /* print ast after inference1 */
+#define DEBUG3 1 /* print inference and deduction stack */
 
 extern jmp_buf exc;
 
@@ -44,7 +45,7 @@ int main(void)
    ast_t * a;
    int jval;
    jit_t * jit;
-
+   
    GC_INIT();
    GREG g;
  
@@ -53,6 +54,7 @@ int main(void)
    types_init();
    scope_init();
    intrinsics_init();
+   infer_stack_init();
    jit = llvm_init();
 
    yyinit(&g);
@@ -78,6 +80,10 @@ int main(void)
 #if DEBUG2
             printf("\n");
             ast_print(root, 0, 1);
+#endif
+#if DEBUG3
+            infer_print(infer_stack);
+            infer_print(deduce_stack);
 #endif
             exec_root(jit, root);
             root = NULL;

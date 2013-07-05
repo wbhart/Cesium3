@@ -37,9 +37,32 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  extern "C" {
 #endif
 
+typedef struct infer_t
+{
+   type_t * t1;
+   type_t * t2;
+   struct infer_t * next;
+} infer_t;
+
+extern infer_t * infer_stack;
+extern infer_t * deduce_stack;
+extern infer_t * generic_stack;
+
+void infer_stack_init(void);
+
+void deduce_stack_init(void);
+
+void infer_print(infer_t * inf);
+
+void substitute_type(type_t ** tin);
+
+void substitute_type_list(ast_t * a);
+
 type_t * find_prototype(type_t * gen, ast_t * a);
 
 void inference1(ast_t * a);
+
+void unify();
 
 #ifdef __cplusplus
 }
