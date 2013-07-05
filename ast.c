@@ -214,6 +214,7 @@ void ast_print(ast_t * ast, int indent, int types)
          printf("\n");
          break;
       case T_TYPENAME:
+      case T_TYPE_VAR:
          if (types) type_print(ast->type);
          printf("\n");
          break;

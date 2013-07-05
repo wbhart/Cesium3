@@ -602,6 +602,7 @@ void inference1(ast_t * a)
    type_t ** args, ** fns;
    sym_t ** slots;
    ast_t * a1, * a2, * a3, * a4;
+   env_t * scope_save;
    int i, j, k;
 
    switch (a->tag)
@@ -812,6 +813,22 @@ void inference1(ast_t * a)
          else
             push_inference(f1, t1);
       }
+      bind = find_symbol(a1->sym);
+      t1 = bind->type;
+      if (t1->typ == FN || t1->typ == GENERIC)
+      {
+          unify();
+          substitute_type(&t1);
+          substitute_type_list(a2);
+          t2 = find_prototype(t1, a2);
+          if (t2 == NULL)
+             exception("Unable to find function prototype in generic\n");
+          if (t2->inf == 0)
+          {
+             t2->inf = 1;
+             inference1(t2->ast);
+          }
+      }
       break;
    case T_LSLOT:
    case T_SLOT:
@@ -836,6 +853,9 @@ void inference1(ast_t * a)
       else inference1(a2);
       bind_symbol(a1->sym, a2->type, NULL);
       a->type = a2->type;
+      break;
+   case T_TYPE_VAR:
+      a->type = new_typevar();
       break;
    case T_FN_PROTO:
       a1 = a->child; /* identifier */
@@ -868,9 +888,10 @@ void inference1(ast_t * a)
       break;
    case T_FN_STMT:
       a1 = a->child->next->next->next;
+      scope_save = current_scope;
       current_scope = a->env;
       inference1(a1);
-      scope_down();
+      current_scope = scope_save;
       break;
    case T_RETURN:
       inference1(a->child);

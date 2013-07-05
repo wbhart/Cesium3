@@ -60,6 +60,7 @@ typedef struct type_t
    int intrinsic; /* intrinsic function/operator? */
    char * llvm; /* llvm serialised name of type */
    struct ast_t * ast; /* the ast (required for functions) */
+   int inf; /* whether or not inference1 has be run on this function */
 } type_t;
 
 typedef struct type_node_t

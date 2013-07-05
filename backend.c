@@ -500,8 +500,6 @@ ret_t * exec_binop(jit_t * jit, ast_t * ast)
     if (ast->sym == sym_lookup(">"))
         return exec_gt(jit, ast);
 
-    printf("here2\n");
-    
     jit_exception(jit, "Unknown symbol in binop\n");
 }
 
@@ -512,10 +510,14 @@ ret_t * exec_block(jit_t * jit, ast_t * ast)
 {
     ast_t * c = ast->child;
     ret_t * c_ret = ret(0, NULL);
-    
+    env_t * scope_save;
+   
     if (ast->tag == T_BLOCK)
+    {
+       scope_save = current_scope;
        current_scope = ast->env;
-    
+    }
+
     while (c != NULL)
     {
         c_ret = exec_ast(jit, c);
@@ -524,7 +526,7 @@ ret_t * exec_block(jit_t * jit, ast_t * ast)
     }
 
     if (ast->tag == T_BLOCK)
-       scope_down();
+       current_scope = scope_save;
 
     return c_ret;
 }
@@ -896,7 +898,7 @@ ret_t * exec_ident(jit_t * jit, ast_t * ast)
        var = LLVMGetNamedGlobal(jit->module, bind->llvm);
     else
        var = bind->llvm_val;
-
+    
     LLVMValueRef val = LLVMBuildLoad(jit->builder, var, bind->llvm);
     
     return ret(0, val);
@@ -1090,10 +1092,6 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
 
    int i, count;
    
-   unify();
-   substitute_type(&bind->type);
-   substitute_type_list(exp);
-   
    if (typ == TYPECONSTR) fn = bind->type->ret;
    else fn = find_prototype(bind->type, exp);
    
@@ -1119,7 +1117,7 @@ ret_t * exec_appl(jit_t * jit, ast_t * ast)
 
       if (fn->llvm == NULL) /* function not yet jit'd */
       {
-         inference1(fn->ast);
+         /*inference1(fn->ast);*/
          r = exec_fndef(jit, fn->ast, fn);
       }
       
