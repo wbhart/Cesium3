@@ -5,7 +5,7 @@ HEADERS=ast.h exception.h symbol.h types.h environment.h inference.h serial.h ba
 CS_FLAGS=-O2 -g -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 
 cesium: cesium.c $(HEADERS) $(OBJS)
-	g++ $(CS_FLAGS) cesium.c -o $(INC) $(OBJS) $(LIB) -lgc `/usr/local/bin/llvm-config --libs --cflags --ldflags core analysis executionengine jit interpreter native` -o cs -ldl
+	g++ $(CS_FLAGS) cesium.c -o $(INC) $(OBJS) $(LIB) -lgc `/usr/local/bin/llvm-config --libs --cflags --ldflags core analysis executionengine jit interpreter native` -o cs -ldl -lpthread
 
 ast.o: ast.c $(HEADERS)
 	gcc $(CS_FLAGS) -c ast.c -o ast.o $(INC)
