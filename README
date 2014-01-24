@@ -6,7 +6,7 @@ Dependencies:
 
 * LLVM 3.3
 * Boehm-Demers-Weiser Garbage Collection
-* Greg/leg/peg parser library (dependency to be removed in future)
+* Greg/leg/peg parser library
 
 Build:
 ------
