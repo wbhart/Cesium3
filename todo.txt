@@ -13,4 +13,6 @@
 * add comparison on chars
 * introduce type_show which returns string of type name and have type_print call it
 * types_unify doesn't correctly check if DATATYPE slots unify
+* separate places from loads from places in expressions
+* deal with uninitialised array entries
  

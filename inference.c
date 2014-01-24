@@ -84,6 +84,7 @@ type_t * resolve_inference1(type_t * t)
    bind_t * bind;
    type_t * t1;
 
+   printf("inm here\n");
    switch (t->typ)
    {
    case RESOLVE:
@@ -956,11 +957,14 @@ void inference1(ast_t * a)
          exception("Incorrect signature in application\n");
       if ((t2 = find_prototype(t1, a2)))
       {
+         type_t * tt;
          a->type = t2->ret;
+         a->type->args[0]->arity;
          for (i = 0; i < a->type->arity; i++)
             a->type->args[i] = resolve_inference1(a->type->args[i]);
       } else
       {
+         printf("here7\n");
          a->type = new_typevar();
          i = ast_count(a2);
          args = GC_MALLOC(i*sizeof(type_t *));
@@ -970,6 +974,7 @@ void inference1(ast_t * a)
             push_generic(f1, t1);
          else
             push_inference(f1, t1);
+         printf("here8\n");
       }
       bind = find_symbol(a1->sym);
       t1 = bind->type;
