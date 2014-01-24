@@ -60,7 +60,7 @@ void assign_inference1(ast_t * a, type_t * b)
     } else if (a->tag == T_TUPLE)
     {
        if (b->typ != TUPLE)
-             exception("Attempt to assign non-tuple to tuple\n");
+          exception("Attempt to assign non-tuple to tuple\n");
        ast_t * a1 = a->child;
        i = ast_count(a1);
        if (i != b->arity)
@@ -317,7 +317,30 @@ int types_unify(type_t * t1, type_t * t2)
       if (t1->sym == sym_lookup("__cs_unknown")
        || t2->sym == sym_lookup("__cs_unknown"))
       {
-         /* TODO: check slots */
+         int i, j;
+
+         for (i = 0; i < t1->arity; i++)
+         {
+            j = find_slot(t2, t1->slots[i]);
+            if (j != t2->arity)
+            {
+               if (!types_unify(t1->args[i], t2->args[j]))
+                  return 0;
+            }
+         }
+
+         if (t2->sym != sym_lookup("__cs_unknown"))
+         {
+            if (!check_slots(t1, t2))
+               return 0;
+         }
+
+         if (t1->sym != sym_lookup("__cs_unknown"))
+         {
+            if (!check_slots(t2, t1))
+               return 0;
+         }
+
          return 1;
       }
 
