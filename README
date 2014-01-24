@@ -27,7 +27,7 @@ Introduction:
 Cesium is a language which is to have the following features:
 
 * LLVMJit backend for performance
-* Local type inference
+* Mixed local and global type inference
 * C foreign function interface
 * Syntax and expression macros
 * Garbage collection
