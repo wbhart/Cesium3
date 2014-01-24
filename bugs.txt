@@ -1,0 +1,42 @@
+List of currently known bugs
+----------------------------
+
+1)
+
+fn bill1(a : int) {
+   return a*a;
+}
+
+fn bill2(a : int) {
+   return a*a;
+}
+
+bill1(12);
+
+bill2(12);
+
+segfault
+
+2)
+
+type bill {
+   a : int;
+   b : double;
+}
+
+a = array[bill](100);
+
+a[0];
+
+crash
+
+3)
+
+fn bill() {
+   return (1, 2.3, 'c');
+}
+
+(a, b, c) = bill();
+
+Attempt to assign non-tuple type to tuple.
+

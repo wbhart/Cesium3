@@ -51,6 +51,19 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define TRACE 1 /* prints lots of ast and llvm trace info */
 
+#define LOC_TAB_SIZE 10000 /* size of llvm locals hash table */
+
+typedef struct loc_t {
+   char * name;
+   LLVMValueRef llvm_val;
+} loc_t;
+
+void loc_tab_init(void);
+
+void loc_insert(const char * name, LLVMValueRef llvm_val);
+
+LLVMValueRef loc_lookup(const char * name);
+
 /* Are we on a 32 or 64 bit machine */
 #if ULONG_MAX == 4294967295U
 #define LLVMWordType() LLVMInt32Type()

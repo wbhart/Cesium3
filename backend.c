@@ -29,6 +29,79 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CS_MALLOC "GC_malloc"
 #define CS_MALLOC_ATOMIC "GC_malloc_atomic"
 
+/**********************************************************************
+
+   Hash table for local identifiers that LLVM won't let us serialise
+
+**********************************************************************/
+
+loc_t ** loc_tab;
+
+void loc_tab_init(void)
+{
+   long i;
+   
+   loc_tab = (loc_t **) GC_MALLOC(LOC_TAB_SIZE*sizeof(loc_t *));
+}
+
+loc_t * new_loc(const char * name, int length, LLVMValueRef llvm_val)
+{
+   loc_t * loc = (loc_t *) GC_MALLOC(sizeof(loc_t));
+   loc->name = (char *) GC_MALLOC(length + 1);
+   strcpy(loc->name, name);
+   loc->llvm_val = llvm_val;
+   return loc;
+}
+
+int loc_hash(const char * name, int length)
+{
+    int hash = (int) name[0];
+    int i;
+    for (i = 1; i < length; i++)
+        hash += (name[i] << ((3*i) % 15));
+    return hash % LOC_TAB_SIZE;
+}
+
+void loc_insert(const char * name, LLVMValueRef llvm_val)
+{
+   int length = strlen(name);
+   int hash = loc_hash(name, length);
+   loc_t * loc;
+
+   while (loc_tab[hash])
+   {
+       hash++;
+       if (hash == LOC_TAB_SIZE)
+           hash = 0;
+   }
+
+   loc = new_loc(name, length, llvm_val);
+   loc_tab[hash] = loc;
+}
+
+LLVMValueRef loc_lookup(const char * name)
+{
+   int length = strlen(name);
+   int hash = loc_hash(name, length);
+   
+   while (loc_tab[hash])
+   {
+       if (strcmp(loc_tab[hash]->name, name) == 0)
+           return loc_tab[hash]->llvm_val;
+       hash++;
+       if (hash == LOC_TAB_SIZE)
+           hash = 0;
+   }
+
+   return NULL;
+}
+
+/**********************************************************************
+
+   LLVM Jit backend
+
+**********************************************************************/
+
 /* 
    Tell LLVM about some external library functions so we can call them 
    and about some constants we want to use from jit'd code
@@ -762,7 +835,8 @@ ret_t * exec_decl(jit_t * jit, ast_t * ast)
    } else
    {
       val = LLVMBuildAlloca(jit->builder, type, llvm);
-      bind->llvm_val = val;
+      loc_insert(llvm, val);
+      /*bind->llvm_val = val;*/
    }
    
    return ret(0, val);
@@ -787,7 +861,8 @@ ret_t * exec_assign(jit_t * jit, ast_t * id, ast_t * expr)
        if (scope_is_global(bind))
           var = LLVMGetNamedGlobal(jit->module, bind->llvm);
        else
-          var = bind->llvm_val;
+          var = loc_lookup(bind->llvm);
+          /*var = bind->llvm_val;*/
     }
 
     expr_ret = exec_ast(jit, expr);
@@ -839,7 +914,8 @@ ret_t * exec_tuple_assign(jit_t * jit, ast_t * id, ast_t * expr)
              if (scope_is_global(bind))
                 var = LLVMGetNamedGlobal(jit->module, bind->llvm);
              else
-                var = bind->llvm_val;
+                var = loc_lookup(bind->llvm);
+                /*var = bind->llvm_val;*/
           }
           LLVMBuildStore(jit->builder, vals[i], var);
        } else if (a1->tag == T_LSLOT)
@@ -895,7 +971,8 @@ ret_t * exec_tuple_unpack_val(jit_t * jit, ast_t * ast1, LLVMValueRef val, type_
              if (scope_is_global(bind))
                 var = LLVMGetNamedGlobal(jit->module, bind->llvm);
              else
-                var = bind->llvm_val;
+                var = loc_lookup(bind->llvm);
+                /*var = bind->llvm_val;*/
           }
           LLVMBuildStore(jit->builder, vals[i], var);
        } else if (a1->tag == T_LSLOT)
@@ -936,7 +1013,8 @@ ret_t * exec_ident(jit_t * jit, ast_t * ast)
     if (scope_is_global(bind))
        var = LLVMGetNamedGlobal(jit->module, bind->llvm);
     else
-       var = bind->llvm_val;
+       var = loc_lookup(bind->llvm);
+       /*var = bind->llvm_val;*/
     
     LLVMValueRef val = LLVMBuildLoad(jit->builder, var, bind->llvm);
     
@@ -1016,8 +1094,9 @@ ret_t * exec_fnparams(jit_t * jit, ast_t * ast)
       palloca = LLVMBuildAlloca(jit->builder, type_to_llvm(jit, p->type), p->child->sym->name);
       LLVMBuildStore(jit->builder, param, palloca);
        
-      bind->llvm_val = palloca;
+      /*bind->llvm_val = palloca;*/
       bind->llvm = p->child->sym->name;
+      loc_insert(bind->llvm, palloca);
          
       i++;
       p = p->next;
