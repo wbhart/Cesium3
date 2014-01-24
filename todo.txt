@@ -1,0 +1,16 @@
+* Have makefile automatically build the .o files
+* have bind_symbol add to a list of symbols to remove if there is an exception
+* have exec_appl check for appropriate constructor and check if intrinsic before jit'ing
+* have operator jit'ing check for appropriate operator and check if intrinsic before applying the intrinsic
+* display list of constructors when type name is entered as expression at top level (may require show function)
+* display list of functions when generic name is entered as expression at top level (may require show function)
+* implement print function
+* have fn_type check if type is same as previous type, but distinguish intrinsic from non-instrinsic of same prototype
+* unary minus
+* print full suffix in print_gen for integer values
+* have int, uint alias another type
+* add true and false values
+* add comparison on chars
+* introduce type_show which returns string of type name and have type_print call it
+* types_unify doesn't correctly check if DATATYPE slots unify
+ 
