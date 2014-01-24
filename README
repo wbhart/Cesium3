@@ -75,6 +75,8 @@ enclosed in braces)
 * fn name(identifier : type, ...) { stmt1; ...; return; }
 * function application, e.g. name(1, 2.3)
 (functions may be polymorphic)
+* a = array[type](len) to create an array
+* a[i] to access an array
 
 MUCH more to come.
 

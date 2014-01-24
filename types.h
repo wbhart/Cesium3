@@ -51,10 +51,10 @@ typedef struct type_t
 {
    typ_t typ; /* kind of type */
    int arity; /* number of args */
-   int num_params; /* number of type parameters */
    struct type_t ** args; /* arguments */
    struct type_t * ret; /* return type, for functions */
-   sym_t ** params; /* type parameters */
+   int num_params; /* number of type parameters */
+   struct type_t ** params; /* type parameters */
    struct sym_t * sym; /* name of type */
    struct sym_t ** slots; /* names of type args/slots */
    int intrinsic; /* intrinsic function/operator? */
@@ -99,7 +99,9 @@ type_t * typeconstr_type(sym_t * sym, type_t * type, int arity, type_t ** args);
 type_t * tuple_type(int arity, type_t ** args);
 
 type_t * data_type(int arity, type_t ** args, sym_t * sym, 
-                     sym_t ** slots, int num_params, sym_t ** params);
+                     sym_t ** slots, int num_params, type_t ** params);
+
+void insert_slot(type_t * t, sym_t * sym, type_t * t1);
 
 type_t * array_type(type_t * el_type);
 

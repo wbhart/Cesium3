@@ -209,6 +209,22 @@ LLVMValueRef LLVMBuildGCMalloc(jit_t * jit, LLVMTypeRef type, const char * name,
 }
 
 /* 
+   Jit a call to GC_malloc to create an array
+*/
+LLVMValueRef LLVMBuildGCArrayMalloc(jit_t * jit, LLVMTypeRef type, LLVMValueRef num, const char * name, int atomic)
+{
+    LLVMValueRef fn;
+    if (atomic)
+        fn = LLVMGetNamedFunction(jit->module, CS_MALLOC_ATOMIC);
+    else
+        fn = LLVMGetNamedFunction(jit->module, CS_MALLOC);
+    LLVMValueRef size = LLVMSizeOf(type);
+    LLVMValueRef arg[1] = { LLVMBuildMul(jit->builder, num, size, "arr_size") };
+    LLVMValueRef gcmalloc = LLVMBuildCall(jit->builder, fn, arg, 1, "malloc");
+    return LLVMBuildPointerCast(jit->builder, gcmalloc, LLVMPointerType(type, 0), name);
+}
+
+/* 
    Build llvm struct type from ordinary tuple type
 */
 LLVMTypeRef tuple_to_llvm(jit_t * jit, type_t * type)
@@ -226,6 +242,22 @@ LLVMTypeRef tuple_to_llvm(jit_t * jit, type_t * type)
 }
 
 /* 
+   Build llvm struct type from array type 
+*/
+LLVMTypeRef array_to_llvm(jit_t * jit, type_t * type)
+{
+    int i;
+
+    /* get parameter types */
+    LLVMTypeRef * args = (LLVMTypeRef *) GC_MALLOC(2*sizeof(LLVMTypeRef));
+    args[0] = LLVMPointerType(type_to_llvm(jit, type->params[0]), 0); 
+    args[1] = LLVMWordType();
+
+    /* make LLVM struct type */
+    return LLVMStructType(args, 2, 1);
+}
+
+/* 
    Convert a type_t to an LLVMTypeRef 
 */
 LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
@@ -237,6 +269,11 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
    {
       unify();
       substitute_type(&type);
+   }
+
+   if (type->typ == DATATYPE)
+   {
+      substitute_datatype(&type);
    }
     
    if (type->typ == TYPEVAR)
@@ -266,6 +303,8 @@ LLVMTypeRef type_to_llvm(jit_t * jit, type_t * type)
       return LLVMInt1Type();
    else if (type->typ == TUPLE)
       return LLVMPointerType(tuple_to_llvm(jit, type), 0);
+   else if (type->typ == ARRAY)
+        return LLVMPointerType(array_to_llvm(jit, type), 0);
    else if (type->typ == DATATYPE)
       return LLVMPointerType(LLVMGetTypeByName(jit->module, type->llvm), 0);
    else
@@ -715,7 +754,7 @@ ret_t * exec_decl(jit_t * jit, ast_t * ast)
    bind_t * bind = bind_symbol(ast->sym, ast->type, llvm);
 
    LLVMTypeRef type = type_to_llvm(jit, ast->type); /* convert to llvm type */
-       
+      
    if (scope_is_global(bind))
    {
       val = LLVMAddGlobal(jit->module, type, llvm);
@@ -725,7 +764,7 @@ ret_t * exec_decl(jit_t * jit, ast_t * ast)
       val = LLVMBuildAlloca(jit->builder, type, llvm);
       bind->llvm_val = val;
    }
-
+   
    return ret(0, val);
 }
 
@@ -1077,6 +1116,34 @@ ret_t * exec_fndef(jit_t * jit, ast_t * ast, type_t * type)
 }
 
 /* 
+   Jit an array constructor application
+*/
+ret_t * exec_array(jit_t * jit, ast_t * ast)
+{
+   ast_t * expr = ast->child->next;
+
+   ret_t * r = exec_ast(jit, expr);
+   
+   LLVMTypeRef struct_ty = array_to_llvm(jit, ast->type);
+   LLVMValueRef val = LLVMBuildGCMalloc(jit, struct_ty, "array_s", 0);
+
+   /* insert length into array struct */
+   LLVMValueRef indices[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 1, 0) };
+   LLVMValueRef entry = LLVMBuildInBoundsGEP(jit->builder, val, indices, 2, "length");
+   LLVMBuildStore(jit->builder, r->val, entry);
+    
+   /* create array */
+   int atomic = is_atomic(ast->type->params[0]);
+   LLVMValueRef arr = LLVMBuildGCArrayMalloc(jit, type_to_llvm(jit, ast->type->params[0]), r->val, "arr", atomic);
+
+   LLVMValueRef indices2[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
+   entry = LLVMBuildInBoundsGEP(jit->builder, val, indices2, 2, "array");
+   LLVMBuildStore(jit->builder, arr, entry);
+
+   return ret(0, val);   
+}
+
+/* 
    Jit a function application or type constructor application
 */
 ret_t * exec_appl(jit_t * jit, ast_t * ast)
@@ -1183,17 +1250,17 @@ ret_t * exec_slot(jit_t * jit, ast_t * ast)
 /*
    Jit a slot assignment statement
 */
-ret_t * exec_slot_assign(jit_t * jit, ast_t * ast)
+ret_t * exec_place_assign(jit_t * jit, ast_t * ast)
 {
-    ast_t * dt = ast->child;
-    ast_t * expr = dt->next;
-    ret_t * dt_ret, * expr_ret;
+    ast_t * place = ast->child;
+    ast_t * expr = place->next;
+    ret_t * place_ret, * expr_ret;
     LLVMValueRef val;
 
     expr_ret = exec_ast(jit, expr);
-    dt_ret = exec_ast(jit, dt);
+    place_ret = exec_ast(jit, place);
     
-    LLVMBuildStore(jit->builder, expr_ret->val, dt_ret->val);
+    LLVMBuildStore(jit->builder, expr_ret->val, place_ret->val);
 
     return ret(0, NULL);
 }
@@ -1217,6 +1284,61 @@ ret_t * exec_lslot(jit_t * jit, ast_t * ast)
    LLVMValueRef val = LLVMBuildInBoundsGEP(jit->builder, r->val, index, 2, "datatype");
    
    return ret(0, val);
+}
+
+/*
+   Jit an array access
+*/
+ret_t * exec_location(jit_t * jit, ast_t * ast)
+{
+    ast_t * id = ast->child;
+    ast_t * expr = id->next;
+    
+    if (ast->sym == NULL) /* need some kind of name */
+        ast->sym = sym_lookup("__cs_none");
+    
+    ret_t * r = exec_ast(jit, id);
+    ret_t * s = exec_ast(jit, expr);
+    
+    /* get array from datatype */
+    LLVMValueRef indices[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
+    LLVMValueRef val = LLVMBuildInBoundsGEP(jit->builder, r->val, indices, 2, "arr");
+    val = LLVMBuildLoad(jit->builder, val, "array");
+    
+    /* get location within array */
+    LLVMValueRef indices2[1] = { s->val };
+    val = LLVMBuildInBoundsGEP(jit->builder, val, indices2, 1, "arr_entry");
+    
+    /* load value */
+    val = LLVMBuildLoad(jit->builder, val, "entry");
+    
+    return ret(0, val);
+}
+
+/*
+   Jit an array location as a place
+*/
+ret_t * exec_llocation(jit_t * jit, ast_t * ast)
+{
+    ast_t * id = ast->child;
+    ast_t * expr = id->next;
+    
+    if (ast->sym == NULL) /* need some kind of name */
+        ast->sym = sym_lookup("__cs_none");
+    
+    ret_t * r = exec_ast(jit, id);
+    ret_t * s = exec_ast(jit, expr);
+    
+    /* get array from datatype */
+    LLVMValueRef indices[2] = { LLVMConstInt(LLVMInt32Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 0, 0) };
+    LLVMValueRef val = LLVMBuildInBoundsGEP(jit->builder, r->val, indices, 2, "arr");
+    val = LLVMBuildLoad(jit->builder, val, "array");
+    
+    /* get location within array */
+    LLVMValueRef indices2[1] = { s->val };
+    val = LLVMBuildInBoundsGEP(jit->builder, val, indices2, 1, "arr_entry");
+    
+    return ret(0, val);
 }
 
 /*
@@ -1293,16 +1415,22 @@ ret_t * exec_ast(jit_t * jit, ast_t * ast)
         return exec_tuple_assign(jit, ast->child, ast->child->next);
     case T_TUPLE_UNPACK:
         return exec_tuple_unpack(jit, ast->child, ast->child->next);
-    case T_SLOT_ASSIGN:
-        return exec_slot_assign(jit, ast);
+    case T_PLACE_ASSIGN:
+        return exec_place_assign(jit, ast);
     case T_IDENT:
         return exec_ident(jit, ast);
     case T_APPL:
         return exec_appl(jit, ast);
+    case T_ARRAY:
+        return exec_array(jit, ast);
     case T_SLOT:
         return exec_slot(jit, ast);
     case T_LSLOT:
         return exec_lslot(jit, ast);
+    case T_LOCATION:
+        return exec_location(jit, ast);
+    case T_LLOCATION:
+        return exec_llocation(jit, ast);
     case T_FN_PROTO:
         return exec_fn_proto(jit, ast);
     case T_RETURN:
@@ -1442,6 +1570,9 @@ void print_gen(jit_t * jit, type_t * type, LLVMGenericValueRef gen_val)
           print_struct_entry(jit, type, i, gen_val), printf(", ");
       print_struct_entry(jit, type, i, gen_val);
       printf(")");
+   } else if (type->typ == ARRAY)
+   {
+      printf("array");
    } else
       exception("Unknown type in print_gen\n");
 }

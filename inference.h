@@ -56,6 +56,8 @@ void infer_print(infer_t * inf);
 
 void substitute_type(type_t ** tin);
 
+void substitute_datatype(type_t ** tin);
+
 void substitute_type_list(ast_t * a);
 
 type_t * find_prototype(type_t * gen, ast_t * a);

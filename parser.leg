@@ -36,7 +36,7 @@ LocStatement  = Spacing IfStmt
                  | Spacing Assignment ';'
                  | Spacing TupleAssign ';'
                  | Spacing TupleUnpack
-                 | Spacing SlotAssign
+                 | Spacing PlaceAssign
                  | Spacing Expression ';'
                  | Spacing ';'
 GloStatement  = Spacing FnStmt
@@ -52,8 +52,8 @@ LTuple        = LParen r:LTupleBody RParen { $$ = ast1(T_TUPLE, r); }
 LTupleBody    = r:LValue Comma s:LTupleBody { r->next = s; $$ = r; }
                 | r:LValue Comma { $$ = r; }
                 | LValue
-LValue        = LSlot | LTuple | Identifier
-SlotAssign    = i:LSlot Equals e:Expression { $$ = ast2(T_SLOT_ASSIGN, i, e); }
+LValue        = Place | LTuple | Identifier
+PlaceAssign   = i:Place Equals e:Expression { $$ = ast2(T_PLACE_ASSIGN, i, e); }
 BlockBody     = s:Statement Spacing b:BlockBody { s->next = b; $$ = s; }
                | Statement
 Block         = LBrace b:BlockBody RBrace { $$ = ast1(T_BLOCK, b); }
@@ -105,17 +105,22 @@ TupleTypeBody = r:TypeExpr Comma s:TupleTypeBody { r->next = s; $$ = r; }
 ArgList       = r:Expression Comma s:ArgList { r->next = s; $$ = r; }
                | Expression
 AOrS          = r:Identifier ( s:Appl { r = ast2(T_APPL, r, s); } 
-                             | s:Slot { r = ast2(T_SLOT, r, s); } )+ { $$ = r; }
-LSlot         = r:AOrS s:Slot { $$ = ast2(T_LSLOT, r, s); }
-               | r:Identifier s:Slot { $$ = ast2(T_LSLOT, r, s); }
+                             | s:Slot { r = ast2(T_SLOT, r, s); } 
+                             | s:Location { r = ast2(T_LOCATION, r, s); } )+ { $$ = r; }
+Place         = r:AOrS { if (r->tag == T_APPL) r->tag = T_LAPPL;
+                         if (r->tag == T_SLOT) r->tag = T_LSLOT;
+                         if (r->tag == T_LOCATION) r->tag = T_LLOCATION;
+                         $$ = r; }
 Appl          = LParen s:ArgList RParen { $$ = s; }
                | LParen RParen { $$ = NULL; }
 Slot          = Dot i:SlotName { $$ = i; }
+Location      = LBrack e:Expression RBrack { $$ = e; }
 SlotName      = < IdentStart IdentCont* > Spacing
               {
                  sym_t * sym = sym_lookup(yytext);
                  $$ = ast_symbol(T_SLOT_NAME, sym);
               }
+ArrayExpr     = Array LBrack t:TypeExpr RBrack LParen e:Expression RParen { $$ = ast2(T_ARRAY, t, e); }
 
 Expression    = r:Infix40 ( ( EQ s:Infix40 { r = ast_binop(sym_lookup("=="), r, s); } )
                | ( NE s:Infix40 { r = ast_binop(sym_lookup("!="), r, s); } ) )* { $$ = r; } 
@@ -128,10 +133,10 @@ Infix20       = r:Infix10 ( ( Plus s:Infix10 { r = ast_binop(sym_lookup("+"), r,
 Infix10       = r:Primary ( ( Times s:Primary { r = ast_binop(sym_lookup("*"), r, s); } )
                | ( Div s:Primary { r = ast_binop(sym_lookup("/"), r, s); } ) 
                | ( Mod s:Primary { r = ast_binop(sym_lookup("%"), r, s); } ) )* { $$ = r; }
-Primary       = AOrS | Float | Double | UInt | Int | String | Char | Identifier
+Primary       = ArrayExpr | AOrS | Float | Double | UInt | Int | String | Char | Identifier
                  | ( LParen Expression RParen ) | Tuple | IfElseExpr
                 
-Reserved      = ( 'while' | 'if' | 'else' | 'type' | 'return' ) ![a-zA-Z0-9_]
+Reserved      = ( 'while' | 'if' | 'else' | 'type' | 'return' | 'fn' | 'array' | 'break' ) ![a-zA-Z0-9_]
 TypeRes      = ( 'int' | 'uint'
                  | 'char' | 'string' | 'double' | 'float' | 'nil' ) ![a-zA-Z0-9_]
 Tuple         = LParen r:TupleBody RParen { $$ = ast1(T_TUPLE, r); }
@@ -195,11 +200,14 @@ Else          = 'else' Spacing
 Type          = 'type' Spacing
 Fn            = 'fn' Spacing
 Return        = 'return' Spacing
+Array         = 'array' Spacing
 Equals        = '=' Spacing
 LParen        = '(' Spacing
 RParen        = ')' Spacing 
 LBrace        = '{' Spacing
 RBrace        = Spacing '}' 
+LBrack        = '[' Spacing
+RBrack        = ']' Spacing 
 Plus          = '+' Spacing
 Minus         = '-' Spacing
 Times         = '*' Spacing

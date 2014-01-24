@@ -159,7 +159,7 @@ type_t * tuple_type(int arity, type_t ** args)
 }
 
 type_t * data_type(int arity, type_t ** args, sym_t * sym, 
-                       sym_t ** slots, int num_params, sym_t ** params)
+                       sym_t ** slots, int num_params, type_t ** params)
 {
    int i;
    
@@ -182,11 +182,26 @@ type_t * data_type(int arity, type_t ** args, sym_t * sym,
    return t;
 }
 
+void insert_slot(type_t * t, sym_t * sym, type_t * t1)
+{
+    int i = t->arity;
+
+    t->args = (type_t **) GC_REALLOC(t->args, sizeof(type_t *)*(i + 1));
+    t->slots = (sym_t **) GC_REALLOC(t->slots, sizeof(sym_t *)*(i + 1));
+   
+    t->args[i] = t1;
+    t->slots[i] = sym;
+
+    t->arity = i + 1;
+}
+
 type_t * array_type(type_t * el_type)
 {
    type_t * t = (type_t *) GC_MALLOC(sizeof(type_t));
+   t->num_params = 1;
+   t->params = (type_t **) GC_MALLOC(sizeof(type_t *)*t->num_params); /* one param */
    t->typ = ARRAY;
-   t->ret = el_type;
+   t->params[0] = el_type;
    
    return t;
 }
@@ -271,6 +286,11 @@ void type_print(type_t * type)
       break;
    case DATATYPE:
       printf("%s", type->sym->name);
+      break;
+   case ARRAY:
+      printf("array[");
+      type_print(type->params[0]);
+      printf("]\n");
       break;
    case TYPEVAR:
       printf("%s%d", type->sym->name, type->arity);

@@ -218,6 +218,10 @@ void ast_print(ast_t * ast, int indent, int types)
          if (types) type_print(ast->type);
          printf("\n");
          break;
+      case T_TUPLE_TYPE:
+         if (types) type_print(ast->type);
+         printf("\n");
+         break;
       case T_TYPE_STMT:
          printf("type %s\n", ast->child->sym->name);
          a = ast->child->next->child;
@@ -237,6 +241,7 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(ast->child->next, indent + 3, types);
          break;
       case T_APPL:
+      case T_LAPPL:
          printf("appl");
          if (types) printf(" : "), type_print(ast->type);
          printf("\n");
@@ -246,6 +251,12 @@ void ast_print(ast_t * ast, int indent, int types)
             ast_print(a, indent + 3, types);
             a = a->next;
          }
+         break;
+      case T_ARRAY:
+         printf("array");
+         if (types) printf(" : "), type_print(ast->type);
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent + 3, types);
          break;
       case T_SLOT_NAME:
          printf(".%s\n", ast->sym->name);
@@ -258,8 +269,16 @@ void ast_print(ast_t * ast, int indent, int types)
          ast_print(ast->child, indent + 3, types);
          ast_print(ast->child->next, indent + 3, types);
          break;
-      case T_SLOT_ASSIGN:
+      case T_PLACE_ASSIGN:
          printf("assign");
+         if (types) printf(" : "), type_print(ast->type);
+         printf("\n");
+         ast_print(ast->child, indent + 3, types);
+         ast_print(ast->child->next, indent + 3, types);
+         break;
+      case T_LOCATION:
+      case T_LLOCATION:
+         printf("location");
          if (types) printf(" : "), type_print(ast->type);
          printf("\n");
          ast_print(ast->child, indent + 3, types);

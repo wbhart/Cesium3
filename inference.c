@@ -197,6 +197,54 @@ int find_slot(type_t * t, sym_t * sym)
    return i;
 }
  
+/*
+   Add any additional slots to t1 that t2 has
+*/
+void update_slots(type_t * t1, type_t * t2)
+{
+   int i, j;
+
+   for (j = 0; j < t2->arity; j++)
+   {
+      i = find_slot(t1, t2->slots[j]);
+      if (i == t1->arity)
+         insert_slot(t1, t2->slots[j], t2->args[j]);
+   }
+}
+
+/*
+   Check t1 has no slots not found in t2. Return 1
+   if all checks out, otherwise return 0.
+*/
+int check_slots(type_t * t1, type_t * t2)
+{
+   int i, j;
+   
+   for (i = 0; i < t1->arity; i++)
+   {
+      j = find_slot(t2, t1->slots[i]);
+      if (j == t1->arity)
+         return 0;
+   }
+
+   return 1;
+}
+
+/*
+   Replace contents of datatype t1 with those of t2,
+   but the llvm serialised name with NULL, as this is
+   not the authoritative record for this type
+*/
+void refill_datatype(type_t * t1, type_t * t2)
+{
+   t1->arity = t2->arity;
+   t1->args = t2->args;
+   t1->num_params = t2->num_params;
+   t1->sym = t2->sym;
+   t1->slots = t2->slots;
+   t1->llvm = NULL;
+}
+
 /* 
    Check if a list has types for each node or whether it
    includes some typevars
@@ -250,6 +298,37 @@ int types_unify(type_t * t1, type_t * t2)
       return 1;
    }
 
+   if (t1->typ == ARRAY || t2->typ == ARRAY)
+   {
+      /* make sure both are arrays */
+      if (t1->typ != t2->typ)
+         return 0;
+
+      if (!types_unify(t1->params[0], t2->params[0]))
+         return 0;
+
+      return 1;
+   }
+
+   if (t1->typ == DATATYPE || t2->typ == DATATYPE)
+   {
+      /* make sure both are datatypes */
+      if (t1->typ != t2->typ)
+         return 0;
+
+      if (t1->sym == sym_lookup("__cs_unknown")
+       || t2->sym == sym_lookup("__cs_unknown"))
+      {
+         /* TODO: check slots */
+         return 1;
+      }
+
+      if (t1->sym != t2->sym)
+         return 0;
+
+      return 1;
+   }
+   
    return 0;
 }
 
@@ -443,6 +522,10 @@ void infer_subst_type(type_t ** tin, infer_t * rel)
         for (i = 0; i < t->arity; i++)
             infer_subst_type(t->args + i, rel);
     }
+    else if (t->typ == ARRAY)
+    {
+       infer_subst_type(t->params, rel);
+    }
 }
 
 /* 
@@ -487,11 +570,28 @@ void infer_subst(infer_t * inf)
 void substitute_type(type_t ** tin)
 {
     infer_t * rel = deduce_stack;
-   
+    
     while (rel != NULL)
     {
         infer_subst_type(tin, rel);
         rel = rel->next;
+    }
+}
+
+/*
+   Replace datatypes with authoritative versions
+*/
+void substitute_datatype(type_t ** tin)
+{
+    bind_t * bind;
+
+    if ((*tin)->typ == DATATYPE)
+    {
+       if ((*tin)->llvm == NULL)
+       {
+          bind = find_symbol((*tin)->sym);
+          (*tin) = bind->type->ret;
+       }
     }
 }
 
@@ -504,6 +604,21 @@ void substitute_type_list(ast_t * a)
    {
       substitute_type(&a->type);
       a = a->next;
+   }
+}
+
+/*
+   Push type relations for slots t1 and t2 have in common
+*/
+void push_common_slots(type_t * t1, type_t * t2)
+{
+   int i, j;
+   
+   for (i = 0; i < t1->arity; i++)
+   {
+      j = find_slot(t2, t1->slots[i]);
+      if (j != t2->arity) /* common slot */
+         push_inference(t1->args[i], t2->args[j]);
    }
 }
 
@@ -544,6 +659,42 @@ void unify()
                exception("Type mismatch: tuple type not matched!\n");
             for (i = 0; i < rel->t1->arity; i++)
                push_inference(rel->t1->args[i], rel->t2->args[i]);
+         } else if (rel->t1->typ == ARRAY)
+         {
+            if (rel->t2->typ != ARRAY)
+               exception("Type mismatch: array type not matched!\n");
+            push_inference(rel->t1->params[0], rel->t2->params[0]);
+         }  else if (rel->t1->typ == DATATYPE)
+         {
+            if (rel->t2->typ != DATATYPE)
+               exception("Type mismatch: datatype not matched!\n");
+            if (rel->t1->sym != sym_lookup("__cs_unknown")
+             && rel->t2->sym != sym_lookup("__cs_unknown"))
+            {
+               if (rel->t1->sym != rel->t2->sym)
+                  exception("Type mismatch: datatype not matched!\n");
+            } else
+            {
+               push_common_slots(rel->t1, rel->t2);
+               if (rel->t1->sym == sym_lookup("__cs_unknown"))
+               {   
+                  if (rel->t2->sym == sym_lookup("__cs_unknown"))
+                  {
+                     update_slots(rel->t2, rel->t1);
+                     update_slots(rel->t1, rel->t2);
+                  } else
+                  {
+                     if (!check_slots(rel->t1, rel->t2))
+                        exception("Invalid slot\n");
+                     refill_datatype(rel->t1, rel->t2);
+                  }
+               } else
+               {
+                  if (!check_slots(rel->t2, rel->t1))
+                     exception("Invalid slot\n");
+                  refill_datatype(rel->t2, rel->t1);
+               }
+            }
          } else if (rel->t1->typ != rel->t2->typ)
          {
             printf("%d %d\n", rel->t1->typ, rel->t2->typ);
@@ -771,7 +922,7 @@ void inference1(ast_t * a)
       assign_inference1(a1, a2->type);
       a->type = t_nil;
       break;
-   case T_SLOT_ASSIGN:
+   case T_PLACE_ASSIGN:
       a1 = a->child;
       a2 = a1->next;
       inference1(a2);
@@ -786,7 +937,16 @@ void inference1(ast_t * a)
       assign_args(args, a->child);
       a->type = tuple_type(i, args);
       break;
+   case T_ARRAY:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a2);
+      inference1(a1);
+      push_inference(a2->type, t_int);
+      a->type = array_type(a1->type);
+      break;
    case T_APPL:
+   case T_LAPPL:
       a1 = a->child;
       a2 = a1->next;
       list_inference1(a2);
@@ -837,11 +997,42 @@ void inference1(ast_t * a)
       inference1(a1);
       t1 = a1->type;
       if (t1->typ != DATATYPE)
-         exception("Unknown data type in dot operator\n");
-      i = find_slot(t1, a2->sym);
-      if (i == t1->arity)
-         exception("Slot not found in slot evaluation\n");
-      a->type = t1->args[i];
+      {
+         args = (type_t **) GC_MALLOC(sizeof(type_t *));
+         slots = (sym_t **) GC_MALLOC(sizeof(sym_t *));
+         args[0] = new_typevar();
+         slots[0] = a2->sym;
+         t2 = data_type(1, args, sym_lookup("__cs_unknown"), slots, 0, NULL);
+         push_inference(t1, t2);
+         a->type = t2->args[0];
+      } else
+      {
+         i = find_slot(t1, a2->sym);
+         if (i == t1->arity)
+         {
+            if (t1->sym == sym_lookup("__cs_unknown"))
+               insert_slot(t1, a2->sym, new_typevar());
+            else
+               exception("Slot not found in slot evaluation\n");
+         }
+         a->type = t1->args[i];
+      }
+      break;
+   case T_LOCATION:
+   case T_LLOCATION:
+      a1 = a->child;
+      a2 = a1->next;
+      inference1(a2);
+      push_inference(a2->type, t_int);
+      inference1(a1);
+      t1 = a1->type;
+      if (t1->typ != ARRAY)
+      {
+         t2 = new_typevar();
+         push_inference(t1, array_type(t2));
+         a->type = t2;
+      } else
+         a->type = t1->params[0];
       break;
    case T_PARAM_BODY:
       list_inference1(a->child);
