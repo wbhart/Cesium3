@@ -74,23 +74,16 @@ int main(void)
          {
 #if DEBUG1
             printf("\n");
-            printf("here1\n");
             ast_print(root, 0, 0);
 #endif
-            printf("here2\n");
             inference1(root);
 #if DEBUG2
             printf("\n");
-            printf("here3\n");
             ast_print(root, 0, 1);
 #endif
 #if DEBUG3
-            printf("here4\n");
             infer_print(infer_stack);
-            printf("here5\n");
             infer_print(deduce_stack);
-            printf("here6\n");
-            
 #endif
             exec_root(jit, root);
             root = NULL;

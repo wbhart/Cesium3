@@ -133,8 +133,6 @@ int ast_count(ast_t * a)
 */
 type_t * list_inference1(ast_t * a)
 {
-   int i = 0;
-
    if (a == NULL)
       return t_nil;
 
@@ -142,7 +140,6 @@ type_t * list_inference1(ast_t * a)
    {
       inference1(a);
       a = a->next;
-      i++;
    }
    inference1(a);
       
@@ -673,6 +670,7 @@ void unify()
             {
                if (rel->t1->sym != rel->t2->sym)
                   exception("Type mismatch: datatype not matched!\n");
+               continue;
             } else
             {
                push_common_slots(rel->t1, rel->t2);

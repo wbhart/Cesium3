@@ -38,7 +38,6 @@ Cesium is a language which is to have the following features:
 Feature todo list:
 ------------------
 
-* Parser combinators - written but not used
 * Symbol Hash table - done
 * Parser - in progress
 * Environments - done

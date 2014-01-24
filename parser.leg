@@ -36,7 +36,7 @@ LocStatement  = Spacing IfStmt
                  | Spacing Assignment ';'
                  | Spacing TupleAssign ';'
                  | Spacing TupleUnpack
-                 | Spacing PlaceAssign
+                 | Spacing PlaceAssign ';'
                  | Spacing Expression ';'
                  | Spacing ';'
 GloStatement  = Spacing FnStmt
@@ -54,9 +54,9 @@ LTupleBody    = r:LValue Comma s:LTupleBody { r->next = s; $$ = r; }
                 | LValue
 LValue        = Place | LTuple | Identifier
 PlaceAssign   = i:Place Equals e:Expression { $$ = ast2(T_PLACE_ASSIGN, i, e); }
-BlockBody     = s:Statement Spacing b:BlockBody { s->next = b; $$ = s; }
-               | Statement
-Block         = LBrace b:BlockBody RBrace { $$ = ast1(T_BLOCK, b); }
+BlockBody     = r:Statement Spacing s:BlockBody { r->next = s; $$ = r; }
+               | r:Statement
+Block         = LBrace c:BlockBody RBrace { $$ = ast1(T_BLOCK, c); }
                | LBrace RBrace { $$ = ast1(T_BLOCK, NULL); }
                | Statement
 BlockExprBody = s:Statement Spacing b:Block { s->next = b; $$ = s; }
