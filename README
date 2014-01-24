@@ -4,14 +4,14 @@ Cesium v 0.3:
 Dependencies:
 -------------
 
-* LLVM 3.1
+* LLVM 3.3
 * Boehm-Demers-Weiser Garbage Collection
 * Greg/leg/peg parser library (dependency to be removed in future)
 
 Build:
 ------
 
-Install LLVM 3.1 and GC.
+Install LLVM 3.3 and GC.
 
 Update directory paths at the top of the Makefile then type:
 
